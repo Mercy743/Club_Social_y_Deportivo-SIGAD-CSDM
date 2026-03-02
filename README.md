@@ -21,8 +21,8 @@ El proyecto sigue la metodología ágil **Scrum**, organizada en:
 # Equipo de trabajo
 - Product Owner / Líder del proyecto: René Antonio Olvera Estrada
 - Equipo de desarrollo: 
-Erandi Celic Santos Alvarez
-Brandon Ramirez Rodriguez 
+Erandi Celic Santos Alvarez |
+Brandon Ramirez Rodriguez |
 Irving Garcia Montañez
 
 # Estado del proyecto
