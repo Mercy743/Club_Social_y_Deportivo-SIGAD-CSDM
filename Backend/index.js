@@ -20,6 +20,27 @@ const pool = new Pool({
 pool.connect()
     .then(() => console.log('🟢 Conectado exitosamente a la base de datos PostgreSQL'))
     .catch(err => console.error('🔴 Error de conexión a la base de datos', err.stack));
+// Ruta para obtener los datos de un usuario específico
+app.get('/api/usuario/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const consultaSQL = `
+            SELECT u.nombre, r.nombre AS rol_nombre 
+            FROM usuarios u 
+            JOIN roles r ON u.rol_id = r.id 
+            WHERE u.id = $1`;
+        const resultado = await pool.query(consultaSQL, [id]);
+
+        if (resultado.rowCount === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        res.json(resultado.rows[0]);
+    } catch (error) {
+        console.error('Error al buscar usuario:', error);
+        res.status(500).json({ error: 'Error en el servidor' });
+    }
+});
 
 app.put('/api/actualizar-rol', async (req, res) => {
     const { usuario_id, rol_id } = req.body;
