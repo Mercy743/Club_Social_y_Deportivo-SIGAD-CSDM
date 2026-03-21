@@ -19,7 +19,7 @@ const pool = new Pool({
 
 pool.connect()
     .then(() => console.log('🟢 Conectado exitosamente a la base de datos PostgreSQL'))
-    .catch(err => console.error('🔴 Error de conexion a la base de datos', err.stack));
+    .catch(err => console.error('🔴 Error de conexión a la base de datos', err.stack));
 
 app.put('/api/actualizar-rol', async (req, res) => {
     const { usuario_id, rol_id } = req.body;

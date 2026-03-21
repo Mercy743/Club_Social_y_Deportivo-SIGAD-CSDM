@@ -28,24 +28,33 @@ document.getElementById('form-roles').addEventListener('submit', function(event)
 
     
     // (ejemplo: puerto 3000)
+
     fetch('http://localhost:3000/api/actualizar-rol', {
-        method: 'PUT', // actualizando (UPDATE) un rol existente
+        method: 'PUT', 
         headers: {
-            'Content-Type': 'application/json' // Le decimos al backend que le mandamos un JSON
+            'Content-Type': 'application/json' 
         },
-        body: JSON.stringify(datosParaEnviar) // Convertimos nuestro objeto a texto JSON
+        body: JSON.stringify(datosParaEnviar) 
     })
-    .then(respuesta => respuesta.json()) // Esperamos la respuesta del backend y la leemos
+    .then(respuesta => {
+        
+        if (!respuesta.ok) {
+            // Si el servidor nos mando un error 
+            return respuesta.json().then(err => { throw new Error(err.error) });
+        }
+        // Si todo salio bien, leemos los datos
+        return respuesta.json();
+    })
     .then(datos => {
-        // Si la conexion fue exitosa, mostramos el mensaje final
+        // Solo entramos aqui si la actualizacion fue  real en la base de datos
         mensajeDiv.style.color = "green";
         mensajeDiv.innerHTML = `✅ ¡Exito! El Usuario ${datosParaEnviar.usuario_id} fue actualizado al Rol ${datosParaEnviar.rol_id} en la base de datos.`;
         console.log("Respuesta del servidor:", datos);
     })
     .catch(error => {
-        // Si el backend esta apagado o hay un error, lo atrapamos aqui
+        // servidores apagados
         mensajeDiv.style.color = "red";
-        mensajeDiv.innerHTML = "❌ Error: No se pudo conectar con el servidor de la base de datos.";
-        console.error('Error de conexion en el fetch:', error);
+        mensajeDiv.innerHTML = `❌ Error: ${error.message}`;
+        console.error('Error detectado:', error);
     });
 });
