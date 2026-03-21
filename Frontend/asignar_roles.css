@@ -63,3 +63,23 @@ button:hover {
     padding: 10px;
     border-radius: 5px;
 }
+
+.info-box {
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #e8f4fd;
+    border-left: 5px solid #3498db;
+    font-size: 0.9em;
+    min-height: 20px;
+}
+
+.btn-secondary {
+    background-color: #95a5a6;
+    margin-left: 10px;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 20px 0;
+}
