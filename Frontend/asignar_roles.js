@@ -11,7 +11,7 @@ document.getElementById('form-roles').addEventListener('submit', function(event)
     // Validacion 
     if (!usuario_id || usuario_id <= 0) {
         mensajeDiv.style.color = "red";
-        mensajeDiv.innerHTML = "❌ Error: Ingrese un ID de usuario válido.";
+        mensajeDiv.innerHTML = "❌ Error: Ingrese un ID de usuario valido.";
         return;
     }
 
@@ -39,13 +39,13 @@ document.getElementById('form-roles').addEventListener('submit', function(event)
     .then(datos => {
         // Si la conexion fue exitosa, mostramos el mensaje final
         mensajeDiv.style.color = "green";
-        mensajeDiv.innerHTML = `✅ ¡Éxito! El Usuario ${datosParaEnviar.usuario_id} fue actualizado al Rol ${datosParaEnviar.rol_id} en la base de datos.`;
+        mensajeDiv.innerHTML = `✅ ¡Exito! El Usuario ${datosParaEnviar.usuario_id} fue actualizado al Rol ${datosParaEnviar.rol_id} en la base de datos.`;
         console.log("Respuesta del servidor:", datos);
     })
     .catch(error => {
         // Si el backend esta apagado o hay un error, lo atrapamos aqui
         mensajeDiv.style.color = "red";
         mensajeDiv.innerHTML = "❌ Error: No se pudo conectar con el servidor de la base de datos.";
-        console.error('Error de conexión en el fetch:', error);
+        console.error('Error de conexion en el fetch:', error);
     });
 });
