@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head> 
+        <meta charset="UTF-8">
+        <title>SIGAD Dashboard</title>
+    </head>
+
+    <body>
+        <h1>Welcome to SIGAD</h1>
+
+        <p id="userInfo"></p>
+        <p id="roleView"></p>
+
+        <button onclick="logout()">Logout</button>
+
+        <script>
+            const loggedUser = JSON.parse(localStorage.getItem("loggedUser"));
+
+            if(!loggedUser) {
+                window.location.href = "index.html";
+            } else {
+                document.getElementById("userInfo").textContent = "User: " + loggedUser.nombre + "| Email: " + loggedUser.email;
+
+                let roleContent = "";
+
+                /// Aquí es donde cada menú cambia dependiendo del rol
+                if(loggedUser.rol === "admin") {
+                    roleContent = "Admin Panel : Full system access";
+                } else if(loggedUser.rol === "instructor") {
+                    roleContent = "Instructor  Panel: Manage activities";
+                } else if(loggedUser.rol === "socio") {
+                    roleContent = "User Panel: View enroll in activities";
+                }
+
+                document.getElementById("roleView").textContent = roleContent;
+
+            }
+
+            function logout () {
+                localStorage.removeItem("loggedUser");
+                window.location.href = "index.html";
+            }
+        </script>
+        
+    </body>
+</html>
