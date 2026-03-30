@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+</head>
+<body>
+
+<h1>SIGAD Dashboard</h1>
+
+<p id="userInfo"></p>
+
+<div id="adminPanel" style="display:none;">
+    <h2>Admin Panel</h2>
+
+    <select id="userSelect"></select>
+
+    <p id="currentRole"></p>
+
+    <select id="newRole">
+        <option value="1">socio</option>
+        <option value="2">instructor</option>
+        <option value="3">admin</option>
+    </select>
+
+    <button onclick="updateRole()">Update Role</button>
+
+    <p id="statusMessage"></p>
+</div>
+
+<button onclick="logout()">Logout</button>
+
+<script>
+const loggedUser = JSON.parse(localStorage.getItem("loggedUser"));
+
+if (!loggedUser) {
+    window.location.href = "index.html";
+} else {
+    document.getElementById("userInfo").textContent =
+        "User: " + loggedUser.nombre + " (" + loggedUser.rol + ")";
+}
+
+if (loggedUser.rol === "admin") {
+    document.getElementById("adminPanel").style.display = "block";
+    loadUsers();
+}
+
+async function loadUsers() {
+    const res = await fetch("http://localhost:3000/api/usuarios");
+    const usuarios = await res.json();
+
+    const select = document.getElementById("userSelect");
+
+    usuarios.forEach(u => {
+        const option = document.createElement("option");
+        option.value = u.id;
+        option.textContent = u.nombre;
+        select.appendChild(option);
+    });
+
+    select.addEventListener("change", () => {
+        const user = usuarios.find(u => u.id == select.value);
+        document.getElementById("currentRole").textContent =
+            "Current role: " + user.rol;
+    });
+}
+
+async function updateRole() {
+    const usuario_id = document.getElementById("userSelect").value;
+    const rol_id = document.getElementById("newRole").value;
+
+    const res = await fetch("http://localhost:3000/api/actualizar-rol", {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ usuario_id, rol_id })
+    });
+
+    const data = await res.json();
+
+    document.getElementById("statusMessage").textContent =
+        data.mensaje || "Actualizado";
+}
+
+function logout() {
+    localStorage.removeItem("loggedUser");
+    window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
