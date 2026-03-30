@@ -1,31 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Dashboard</title>
 </head>
 <body>
 
-<h1>SIGAD Dashboard</h1>
+<h1>Dashboard</h1>
 
 <p id="userInfo"></p>
 
-<div id="adminPanel" style="display:none;">
-    <h2>Admin Panel</h2>
+<div id="eventPanel" style="display:none;">
+    <h2>Eventos</h2>
 
-    <select id="userSelect"></select>
+    <input type="text" id="eventName" placeholder="Nombre">
+    <input type="date" id="eventDate">
+    <input type="text" id="eventDesc" placeholder="Descripción">
 
-    <p id="currentRole"></p>
+    <button onclick="createEvent()">Guardar</button>
 
-    <select id="newRole">
-        <option value="1">socio</option>
-        <option value="2">instructor</option>
-        <option value="3">admin</option>
-    </select>
+    <ul id="eventList"></ul>
+</div>
 
-    <button onclick="updateRole()">Update Role</button>
-
-    <p id="statusMessage"></p>
+<div id="statsPanel" style="display:none;">
+    <h2>Estadísticas</h2>
+    <p id="totalEventos"></p>
+    <p id="totalUsuarios"></p>
 </div>
 
 <button onclick="logout()">Logout</button>
@@ -35,50 +34,97 @@ const loggedUser = JSON.parse(localStorage.getItem("loggedUser"));
 
 if (!loggedUser) {
     window.location.href = "index.html";
-} else {
-    document.getElementById("userInfo").textContent =
-        "User: " + loggedUser.nombre + " (" + loggedUser.rol + ")";
+}
+
+document.getElementById("userInfo").textContent =
+    loggedUser.nombre + " (" + loggedUser.rol + ")";
+
+if (loggedUser.rol === "admin" || loggedUser.rol === "instructor") {
+    document.getElementById("eventPanel").style.display = "block";
+    loadEvents();
 }
 
 if (loggedUser.rol === "admin") {
-    document.getElementById("adminPanel").style.display = "block";
-    loadUsers();
+    document.getElementById("statsPanel").style.display = "block";
+    loadStats();
 }
 
-async function loadUsers() {
-    const res = await fetch("http://localhost:3000/api/usuarios");
-    const usuarios = await res.json();
+async function createEvent() {
+    const nombre = document.getElementById("eventName").value;
+    const fecha_evento = document.getElementById("eventDate").value;
+    const descripcion = document.getElementById("eventDesc").value;
 
-    const select = document.getElementById("userSelect");
+    if (window.currentEventId) {
+        await fetch(`http://localhost:3000/api/eventos/${window.currentEventId}`, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ nombre, descripcion, fecha_evento })
+        });
 
-    usuarios.forEach(u => {
-        const option = document.createElement("option");
-        option.value = u.id;
-        option.textContent = u.nombre;
-        select.appendChild(option);
-    });
+        window.currentEventId = null;
 
-    select.addEventListener("change", () => {
-        const user = usuarios.find(u => u.id == select.value);
-        document.getElementById("currentRole").textContent =
-            "Current role: " + user.rol;
+    } else {
+        await fetch("http://localhost:3000/api/eventos", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                nombre,
+                descripcion,
+                fecha_evento,
+                creado_por: loggedUser.id
+            })
+        });
+    }
+
+    loadEvents();
+}
+
+async function loadEvents() {
+    const res = await fetch("http://localhost:3000/api/eventos");
+    const eventos = await res.json();
+
+    const list = document.getElementById("eventList");
+    list.innerHTML = "";
+
+    eventos.forEach(e => {
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+            <b>${e.nombre}</b> - ${e.fecha_evento} <br>
+            ${e.descripcion} <br>
+            <button onclick="editEvent(${e.id_evento}, '${e.nombre}', '${e.descripcion}', '${e.fecha_evento}')">Editar</button>
+            <button onclick="deleteEvent(${e.id_evento})">Eliminar</button>
+            <hr>
+        `;
+
+        list.appendChild(li);
     });
 }
 
-async function updateRole() {
-    const usuario_id = document.getElementById("userSelect").value;
-    const rol_id = document.getElementById("newRole").value;
+function editEvent(id, nombre, descripcion, fecha) {
+    document.getElementById("eventName").value = nombre;
+    document.getElementById("eventDesc").value = descripcion;
+    document.getElementById("eventDate").value = fecha;
+    window.currentEventId = id;
+}
 
-    const res = await fetch("http://localhost:3000/api/actualizar-rol", {
-        method: "PUT",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ usuario_id, rol_id })
+async function deleteEvent(id) {
+    await fetch(`http://localhost:3000/api/eventos/${id}`, {
+        method: "DELETE"
     });
 
+    loadEvents();
+}
+
+async function loadStats() {
+    const res = await fetch("http://localhost:3000/api/estadisticas");
     const data = await res.json();
 
-    document.getElementById("statusMessage").textContent =
-        data.mensaje || "Actualizado";
+    document.getElementById("totalEventos").textContent =
+        "Eventos: " + data.eventos;
+
+    document.getElementById("totalUsuarios").textContent =
+        "Usuarios: " + data.usuarios;
 }
 
 function logout() {
