@@ -1,23 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Login</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <title>SIGAD Login</title>
+
+    <!-- Fuentes -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
+<div class="particles"></div>
+<div class="container">
 
-<div class="loginContainer">
-    <h2>Login</h2>
+    <!-- PANEL MOTIVACIONAL -->
+ <div class="leftPanel">
+        <img src="images/logo.png" alt="Logo SIGAD" class="logo">
+        <h1>Tu santuario personal de alto rendimiento.</h1>
+        <p id="motivationalText" class="motivational"></p>
+    </div>
 
-    <form id="loginForm">
-        <input type="email" id="emailInput" placeholder="Email" required>
-        <input type="password" id="passwordInput" placeholder="Password" required>
-        <button type="submit">Login</button>
-    </form>
+    <!-- LOGIN -->
+    <div class="rightPanel">
+        <div class="loginContainer">
+            <h2>SIGAD</h2>
+            <p class="subtitle">Sistema de Gestión Deportiva</p>
 
-    <p id="message"></p>
+            <form id="loginForm">
+                <input type="email" id="emailInput" placeholder="Correo electrónico" required>
+                <input type="password" id="passwordInput" placeholder="Contraseña" required>
+
+                <button type="submit">Iniciar sesión</button>
+            </form>
+
+            <p id="message"></p>
+        </div>
+    </div>
+
 </div>
 
-<script src="script.js"></script>
+<script src="js/script.js"></script>
+
 </body>
 </html>

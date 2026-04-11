@@ -1,4 +1,4 @@
-require('dotenv').config(); 
+require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg'); 
@@ -155,3 +155,11 @@ app.get('/api/estadisticas', async (req, res) => {
 app.listen(puerto, () => {
     console.log(`http://localhost:${puerto}`);
 });
+
+console.log("PASS:", process.env.DB_PASSWORD);
+console.log("USER:", process.env.DB_USER);
+console.log("PASS:", process.env.DB_PASSWORD);
+console.log("DB:", process.env.DB_NAME);
+const path = require('path');
+
+app.use(express.static(path.join(__dirname, '../frontend')));
