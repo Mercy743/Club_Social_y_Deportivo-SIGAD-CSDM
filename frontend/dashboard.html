@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+
+<h1>Dashboard</h1>
+
+<p id="userInfo"></p>
+
+<div id="eventPanel" style="display:none;">
+    <h2>Eventos</h2>
+
+    <input type="text" id="eventName" placeholder="Nombre">
+    <input type="date" id="eventDate">
+    <input type="text" id="eventDesc" placeholder="Descripción">
+
+    <button onclick="createEvent()">Guardar</button>
+
+    <ul id="eventList"></ul>
+</div>
+
+<div id="statsPanel" style="display:none;">
+    <h2>Estadísticas</h2>
+    <p id="totalEventos"></p>
+    <p id="totalUsuarios"></p>
+</div>
+
+<button onclick="logout()">Logout</button>
+
+<script>
+const loggedUser = JSON.parse(localStorage.getItem("loggedUser"));
+
+if (!loggedUser) {
+    window.location.href = "index.html";
+}
+
+document.getElementById("userInfo").textContent =
+    loggedUser.nombre + " (" + loggedUser.rol + ")";
+
+if (loggedUser.rol === "admin" || loggedUser.rol === "instructor") {
+    document.getElementById("eventPanel").style.display = "block";
+    loadEvents();
+}
+
+if (loggedUser.rol === "admin") {
+    document.getElementById("statsPanel").style.display = "block";
+    loadStats();
+}
+
+async function createEvent() {
+    const nombre = document.getElementById("eventName").value;
+    const fecha_evento = document.getElementById("eventDate").value;
+    const descripcion = document.getElementById("eventDesc").value;
+
+    if (window.currentEventId) {
+        await fetch(`http://localhost:3000/api/eventos/${window.currentEventId}`, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ nombre, descripcion, fecha_evento })
+        });
+
+        window.currentEventId = null;
+
+    } else {
+        await fetch("http://localhost:3000/api/eventos", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                nombre,
+                descripcion,
+                fecha_evento,
+                creado_por: loggedUser.id
+            })
+        });
+    }
+
+    loadEvents();
+}
+
+async function loadEvents() {
+    const res = await fetch("http://localhost:3000/api/eventos");
+    const eventos = await res.json();
+
+    const list = document.getElementById("eventList");
+    list.innerHTML = "";
+
+    eventos.forEach(e => {
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+            <b>${e.nombre}</b> - ${e.fecha_evento} <br>
+            ${e.descripcion} <br>
+            <button onclick="editEvent(${e.id_evento}, '${e.nombre}', '${e.descripcion}', '${e.fecha_evento}')">Editar</button>
+            <button onclick="deleteEvent(${e.id_evento})">Eliminar</button>
+            <hr>
+        `;
+
+        list.appendChild(li);
+    });
+}
+
+function editEvent(id, nombre, descripcion, fecha) {
+    document.getElementById("eventName").value = nombre;
+    document.getElementById("eventDesc").value = descripcion;
+    document.getElementById("eventDate").value = fecha;
+    window.currentEventId = id;
+}
+
+async function deleteEvent(id) {
+    await fetch(`http://localhost:3000/api/eventos/${id}`, {
+        method: "DELETE"
+    });
+
+    loadEvents();
+}
+
+async function loadStats() {
+    const res = await fetch("http://localhost:3000/api/estadisticas");
+    const data = await res.json();
+
+    document.getElementById("totalEventos").textContent =
+        "Eventos: " + data.eventos;
+
+    document.getElementById("totalUsuarios").textContent =
+        "Usuarios: " + data.usuarios;
+}
+
+function logout() {
+    localStorage.removeItem("loggedUser");
+    window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
