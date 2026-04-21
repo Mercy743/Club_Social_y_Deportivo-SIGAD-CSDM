@@ -1,21 +1,29 @@
-require('dotenv').config(); 
+require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const cors = require('cors');
+<<<<<<< HEAD
 const { Pool } = require('pg'); 
+=======
+const { Pool } = require('pg');
+>>>>>>> 4a9b4fe95414b16c37e0318fc0c65c9d40b723b3
 const path = require('path');
 
 const app = express();
 const puerto = process.env.PORT || 3000;
 
-app.use(cors()); 
-app.use(express.json()); 
+app.use(cors());
+app.use(express.json());
 
+<<<<<<< HEAD
 app.use(express.static(path.join(__dirname, '../Frontend')));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../Frontend/index.html'));
 });
 
+=======
+/* ===== CONEXION BD ===== */
+>>>>>>> 4a9b4fe95414b16c37e0318fc0c65c9d40b723b3
 const pool = new Pool({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
@@ -28,6 +36,7 @@ pool.connect()
     .then(() => console.log('Conectado a PostgreSQL'))
     .catch(err => console.error('Error conexión BD', err.stack));
 
+/* ===== LOGIN ===== */
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -50,6 +59,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+/* ===== USUARIOS ===== */
 app.get('/api/usuarios', async (req, res) => {
     try {
         const resultado = await pool.query(`
@@ -69,8 +79,8 @@ app.put('/api/actualizar-rol', async (req, res) => {
     const { usuario_id, rol_id } = req.body;
 
     try {
-        const resultado = await pool.query(
-            'UPDATE usuarios SET rol_id = $1 WHERE id = $2 RETURNING *',
+        await pool.query(
+            'UPDATE usuarios SET rol_id = $1 WHERE id = $2',
             [rol_id, usuario_id]
         );
 
@@ -81,19 +91,21 @@ app.put('/api/actualizar-rol', async (req, res) => {
     }
 });
 
+/* ===== EVENTOS ===== */
 app.post('/api/eventos', async (req, res) => {
     const { nombre, descripcion, fecha_evento, creado_por } = req.body;
 
     try {
-        const resultado = await pool.query(
+        await pool.query(
             `INSERT INTO eventos(nombre, descripcion, fecha_evento, creado_por)
-             VALUES($1, $2, $3, $4) RETURNING *`,
+             VALUES($1, $2, $3, $4)`,
             [nombre, descripcion, fecha_evento, creado_por]
         );
 
         res.json({ mensaje: "Evento creado" });
 
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: "Error" });
     }
 });
@@ -144,6 +156,7 @@ app.delete('/api/eventos/:id', async (req, res) => {
     }
 });
 
+/* ===== ESTADISTICAS ===== */
 app.get('/api/estadisticas', async (req, res) => {
     try {
         const eventos = await pool.query('SELECT COUNT(*) FROM eventos');
@@ -159,10 +172,23 @@ app.get('/api/estadisticas', async (req, res) => {
     }
 });
 
+<<<<<<< HEAD
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../Frontend/index.html'));
 });
 
+=======
+/* ===== FRONTEND (SOLUCION DEFINITIVA) ===== */
+const frontendPath = path.join(__dirname, '../frontend');
+
+app.use(express.static(frontendPath));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+/* ===== SERVER ===== */
+>>>>>>> 4a9b4fe95414b16c37e0318fc0c65c9d40b723b3
 app.listen(puerto, () => {
-    console.log(`http://localhost:${puerto}`);
+    console.log(`Servidor corriendo en http://localhost:${puerto}`);
 });

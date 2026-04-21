@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "csdm-backend",
   "version": "1.0.0",
   "description": "Backend del proyecto Club Social y Deportivo",
@@ -15,5 +16,24 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
+=======
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "pg": "^8.20.0"
+>>>>>>> 4a9b4fe95414b16c37e0318fc0c65c9d40b723b3
   }
 }
