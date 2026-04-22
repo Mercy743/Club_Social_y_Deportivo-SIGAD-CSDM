@@ -3,69 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard - SIGAD</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
 </head>
-
 <body>
 
-<div class="particles"></div>
+<h1>SIGAD - Panel de Control</h1>
 
-<div class="dashboardPage">
+<p id="userInfo"></p>
 
-    <!-- HEADER -->
-    <header class="dashboardTopbar">
-        <div>
-            <h1>SIGAD</h1>
-            <p id="userInfo"></p>
-        </div>
+<hr>
 
-        <div class="topbarActions">
-            <a href="eventos.html" class="secondaryBtn">Ver reporte</a>
-            <button class="logoutBtn" onclick="logout()">Cerrar sesion</button>
-        </div>
-    </header>
+<div id="adminPanel" style="display:none;">
+    <h2>Buscar Socios</h2>
 
-    <main class="dashboardLayout">
+    <input type="text" id="searchInput" placeholder="Buscar por ID, INE o Correo">
+    <button id="searchBtn">Buscar</button>
+    <button id="resetBtn">Mostrar todos</button>
 
-        <!-- EVENTOS -->
-        <section id="eventPanel" class="dashboardCard" style="display:none;">
-            <h2>Gestion de Eventos</h2>
-
-            <div class="eventForm">
-                <input type="text" id="eventName" placeholder="Nombre del evento">
-                <input type="date" id="eventDate">
-                <input type="text" id="eventDesc" placeholder="Descripcion">
-                <button onclick="createEvent()">Guardar evento</button>
-            </div>
-
-            <div id="eventList" class="eventListGrid"></div>
-        </section>
-
-        <!-- USUARIOS (ADMIN) -->
-        <section id="userPanel" class="dashboardCard" style="display:none;">
-            <h2>Usuarios</h2>
-            <div id="userList"></div>
-        </section>
-
-        <!-- ESTADISTICAS -->
-        <aside id="statsPanel" class="dashboardCard statsCard" style="display:none;">
-            <h2>Estadisticas</h2>
-
-            <div class="statBox">
-                <span>Total de eventos</span>
-                <strong id="totalEventos">0</strong>
-            </div>
-
-            <div class="statBox">
-                <span>Total de usuarios</span>
-                <strong id="totalUsuarios">0</strong>
-            </div>
-        </aside>
-
-    </main>
+    <hr>
+    <h2>Lista de Usuarios</h2>
 </div>
+
+<div id="userList">Cargando...</div>
+
+<hr>
+
+<div id="statsPanel" style="display:none;">
+    <h2>Estadisticas del Sistema</h2>
+    <div id="stats">Cargando estadisticas...</div>
+</div>
+
+<hr>
+
+<!-- ================= EDITAR USUARIO ================= -->
+
+<div id="editPanel" style="display:none; border:1px solid black; padding:15px;">
+    <h2>Editar Usuario</h2>
+
+    <input type="hidden" id="editId">
+
+    <label>Nombre:</label><br>
+    <input type="text" id="editNombre"><br><br>
+
+    <label>Apellido:</label><br>
+    <input type="text" id="editApellido"><br><br>
+
+    <label>Email:</label><br>
+    <input type="text" id="editEmail"><br><br>
+
+    <label>Telefono:</label><br>
+    <input type="text" id="editTelefono"><br><br>
+
+    <button id="guardarBtn">Guardar</button>
+    <button onclick="document.getElementById('editPanel').style.display='none'">Cancelar</button>
+</div>
+
+<!-- ================= ELIMINAR ================= -->
+
+<div id="deletePanel" style="display:none; border:1px solid red; padding:15px;">
+    <h3>Confirmar eliminación</h3>
+
+    <p>Ingresa tu contraseña:</p>
+    <input type="password" id="deletePassword"><br><br>
+
+    <button id="confirmDeleteBtn">Eliminar</button>
+    <button onclick="document.getElementById('deletePanel').style.display='none'">Cancelar</button>
+</div>
+
+<!-- ================= 💰 PAGO (NUEVO PANEL) ================= -->
+
+<div id="pagoPanel" style="display:none; border:1px solid green; padding:15px;">
+    <h2>Registrar Pago</h2>
+
+    <input type="hidden" id="pagoUsuario">
+
+    <label>Monto:</label><br>
+    <input type="number" id="pagoMonto"><br><br>
+
+    <label>Fecha:</label><br>
+    <input type="date" id="pagoFecha"><br><br>
+
+    <label>Método de pago:</label><br>
+    <select id="pagoMetodo">
+        <option value="efectivo">Efectivo</option>
+        <option value="tarjeta">Tarjeta</option>
+        <option value="transferencia">Transferencia</option>
+    </select><br><br>
+
+    <label>Estado:</label><br>
+    <select id="pagoEstado">
+        <option value="pagado">Pagado</option>
+        <option value="pendiente">Pendiente</option>
+    </select><br><br>
+
+    <button id="registrarPagoBtn">Registrar Pago</button>
+    <button onclick="document.getElementById('pagoPanel').style.display='none'">Cancelar</button>
+</div>
+
+<hr>
+
+<button id="logoutBtn">Cerrar sesion</button>
 
 <script src="js/dashboard.js"></script>
 

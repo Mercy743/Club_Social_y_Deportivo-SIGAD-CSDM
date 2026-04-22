@@ -1,119 +1,238 @@
-const loggedUser = JSON.parse(localStorage.getItem("loggedUser"));
+const API_URL = 'http://localhost:3000/api';
+const loggedUser = JSON.parse(localStorage.getItem('loggedUser'));
 
-if (!loggedUser) window.location.href = "index.html";
-
-document.getElementById("userInfo").textContent =
-`${loggedUser.nombre} (${loggedUser.rol})`;
-
-if (loggedUser.rol === "admin" || loggedUser.rol === "instructor") {
-document.getElementById("eventPanel").style.display = "block";
-loadEvents();
+if (!loggedUser) {
+    window.location.href = 'index.html';
 }
 
-if (loggedUser.rol === "admin") {
-document.getElementById("statsPanel").style.display = "block";
-document.getElementById("userPanel").style.display = "block";
+document.getElementById('userInfo').innerHTML = loggedUser.nombre + ' (' + loggedUser.rol + ')';
 
-loadStats();
-loadUsers();
+// ====================== ADMIN ======================
+
+if (loggedUser.rol === 'admin') {
+    cargarTodosLosUsuarios();
+    cargarEstadisticas();
+
+    document.getElementById('adminPanel').style.display = 'block';
+    document.getElementById('statsPanel').style.display = 'block';
+
+    document.getElementById('searchBtn').addEventListener('click', buscarSocios);
+    document.getElementById('resetBtn').addEventListener('click', function () {
+        document.getElementById('searchInput').value = '';
+        cargarTodosLosUsuarios();
+    });
+
+    document.getElementById('searchInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') buscarSocios();
+    });
 }
 
-/* EVENTOS */
+// ====================== INSTRUCTOR ======================
 
-async function createEvent() {
-const nombre = eventName.value;
-const fecha_evento = eventDate.value;
-const descripcion = eventDesc.value;
+else if (loggedUser.rol === 'instructor') {
+    cargarTodosLosUsuarios();
+    document.getElementById('stats').innerHTML = 'No tienes acceso a las estadisticas.';
+    document.getElementById('statsPanel').style.display = 'none';
+}
 
-await fetch("/api/eventos", {
-method: "POST",
-headers: {"Content-Type": "application/json"},
-body: JSON.stringify({
-nombre,
-descripcion,
-fecha_evento,
-creado_por: loggedUser.id
-})
+// ====================== SOCIO ======================
+
+else {
+    document.getElementById('userList').innerHTML = 'No tienes permisos para ver usuarios.';
+    document.getElementById('stats').innerHTML = 'No tienes permisos para ver estadisticas.';
+}
+
+document.getElementById('logoutBtn').addEventListener('click', logout);
+
+// ====================== USUARIOS ======================
+
+async function cargarTodosLosUsuarios() {
+    try {
+        const res = await fetch(API_URL + '/usuarios/except/' + loggedUser.id);
+        const usuarios = await res.json();
+
+        let html = '<table border="1" cellpadding="8">';
+        html += '<tr>';
+        html += '<th>ID</th><th>Nombre</th><th>Apellido</th><th>INE</th><th>Email</th><th>Telefono</th><th>Rol</th>';
+
+        if (loggedUser.rol === 'admin') {
+            html += '<th>Acciones</th>';
+        }
+
+        html += '</tr>';
+
+        usuarios.forEach(u => {
+            html += '<tr>';
+            html += '<td>' + u.id + '</td>';
+            html += '<td>' + (u.nombre || '-') + '</td>';
+            html += '<td>' + (u.apellido || '-') + '</td>';
+            html += '<td>' + (u.ine || '-') + '</td>';
+            html += '<td>' + (u.email || '-') + '</td>';
+            html += '<td>' + (u.telefono || '-') + '</td>';
+            html += '<td>' + u.rol + '</td>';
+
+            if (loggedUser.rol === 'admin') {
+                html += '<td>';
+                html += '<button onclick="editarUsuario(' + u.id + ')">Editar</button> ';
+                html += '<button onclick="eliminarUsuario(' + u.id + ')">Eliminar</button> ';
+                html += '<button onclick="abrirPago(' + u.id + ')">Pago</button>';
+                html += '</td>';
+            }
+
+            html += '</tr>';
+        });
+
+        html += '</table>';
+        document.getElementById('userList').innerHTML = html;
+
+    } catch (error) {
+        console.error(error);
+        document.getElementById('userList').innerHTML = 'Error al cargar usuarios';
+    }
+}
+
+
+function abrirPago(id) {
+    document.getElementById('pagoPanel').style.display = 'block';
+    document.getElementById('pagoUsuario').value = id;
+}
+
+
+document.getElementById('registrarPagoBtn').addEventListener('click', async function () {
+
+    const pago = {
+        usuario_id: document.getElementById('pagoUsuario').value,
+        monto: document.getElementById('pagoMonto').value,
+        fecha: document.getElementById('pagoFecha').value,
+        metodo_pago: document.getElementById('pagoMetodo').value,
+        estado: document.getElementById('pagoEstado').value
+    };
+
+    if (!pago.usuario_id || !pago.monto || !pago.fecha) {
+        alert('Completa todos los campos');
+        return;
+    }
+
+    try {
+        const res = await fetch(API_URL + '/pagos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(pago)
+        });
+
+        if (res.ok) {
+            alert('Pago registrado correctamente');
+            document.getElementById('pagoPanel').style.display = 'none';
+            document.getElementById('pagoMonto').value = '';
+            document.getElementById('pagoFecha').value = '';
+        } else {
+            const data = await res.json();
+            alert(data.error || 'Error al registrar pago');
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert('Error de conexión');
+    }
 });
 
-loadEvents();
-loadStats();
+async function buscarSocios() {
+    const termino = document.getElementById('searchInput').value.trim();
+    if (!termino) return cargarTodosLosUsuarios();
+
+    const res = await fetch(API_URL + '/socios/buscar?q=' + encodeURIComponent(termino));
+    const socios = await res.json();
+
+    let html = '<table border="1" cellpadding="8"><tr><th>ID</th><th>Nombre</th><th>Apellido</th><th>INE</th><th>Email</th><th>Telefono</th></tr>';
+
+    socios.forEach(s => {
+        html += '<tr>';
+        html += '<td>' + s.id + '</td>';
+        html += '<td>' + s.nombre + '</td>';
+        html += '<td>' + s.apellido + '</td>';
+        html += '<td>' + s.ine + '</td>';
+        html += '<td>' + s.email + '</td>';
+        html += '<td>' + s.telefono + '</td>';
+        html += '</tr>';
+    });
+
+    html += '</table>';
+    document.getElementById('userList').innerHTML = html;
 }
 
-async function loadEvents() {
-const res = await fetch("/api/eventos");
-const eventos = await res.json();
+async function cargarEstadisticas() {
+    const res = await fetch(API_URL + '/estadisticas');
+    const datos = await res.json();
 
-eventList.innerHTML = "";
+    document.getElementById('stats').innerHTML =
+        '<ul>' +
+        '<li>Eventos: ' + datos.eventos + '</li>' +
+        '<li>Usuarios: ' + datos.usuarios + '</li>' +
+        '<li>Socios: ' + datos.socios + '</li>' +
+        '<li>Instructores: ' + datos.instructores + '</li>' +
+        '</ul>';
+}
 
-eventos.forEach(e => {
-const div = document.createElement("div");
+async function editarUsuario(id) {
+    const res = await fetch(API_URL + '/usuarios/' + id);
+    const u = await res.json();
 
-div.innerHTML = `
-<h3>${e.nombre}</h3>
-<p>${e.descripcion}</p>
-<button onclick="deleteEvent(${e.id_evento})">Eliminar</button>
-`;
+    document.getElementById('editId').value = u.id;
+    document.getElementById('editNombre').value = u.nombre || '';
+    document.getElementById('editApellido').value = u.apellido || '';
+    document.getElementById('editEmail').value = u.email || '';
+    document.getElementById('editTelefono').value = u.telefono || '';
 
-eventList.appendChild(div);
+    document.getElementById('editPanel').style.display = 'block';
+}
+
+async function guardarCambios() {
+    const id = document.getElementById('editId').value;
+
+    const data = {
+        nombre: document.getElementById('editNombre').value,
+        apellido: document.getElementById('editApellido').value,
+        email: document.getElementById('editEmail').value,
+        telefono: document.getElementById('editTelefono').value
+    };
+
+    await fetch(API_URL + '/usuarios/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+
+    document.getElementById('editPanel').style.display = 'none';
+    cargarTodosLosUsuarios();
+}
+
+let usuarioAEliminar = null;
+
+function eliminarUsuario(id) {
+    usuarioAEliminar = id;
+    document.getElementById('deletePanel').style.display = 'block';
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', async function () {
+
+    const password = document.getElementById('deletePassword').value;
+
+    await fetch(API_URL + '/usuarios/' + usuarioAEliminar + '/seguro', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            admin_id: loggedUser.id,
+            password
+        })
+    });
+
+    document.getElementById('deletePanel').style.display = 'none';
+    cargarTodosLosUsuarios();
 });
-}
-
-async function deleteEvent(id) {
-await fetch(`/api/eventos/${id}`, { method: "DELETE" });
-loadEvents();
-loadStats();
-}
-
-/* STATS */
-
-async function loadStats() {
-const res = await fetch("/api/estadisticas");
-const data = await res.json();
-
-totalEventos.textContent = data.eventos;
-totalUsuarios.textContent = data.usuarios;
-}
-
-/* USUARIOS */
-
-async function loadUsers() {
-const res = await fetch("/api/usuarios");
-const usuarios = await res.json();
-
-userList.innerHTML = "";
-
-usuarios.forEach(u => {
-const div = document.createElement("div");
-
-div.innerHTML = `
-<h3>${u.nombre}</h3>
-<p>${u.rol}</p>
-
-<select onchange="changeRole(${u.id}, this.value)">
-<option value="1" ${u.rol_id==1?"selected":""}>Admin</option>
-<option value="2" ${u.rol_id==2?"selected":""}>Instructor</option>
-<option value="3" ${u.rol_id==3?"selected":""}>Socio</option>
-</select>
-`;
-
-userList.appendChild(div);
-});
-}
-
-async function changeRole(usuario_id, rol_id) {
-await fetch("/api/actualizar-rol", {
-method: "PUT",
-headers: {"Content-Type": "application/json"},
-body: JSON.stringify({ usuario_id, rol_id })
-});
-
-loadUsers();
-}
-
-/* LOGOUT */
 
 function logout() {
-localStorage.removeItem("loggedUser");
-window.location.href = "index.html";
+    localStorage.removeItem('loggedUser');
+    window.location.href = 'index.html';
 }
+
+document.getElementById('guardarBtn').addEventListener('click', guardarCambios);
