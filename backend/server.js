@@ -139,6 +139,7 @@ app.delete('/api/usuarios/:id', async (req, res) => {
     }
 });
 
+
 /* ===== SOCIOS ===== */
 app.get('/api/socios', async (req, res) => {
     try {
@@ -158,35 +159,44 @@ app.get('/api/socios', async (req, res) => {
 });
 
 app.post('/api/socios', async (req, res) => {
-    const { nombre, email, password, telefono, tipo_accion } = req.body;
+    const { nombre, apellido, email, password, telefono, tipo_accion, ine, direccion } = req.body;
 
     try {
-        const existe = await pool.query('SELECT id FROM usuarios WHERE email = $1', [email]);
+        // Validar email duplicado
+        const existe = await pool.query(
+            'SELECT id FROM usuarios WHERE email = $1',
+            [email]
+        );
         if (existe.rows.length > 0) {
             return res.status(400).json({ error: "Email ya registrado" });
         }
 
-        const rolSocio = await pool.query("SELECT id FROM roles WHERE nombre = 'socio'");
-        
+        // Obtener rol socio
+        const rolSocio = await pool.query(
+            "SELECT id FROM roles WHERE nombre = 'socio'"
+        );
+
+        // 🔹 Insertar usuario
         const nuevoUsuario = await pool.query(`
-            INSERT INTO usuarios(nombre, email, password, rol_id, telefono, activo)
-            VALUES($1, $2, $3, $4, $5, true)
+            INSERT INTO usuarios(nombre, apellido, email, password, rol_id, telefono, activo)
+            VALUES($1, $2, $3, $4, $5, $6, true)
             RETURNING id
-        `, [nombre, email, password, rolSocio.rows[0].id, telefono]);
-        
+        `, [nombre, apellido, email, password, rolSocio.rows[0].id, telefono]);
+
+        // 🔹 Insertar socio
         await pool.query(`
-            INSERT INTO socios(usuario_id, tipo_accion)
-            VALUES($1, $2)
-        `, [nuevoUsuario.rows[0].id, tipo_accion]);
-        
-        res.json({ 
-            id: nuevoUsuario.rows[0].id, 
-            mensaje: "Socio creado exitosamente" 
+            INSERT INTO socios(usuario_id, tipo_accion, ine, direccion)
+            VALUES($1, $2, $3, $4)
+        `, [nuevoUsuario.rows[0].id, tipo_accion || 'individual', ine, direccion]);
+
+        res.json({
+            id: nuevoUsuario.rows[0].id,
+            mensaje: "Socio creado exitosamente"
         });
-        
+
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al crear socio" });
+        console.error("ERROR:", error.message);
+        res.status(500).json({ error: error.message });
     }
 });
 
