@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard - SIGAD</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
 
 <div class="particles"></div>
 
 <div class="dashboardPage">
+
     <header class="dashboardTopbar">
         <div>
             <h1>SIGAD</h1>
@@ -19,11 +22,13 @@
 
         <div class="topbarActions">
             <a href="eventos.html" class="secondaryBtn">Ver reporte</a>
-            <button class="logoutBtn" onclick="logout()">Cerrar sesión</button>
+            <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
         </div>
     </header>
 
     <main class="dashboardLayout">
+
+        <!-- EVENTOS -->
         <section id="eventPanel" class="dashboardCard" style="display:none;">
             <h2>Gestión de Eventos</h2>
 
@@ -37,20 +42,103 @@
             <div id="eventList" class="eventListGrid"></div>
         </section>
 
+        <!-- USUARIOS -->
+        <section id="userPanel" class="dashboardCard" style="display:none;">
+            <h2>Gestión de Usuarios</h2>
+
+            <div class="userSearch">
+                <input type="text" id="searchInput" placeholder="Buscar por ID, INE o Correo">
+                <button id="searchBtn" class="secondaryBtn">Buscar</button>
+                <button id="resetBtn" class="secondaryBtn">Mostrar todos</button>
+            </div>
+
+            <div id="userList"></div>
+        </section>
+
+        <!-- ESTADÍSTICAS -->
         <aside id="statsPanel" class="dashboardCard statsCard" style="display:none;">
             <h2>Estadísticas</h2>
+
             <div class="statBox">
                 <span>Total de eventos</span>
-                <strong id="totalEventos">Eventos: 0</strong>
+                <strong id="totalEventos">0</strong>
             </div>
+
             <div class="statBox">
                 <span>Total de usuarios</span>
-                <strong id="totalUsuarios">Usuarios: 0</strong>
+                <strong id="totalUsuarios">0</strong>
             </div>
+
+            <!-- opcional, por si luego quieres usar el bloque completo -->
+            <div id="stats" style="display:none;"></div>
         </aside>
+
     </main>
 </div>
 
+<!-- MODAL EDITAR -->
+<div id="editPanel" class="modal" style="display:none;">
+    <div class="modalContent">
+        <h2>Editar Usuario</h2>
+
+        <input type="hidden" id="editId">
+
+        <input type="text" id="editNombre" placeholder="Nombre">
+        <input type="text" id="editApellido" placeholder="Apellido">
+        <input type="text" id="editEmail" placeholder="Email">
+        <input type="text" id="editTelefono" placeholder="Teléfono">
+
+        <div class="modalActions">
+            <button id="guardarBtn">Guardar</button>
+            <button class="secondaryBtn" onclick="document.getElementById('editPanel').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ELIMINAR -->
+<div id="deletePanel" class="modal" style="display:none;">
+    <div class="modalContent">
+        <h3>Confirmar eliminación</h3>
+
+        <p>Ingresa tu contraseña para continuar</p>
+        <input type="password" id="deletePassword" placeholder="Contraseña">
+
+        <div class="modalActions">
+            <button id="confirmDeleteBtn" class="dangerBtn">Eliminar</button>
+            <button class="secondaryBtn" onclick="document.getElementById('deletePanel').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PAGOS -->
+<div id="pagoPanel" class="modal" style="display:none;">
+    <div class="modalContent">
+        <h2>Registrar Pago</h2>
+
+        <input type="hidden" id="pagoUsuario">
+
+        <input type="number" id="pagoMonto" placeholder="Monto">
+        <input type="date" id="pagoFecha">
+
+        <select id="pagoMetodo">
+            <option value="efectivo">Efectivo</option>
+            <option value="tarjeta">Tarjeta</option>
+            <option value="transferencia">Transferencia</option>
+        </select>
+
+        <select id="pagoEstado">
+            <option value="pagado">Pagado</option>
+            <option value="pendiente">Pendiente</option>
+        </select>
+
+        <div class="modalActions">
+            <button id="registrarPagoBtn">Registrar Pago</button>
+            <button class="secondaryBtn" onclick="document.getElementById('pagoPanel').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+</div>
+
 <script src="js/dashboard.js"></script>
+
 </body>
 </html>
