@@ -805,4 +805,4 @@ app.post('/api/pagos', async (req, res) => {
         console.error(error);
         res.status(500).json({ error: "Error al registrar pago" });
     }
-});
+}); 
