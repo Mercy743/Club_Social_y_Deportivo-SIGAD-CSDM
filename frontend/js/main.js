@@ -1,12 +1,11 @@
 const user = JSON.parse(localStorage.getItem("loggedUser"));
 
-if (!user) {
-  window.location.href = "index.html";
+// Solo mostrar info si está logueado
+if (user) {
+  console.log("Usuario logueado:", user);
 }
 
-document.getElementById("userInfo").textContent =
-  `Hola, ${user.nombre} (${user.rol})`;
-
+// navegación
 function ir(ruta) {
   window.location.href = ruta;
 }
@@ -16,6 +15,6 @@ function logout() {
   window.location.href = "index.html";
 }
 
-function verUsuarios() {
-  alert("Aquí puedes conectar con /api/usuarios");
+function irLogin() {
+  window.location.href = "dashboard.html"; // tu login
 }

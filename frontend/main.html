@@ -2,21 +2,25 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Landing Pro</title>
+<title>SIGAD - Club</title>
 <link rel="stylesheet" href="stylee.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <!-- NAVBAR -->
 <header class="nav">
-  <h2>MI SITIO</h2>
-  <div class="menu">MENU ☰</div>
+  <h2>SIGAD</h2>
+
+  <div id="userInfo"></div>
+
+  <div class="menu" onclick="irLogin()">Iniciar sesión</div>
 </header>
 
 <!-- HERO -->
 <section class="hero">
-  <h1>Mi Proyecto</h1>
-  <p>Sobre el sitio</p>
+  <h1>Club Deportivo SIGAD</h1>
+  <p>Bienvenido a nuestro sistema de gestión</p>
   <div class="scroll">↓</div>
 </section>
 
@@ -24,27 +28,55 @@
 <section class="about">
   <h2>NUESTRO CLUB</h2>
   <p>
-    Aquí va tu texto largo como en la página original...
+    Somos un club deportivo enfocado en brindar actividades,
+    eventos y espacios de calidad para nuestros socios.
   </p>
 </section>
 
-<!-- BLOQUE 1 -->
+<!-- DEPORTES -->
+
 <section class="split">
-  <div class="img"></div>
+  <div class="img futbol"></div>
   <div class="text">
-    <h2>SALÓN DE EVENTOS</h2>
-    <p>Texto descriptivo...</p>
-    <button>Informes</button>
+    <h2>Fútbol</h2>
+    <p>Entrenamientos y partidos para todas las edades.</p>
+    <button onclick="irLogin()">Inscribirse</button>
   </div>
 </section>
 
-<!-- BLOQUE 2 (invertido) -->
 <section class="split reverse">
-  <div class="img"></div>
+  <div class="img basquet"></div>
   <div class="text">
-    <h2>RESTAURANTE</h2>
-    <p>Texto descriptivo...</p>
-    <button>Ver menú</button>
+    <h2>Basquetbol</h2>
+    <p>Clases técnicas y torneos internos.</p>
+    <button onclick="irLogin()">Inscribirse</button>
+  </div>
+</section>
+
+<section class="split">
+  <div class="img natacion"></div>
+  <div class="text">
+    <h2>Natación</h2>
+    <p>Clases en alberca con instructores certificados.</p>
+    <button onclick="irLogin()">Inscribirse</button>
+  </div>
+</section>
+
+<section class="split reverse">
+  <div class="img gym"></div>
+  <div class="text">
+    <h2>Gimnasio</h2>
+    <p>Área equipada para entrenamiento físico completo.</p>
+    <button onclick="irLogin()">Inscribirse</button>
+  </div>
+</section>
+
+<section class="split">
+  <div class="img voleibol"></div>
+  <div class="text">
+    <h2>Voleibol</h2>
+    <p>Entrenamientos y competencias recreativas.</p>
+    <button onclick="irLogin()">Inscribirse</button>
   </div>
 </section>
 
@@ -58,10 +90,24 @@
   </div>
 </section>
 
-<!-- FOOTER -->
-<footer>
-  <p>Contacto y redes</p>
+<footer class="footer">
+  <div class="footer-content">
+
+    <p>© 2026 SIGAD - Club Deportivo. Todos los derechos reservados.</p>
+
+    <p>
+      📞 Tel: 443 123 4567 | 
+      ✉️ Email: contacto@sigad.com
+    </p>
+
+    <p>
+      Dirección: Morelia, Michoacán, México
+    </p>
+
+  </div>
 </footer>
+<!-- JS -->
+<script src="js/main.js"></script>
 
 </body>
 </html>

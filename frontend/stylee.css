@@ -112,3 +112,28 @@ footer {
   padding: 40px;
   text-align: center;
 }
+/* TEXTO GENERAL */
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* TÍTULOS */
+h1, h2, h3 {
+  font-family: 'Oswald', sans-serif;
+}
+.menu {
+  cursor: pointer;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 8px 15px;
+  border-radius: 8px;
+  transition: 0.3s;
+}
+
+/* EFECTO AL PASAR EL MOUSE */
+.menu:hover {
+  background: linear-gradient(45deg, #00c6ff, #0072ff);
+  color: white;
+  box-shadow: 0 0 10px rgba(0, 198, 255, 0.7);
+  transform: scale(1.05);
+}
