@@ -9,6 +9,7 @@ const puerto = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '../Frontend')));
 
 /* ===== CONEXION BD ===== */
 const pool = new Pool({

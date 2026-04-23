@@ -2,143 +2,182 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - SIGAD</title>
-
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
 </head>
+<body class="dashboardPage">
+<!-- FONDO PIZARRÓN ESTRATEGA -->
+<svg class="bg-playbook" viewBox="0 0 700 560" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="rgba(14,104,115,0.5)"/>
+        </marker>
+        <marker id="arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="rgba(254,126,60,0.45)"/>
+        </marker>
+        <marker id="arr3" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="rgba(255,255,255,0.2)"/>
+        </marker>
+        <radialGradient id="vignette" cx="50%" cy="50%" r="60%">
+            <stop offset="30%" stop-color="#0d1618" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#0d1618" stop-opacity="0.7"/>
+        </radialGradient>
+    </defs>
 
-<body>
+    <!-- CANCHA -->
+    <rect x="60" y="40" width="580" height="490" rx="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.2"/>
+    <line x1="60" y1="285" x2="640" y2="285" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <circle cx="350" cy="285" r="55" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <circle cx="350" cy="285" r="3" fill="rgba(255,255,255,0.08)"/>
 
-<div class="particles"></div>
+    <!-- áreas -->
+    <rect x="210" y="40" width="280" height="90" rx="2" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <rect x="280" y="40" width="140" height="45" rx="2" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <rect x="210" y="440" width="280" height="90" rx="2" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <rect x="280" y="475" width="140" height="55" rx="2" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
 
-<div class="dashboardPage">
+    <!-- arcos -->
+    <rect x="300" y="34" width="100" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <rect x="300" y="522" width="100" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
 
-    <header class="dashboardTopbar">
-        <div>
-            <h1>SIGAD</h1>
-            <p id="userInfo"></p>
+    <!-- semicírculos área -->
+    <path d="M210,130 Q350,180 490,130" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <path d="M210,440 Q350,390 490,440" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+
+    <!-- JUGADORES equipo A (teal) -->
+    <circle cx="350" cy="500" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="180" cy="430" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="520" cy="430" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="260" cy="370" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="440" cy="370" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="350" cy="340" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+
+    <!-- JUGADORES equipo B (naranja) -->
+    <circle cx="350" cy="80" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+    <circle cx="200" cy="150" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+    <circle cx="500" cy="150" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+    <circle cx="280" cy="220" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+    <circle cx="420" cy="220" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+
+    <!-- FLECHAS equipo A -->
+    <path d="M350,492 Q300,440 260,378" fill="none" stroke="rgba(14,104,115,0.5)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <path d="M260,362 Q300,310 350,334" fill="none" stroke="rgba(14,104,115,0.5)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <path d="M520,422 Q480,380 448,374" fill="none" stroke="rgba(14,104,115,0.5)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <path d="M180,422 Q200,380 252,374" fill="none" stroke="rgba(14,104,115,0.45)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <path d="M350,332 Q350,290 350,277" fill="none" stroke="rgba(14,104,115,0.4)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+
+    <!-- FLECHAS equipo B -->
+    <path d="M280,212 Q260,170 208,158" fill="none" stroke="rgba(254,126,60,0.45)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr2)"/>
+    <path d="M420,212 Q440,170 492,158" fill="none" stroke="rgba(254,126,60,0.45)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr2)"/>
+    <path d="M200,142 Q260,110 342,86" fill="none" stroke="rgba(254,126,60,0.4)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr2)"/>
+    <path d="M500,142 Q440,110 358,86" fill="none" stroke="rgba(254,126,60,0.4)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr2)"/>
+
+    <!-- BALÓN y trayectoria -->
+    <circle cx="350" cy="285" r="6" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+    <path d="M350,279 Q390,240 440,220" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="3,5" marker-end="url(#arr3)"/>
+
+    <!-- viñeta -->
+    <rect width="700" height="560" fill="url(#vignette)"/>
+</svg>
+
+    <!-- LUCES DE FONDO (igual que el login) -->
+    <div class="particles"></div>
+
+    <div class="dashboardWrapper">
+
+        <!-- TOPBAR -->
+        <div class="dashboardTopbar">
+            <div class="topbarBrand">
+                <span class="topbarGreeting">Bienvenido de vuelta</span>
+                <h1>SIGAD <span class="topbarRole" id="userInfo"></span></h1>
+            </div>
+            <div class="topbarActions">
+                <span class="topbarDate" id="topDate"></span>
+                <div class="topbarAvatar" id="userAvatar">AD</div>
+                <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
+            </div>
         </div>
 
-        <div class="topbarActions">
-            <a href="eventos.html" class="secondaryBtn">Ver reporte</a>
-            <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
+    <!-- STATS RÁPIDAS -->
+    <p class="section-label">Información rápida</p>
+    <div class="quickStats">
+             <div class="statPill">
+            <strong id="sinPagos">0</strong>
+            <span>Sin pago reciente</span>
         </div>
-    </header>
-
-    <main class="dashboardLayout">
-
-        <!-- EVENTOS -->
-        <section id="eventPanel" class="dashboardCard" style="display:none;">
-            <h2>Gestión de Eventos</h2>
-
-            <div class="eventForm">
-                <input type="text" id="eventName" placeholder="Nombre del evento">
-                <input type="date" id="eventDate">
-                <input type="text" id="eventDesc" placeholder="Descripción">
-                <button onclick="createEvent()">Guardar evento</button>
-            </div>
-
-            <div id="eventList" class="eventListGrid"></div>
-        </section>
-
-        <!-- USUARIOS -->
-        <section id="userPanel" class="dashboardCard" style="display:none;">
-            <h2>Gestión de Usuarios</h2>
-
-            <div class="userSearch">
-                <input type="text" id="searchInput" placeholder="Buscar por ID, INE o Correo">
-                <button id="searchBtn" class="secondaryBtn">Buscar</button>
-                <button id="resetBtn" class="secondaryBtn">Mostrar todos</button>
-            </div>
-
-            <div id="userList"></div>
-        </section>
-
-        <!-- ESTADÍSTICAS -->
-        <aside id="statsPanel" class="dashboardCard statsCard" style="display:none;">
-            <h2>Estadísticas</h2>
-
-            <div class="statBox">
-                <span>Total de eventos</span>
-                <strong id="totalEventos">0</strong>
-            </div>
-
-            <div class="statBox">
-                <span>Total de usuarios</span>
-                <strong id="totalUsuarios">0</strong>
-            </div>
-
-            <!-- opcional, por si luego quieres usar el bloque completo -->
-            <div id="stats" style="display:none;"></div>
-        </aside>
-
-    </main>
-</div>
-
-<!-- MODAL EDITAR -->
-<div id="editPanel" class="modal" style="display:none;">
-    <div class="modalContent">
-        <h2>Editar Usuario</h2>
-
-        <input type="hidden" id="editId">
-
-        <input type="text" id="editNombre" placeholder="Nombre">
-        <input type="text" id="editApellido" placeholder="Apellido">
-        <input type="text" id="editEmail" placeholder="Email">
-        <input type="text" id="editTelefono" placeholder="Teléfono">
-
-        <div class="modalActions">
-            <button id="guardarBtn">Guardar</button>
-            <button class="secondaryBtn" onclick="document.getElementById('editPanel').style.display='none'">Cancelar</button>
+        <div class="statPill">
+            <strong id="inactivos">0</strong>
+            <span>Usuarios inactivos</span> 
         </div>
+    <div id="dashboardStats"></div>
     </div>
-</div>
 
-<!-- MODAL ELIMINAR -->
-<div id="deletePanel" class="modal" style="display:none;">
-    <div class="modalContent">
-        <h3>Confirmar eliminación</h3>
+    <div id="stats"></div>
 
-        <p>Ingresa tu contraseña para continuar</p>
-        <input type="password" id="deletePassword" placeholder="Contraseña">
+        <!-- TILES DE MÓDULOS -->
+        <p class="section-label">¿Qué quieres hacer hoy?</p>
+        <div class="tilesGrid">
 
-        <div class="modalActions">
-            <button id="confirmDeleteBtn" class="dangerBtn">Eliminar</button>
-            <button class="secondaryBtn" onclick="document.getElementById('deletePanel').style.display='none'">Cancelar</button>
+            <div class="tile tile--teal" onclick="window.location.href='usuarios.html'">
+                <div class="tileGlow"></div>
+                <span class="tileIcon">👤</span>
+                <div class="tileTitle">Usuarios</div>
+                <div class="tileDesc">Gestión de socios, roles y accesos</div>
+                <span class="tileArrow">→</span>
+            </div>
+
+            <div class="tile tile--orange" onclick="window.location.href='eventos.html'">
+                <div class="tileGlow"></div>
+                <span class="tileIcon">📅</span>
+                <div class="tileTitle">Eventos</div>
+                <div class="tileDesc">Crear y administrar eventos del club</div>
+                <span class="tileArrow">→</span>
+            </div>
+
+            <div class="tile tile--copper" onclick="window.location.href='pagos.html'">
+                <div class="tileGlow"></div>
+                <span class="tileIcon">💰</span>
+                <div class="tileTitle">Pagos</div>
+                <div class="tileDesc">Control de cuotas y transacciones</div>
+                <span class="tileArrow">→</span>
+            </div>
+
+            <div class="tile tile--red" onclick="window.location.href='torneos.html'">
+                <div class="tileGlow"></div>
+                <span class="tileIcon">🏆</span>
+                <div class="tileTitle">Torneos</div>
+                <div class="tileDesc">Brackets, categorías y resultados</div>
+                <span class="tileArrow">→</span>
+            </div>
+
+            <div class="tile tile--teal" onclick="window.location.href='reservaciones.html'">
+                <div class="tileGlow"></div>
+                <span class="tileIcon">🎾</span>
+                <div class="tileTitle">Reservaciones</div>
+                <div class="tileDesc">Espacios deportivos y canchas</div>
+                <span class="tileArrow">→</span>
+            </div>
+
+            <div class="tile tile--orange" id="contentPanel">
+                <div class="tileGlow"></div>
+                <span class="tileIcon">📊</span>
+                <div class="tileTitle">Estadísticas</div>
+                <div class="tileDesc">Indicadores y reportes estratégicos</div>
+                <span class="tileArrow">→</span>
+            </div>
+
         </div>
+
     </div>
-</div>
 
-<!-- MODAL PAGOS -->
-<div id="pagoPanel" class="modal" style="display:none;">
-    <div class="modalContent">
-        <h2>Registrar Pago</h2>
-
-        <input type="hidden" id="pagoUsuario">
-
-        <input type="number" id="pagoMonto" placeholder="Monto">
-        <input type="date" id="pagoFecha">
-
-        <select id="pagoMetodo">
-            <option value="efectivo">Efectivo</option>
-            <option value="tarjeta">Tarjeta</option>
-            <option value="transferencia">Transferencia</option>
-        </select>
-
-        <select id="pagoEstado">
-            <option value="pagado">Pagado</option>
-            <option value="pendiente">Pendiente</option>
-        </select>
-
-        <div class="modalActions">
-            <button id="registrarPagoBtn">Registrar Pago</button>
-            <button class="secondaryBtn" onclick="document.getElementById('pagoPanel').style.display='none'">Cancelar</button>
-        </div>
-    </div>
-</div>
-
-<script src="js/dashboard.js"></script>
-
+    <script src="Js/dashboard.js"></script>
+    <script>
+        // Fecha en topbar
+        const d = new Date();
+        document.getElementById('topDate').textContent =
+            d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+    </script>
 </body>
 </html>

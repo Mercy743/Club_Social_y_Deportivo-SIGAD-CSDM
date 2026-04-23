@@ -1,82 +1,115 @@
-/* ===== LOGIN ===== */
-console.log("JS cargado");
 const loginForm = document.getElementById("loginForm");
 const message = document.getElementById("message");
+const submitBtn = loginForm?.querySelector("button[type='submit']");
 
 if (loginForm) {
-    loginForm.addEventListener("submit", async function(event) {
-        event.preventDefault();
+    loginForm.addEventListener("submit", async e => {
+        e.preventDefault();
+
+        // Feedback: deshabilitar botón
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Iniciando...";
+        message.className = "";
+        message.classList.remove("visible");
 
         const email = document.getElementById("emailInput").value;
         const password = document.getElementById("passwordInput").value;
 
-        const res = await fetch("http://localhost:3000/api/login", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ email, password })
-        });
+        try {
+            const res = await fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
 
-        const data = await res.json();
+            const data = await res.json();
 
-        if (!res.ok) {
-            message.textContent = data.error;
-            return;
+            if (!res.ok) {
+                message.textContent = data.error;
+                message.classList.add("visible");
+                // Restaurar botón
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Iniciar sesión";
+                return;
+            }
+
+            // Éxito
+            message.textContent = "¡Acceso concedido!";
+            message.classList.add("visible", "success");
+            submitBtn.textContent = "✓ Entrando...";
+
+            localStorage.setItem("loggedUser", JSON.stringify(data));
+
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 800);
+
+        } catch (err) {
+            message.textContent = "Error de conexión. Intenta de nuevo.";
+            message.classList.add("visible");
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Iniciar sesión";
         }
-
-        localStorage.setItem("loggedUser", JSON.stringify(data));
-
-        message.textContent = "Access granted";
-
-        setTimeout(() => {
-            window.location.href = "dashboard.html";
-        }, 1000);
     });
 }
 
-/* ===== FRASES MOTIVACIONALES ===== */
-const frases = [
-    "Bienvenido a SIGAD, tu rendimiento comienza hoy.",
-    "La disciplina supera al talento.",
-    "Cada entrenamiento cuenta.",
-    "El éxito se construye con constancia.",
-    "Actívate hoy, mejora mañana.",
-    "Tu mejor versión te está esperando."
-];
+// ===== PARTÍCULAS =====
+const particlesContainer = document.querySelector(".particles");
 
-let index = 0;
-const textElement = document.getElementById("motivationalText");
+if (particlesContainer) {
+    const total = 40;
 
-if (textElement) {
-    function cambiarFrase() {
-        textElement.style.opacity = 0;
+    for (let i = 0; i < total; i++) {
+        const span = document.createElement("span");
 
-        setTimeout(() => {
-            textElement.textContent = frases[index];
-            textElement.style.opacity = 1;
-            index = (index + 1) % frases.length;
-        }, 500);
+        // Posición horizontal aleatoria
+        span.style.left = Math.random() * 100 + "%";
+
+        // Tamaño aleatorio entre 2px y 5px
+        const size = Math.random() * 3 + 2 + "px";
+        span.style.width = size;
+        span.style.height = size;
+
+        // Duración y retraso aleatorio para que no suban todas juntas
+        span.style.animationDuration = (Math.random() * 10 + 6) + "s";
+        span.style.animationDelay   = (Math.random() * 8) + "s";
+
+        // Opacidad inicial aleatoria
+        span.style.opacity = Math.random() * 0.6 + 0.2;
+
+        particlesContainer.appendChild(span);
     }
-
-    cambiarFrase();
-    setInterval(cambiarFrase, 4000);
 }
 
-/* ===== PARTÍCULAS PREMIUM ===== */
-document.addEventListener("DOMContentLoaded", () => {
-    const container = document.querySelector(".particles");
+// ===== FRASES MOTIVACIONALES =====
+const frases = [
+    "Cada entrenamiento cuenta.",
+    "Tu mejor versión empieza hoy.",
+    "El esfuerzo de hoy es el resultado de mañana.",
+    "Supera tus límites, uno a la vez.",
+    "Constancia es la clave del éxito.",
+];
 
-    if (!container) return;
+const motivationalText = document.getElementById("motivationalText");
 
-    for (let i = 0; i < 35; i++) {
-        const p = document.createElement("span");
+if (motivationalText) {
+    let index = 0;
 
-        p.style.left = Math.random() * 100 + "%";
-        p.style.animationDuration = (4 + Math.random() * 4) + "s";
+    // Muestra la primera frase inmediatamente
+    motivationalText.textContent = frases[index];
 
-        if (Math.random() > 0.7) {
-            p.style.background = "rgba(0,102,255,0.9)";
-        }
+    setInterval(() => {
+        // Fade out
+        motivationalText.style.opacity = "0";
+        motivationalText.style.transition = "opacity 0.6s ease";
 
-        container.appendChild(p);
-    }
-});
+        setTimeout(() => {
+            index = (index + 1) % frases.length;
+            motivationalText.textContent = frases[index];
+
+            // Fade in
+            motivationalText.style.opacity = "0.7";
+        }, 600);
+
+    }, 5000);
+}

@@ -1,47 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>SIGAD Login</title>
+<meta charset="UTF-8">
+<title>SIGAD Login</title>
 
-    <!-- Fuentes -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
-
-    <!-- CSS -->
-    <link rel="stylesheet" href="css/styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
 </head>
-
 <body>
 <div class="particles"></div>
+
 <div class="container">
 
-    <!-- PANEL MOTIVACIONAL -->
- <div class="leftPanel">
-        <img src="images/logo.png" alt="Logo SIGAD" class="logo">
-        <h1>Tu santuario personal de alto rendimiento.</h1>
-        <p id="motivationalText" class="motivational"></p>
-    </div>
+<div class="leftPanel">
+<img src="images/logo.png" class="logo">
+<h1>Tu santuario personal de alto rendimiento.</h1>
+<p id="motivationalText" class="motivational"></p>
+</div>
 
-    <!-- LOGIN -->
-    <div class="rightPanel">
-        <div class="loginContainer">
-            <h2>SIGAD</h2>
-            <p class="subtitle">Sistema de Gestión Deportiva</p>
+<div class="rightPanel">
+<div class="loginContainer">
+<h2>SIGAD</h2>
+<p class="subtitle">Sistema de Gestión Deportiva</p>
 
-            <form id="loginForm">
-                <input type="email" id="emailInput" placeholder="Correo electrónico" required>
-                <input type="password" id="passwordInput" placeholder="Contraseña" required>
+<form id="loginForm">
+<input type="email" id="emailInput" placeholder="Correo" required>
+<input type="password" id="passwordInput" placeholder="Contraseña" required>
+<button type="submit">Iniciar sesion</button>
+</form>
 
-                <button type="submit">Iniciar sesión</button>
-            </form>
-
-            <p id="message"></p>
-        </div>
-    </div>
+<p id="message"></p>
+</div>
+</div>
 
 </div>
 
 <script src="js/script.js"></script>
-
 </body>
 </html>
