@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Torneos - SIGAD</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dashboardPage">
+    <div class="dashboardTopbar">
+        <div><h1>SIGAD - Torneos</h1><p id="userInfo"></p></div>
+        <div class="topbarActions">
+            <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">← Atras</button>
+            <button id="logoutBtn" class="logoutBtn">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="dashboardLayout">
+        <div id="mainPanel">
+            <div class="dashboardCard">
+                <h2> Lista de Torneos</h2>
+                <div id="torneosList">Cargando torneos...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="Js/torneos.js"></script>
+</body>
+</html>

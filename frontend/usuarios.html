@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestión de Usuarios - SIGAD</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="dashboardTopbar">
+        <div>
+            <h1>SIGAD - Gestión de Usuarios</h1>
+            <p id="userInfo"></p>
+        </div>
+        <div class="topbarActions">
+            <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">← Atras</button>
+            <button id="logoutBtn" class="logoutBtn">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="dashboardCard" id="userPanel">
+        <h2>Gestión de Usuarios</h2>
+        <div class="userSearch">
+            <input type="text" id="searchInput" placeholder="Buscar por ID, INE o Correo">
+            <div>
+                <button id="searchBtn" class="secondaryBtn">Buscar</button>
+                <button id="resetBtn" class="secondaryBtn">Mostrar todos</button>
+            </div>
+        </div>
+        <div id="userList">Cargando usuarios...</div>
+    </div>
+
+    <div id="editPanel" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:white; border:2px solid #3498db; padding:25px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.3); z-index:1000; max-width:500px;">
+        <h3>Editar Usuario</h3>
+        <input type="hidden" id="editId">
+        <label>Nombre:</label><br><input type="text" id="editNombre" style="width:100%; padding:10px; margin:5px 0;"><br>
+        <label>Apellido:</label><br><input type="text" id="editApellido" style="width:100%; padding:10px; margin:5px 0;"><br>
+        <label>Email:</label><br><input type="email" id="editEmail" style="width:100%; padding:10px; margin:5px 0;"><br>
+        <label>Teléfono:</label><br><input type="text" id="editTelefono" style="width:100%; padding:10px; margin:5px 0;"><br><br>
+        <button onclick="guardarCambios()" class="primaryBtn">Guardar</button>
+        <button onclick="cerrarEditar()" class="secondaryBtn">Cancelar</button>
+    </div>
+
+    <div id="modalBackdrop" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="cerrarTodo()"></div>
+
+    <div id="deletePanel" style="display:none; position:fixed; top:25%; left:50%; transform:translateX(-50%); background:white; border:2px solid red; padding:25px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.3); z-index:1001; max-width:400px;">
+        <h3>Eliminar Usuario</h3>
+        <p>Ingresa tu contraseña para confirmar:</p>
+        <input type="password" id="deletePassword" style="width:100%; padding:10px; margin:10px 0;"><br>
+        <button id="confirmDeleteBtn" style="background:#e74c3c; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">Confirmar</button>
+        <button onclick="cerrarEliminar()" class="secondaryBtn">Cancelar</button>
+    </div>
+
+    <!-- Script al final para que todos los elementos del DOM existan -->
+    <script src="Js/usuarios.js"></script>
+</body>
+</html>

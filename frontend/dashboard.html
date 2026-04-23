@@ -1,109 +1,69 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Dashboard - SIGAD</title>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
+<body class="dashboardPage">
 
-<h1>SIGAD - Panel de Control</h1>
-
-<p id="userInfo"></p>
-
-<hr>
-
-<div id="adminPanel" style="display:none;">
-    <h2>Buscar Socios</h2>
-
-    <input type="text" id="searchInput" placeholder="Buscar por ID, INE o Correo">
-    <button id="searchBtn">Buscar</button>
-    <button id="resetBtn">Mostrar todos</button>
-
-    <hr>
-    <h2>Lista de Usuarios</h2>
+<div class="dashboardTopbar">
+    <div>
+        <h1>SIGAD - Panel de Control</h1>
+        <p id="userInfo"></p>
+        <p id="welcomeMessage" class="dashboardHeader">¿Qué quieres hacer hoy?</p>
+    </div>
+    <div class="topbarActions">
+        <button id="logoutBtn" class="logoutBtn">Cerrar Sesión</button>
+    </div>
 </div>
 
-<div id="userList">Cargando...</div>
+<div class="dashboardLayout">
+    
+    <!-- PANEL IZQUIERDO: CONTENIDO PRINCIPAL -->
+    <div id="mainPanel">
+        <div class="dashboardCard" id="contentPanel">
+            <h2> Resumen del Sistema</h2>
+            <div id="stats" class="statsCard">Cargando estadísticas...</div>
+        </div>
+    </div>
 
-<hr>
+    <div>
+        
+        <!-- Botones rápidos -->
+        <div class="dashboardCard">
+            <h2> Acciones Rápidas</h2>
+            <div class="quickActions">
+                <button class="quickBtn" onclick="window.location.href='usuarios.html'"> Usuarios</button>
+                <button class="quickBtn" onclick="window.location.href='eventos.html'"> Eventos</button>
+                <button class="quickBtn" onclick="window.location.href='pagos.html'"> Pagos</button>
+                <button class="quickBtn" onclick="window.location.href='torneos.html'"> Torneos</button>
+                <button class="quickBtn" onclick="window.location.href='reservaciones.html'"> Reservaciones</button>
+            </div>
+        </div>
 
-<div id="statsPanel" style="display:none;">
-    <h2>Estadisticas del Sistema</h2>
-    <div id="stats">Cargando estadisticas...</div>
+        <div class="dashboardCard" id="statsPanel">
+            <h2> Estadísticas</h2>
+            <div id="dashboardStats" class="statsCard">Cargando...</div>
+        </div>
+
+        <!-- Alertas -->
+        <div class="dashboardCard">
+            <h2> Alertas</h2>
+            <div id="alerts" class="statsCard">
+                <div class="statBox">
+                    <span>Usuarios sin pago reciente</span>
+                    <strong id="sinPagos">0</strong>
+                </div>
+                <div class="statBox">
+                    <span>Usuarios inactivos</span>
+                    <strong id="inactivos">0</strong>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
 
-<hr>
-
-<!-- ================= EDITAR USUARIO ================= -->
-
-<div id="editPanel" style="display:none; border:1px solid black; padding:15px;">
-    <h2>Editar Usuario</h2>
-
-    <input type="hidden" id="editId">
-
-    <label>Nombre:</label><br>
-    <input type="text" id="editNombre"><br><br>
-
-    <label>Apellido:</label><br>
-    <input type="text" id="editApellido"><br><br>
-
-    <label>Email:</label><br>
-    <input type="text" id="editEmail"><br><br>
-
-    <label>Telefono:</label><br>
-    <input type="text" id="editTelefono"><br><br>
-
-    <button id="guardarBtn">Guardar</button>
-    <button onclick="document.getElementById('editPanel').style.display='none'">Cancelar</button>
-</div>
-
-<!-- ================= ELIMINAR ================= -->
-
-<div id="deletePanel" style="display:none; border:1px solid red; padding:15px;">
-    <h3>Confirmar eliminación</h3>
-
-    <p>Ingresa tu contraseña:</p>
-    <input type="password" id="deletePassword"><br><br>
-
-    <button id="confirmDeleteBtn">Eliminar</button>
-    <button onclick="document.getElementById('deletePanel').style.display='none'">Cancelar</button>
-</div>
-
-<!-- ================= 💰 PAGO (NUEVO PANEL) ================= -->
-
-<div id="pagoPanel" style="display:none; border:1px solid green; padding:15px;">
-    <h2>Registrar Pago</h2>
-
-    <input type="hidden" id="pagoUsuario">
-
-    <label>Monto:</label><br>
-    <input type="number" id="pagoMonto"><br><br>
-
-    <label>Fecha:</label><br>
-    <input type="date" id="pagoFecha"><br><br>
-
-    <label>Método de pago:</label><br>
-    <select id="pagoMetodo">
-        <option value="efectivo">Efectivo</option>
-        <option value="tarjeta">Tarjeta</option>
-        <option value="transferencia">Transferencia</option>
-    </select><br><br>
-
-    <label>Estado:</label><br>
-    <select id="pagoEstado">
-        <option value="pagado">Pagado</option>
-        <option value="pendiente">Pendiente</option>
-    </select><br><br>
-
-    <button id="registrarPagoBtn">Registrar Pago</button>
-    <button onclick="document.getElementById('pagoPanel').style.display='none'">Cancelar</button>
-</div>
-
-<hr>
-
-<button id="logoutBtn">Cerrar sesion</button>
-
-<script src="js/dashboard.js"></script>
-
+<script src="Js/dashboard.js"></script>
 </body>
-</html>
+</html> 

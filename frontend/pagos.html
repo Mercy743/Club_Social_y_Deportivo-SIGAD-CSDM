@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pagos - SIGAD</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dashboardPage">
+    <div class="dashboardTopbar">
+        <div><h1>SIGAD - Gestión de Pagos</h1><p id="userInfo"></p></div>
+        <div class="topbarActions">
+            <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">← Atras</button>
+            <button id="logoutBtn" class="logoutBtn">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="dashboardLayout">
+        <div id="mainPanel">
+            <div class="dashboardCard">
+                <h2> Registrar Nuevo Pago</h2>
+                <input type="hidden" id="pagoUsuario">
+                <label>Usuario ID:</label><br><input type="number" id="pagoUsuarioInput" placeholder="ID del usuario"><br><br>
+                <label>Monto:</label><br><input type="number" id="pagoMonto"><br><br>
+                <label>Fecha:</label><br><input type="date" id="pagoFecha"><br><br>
+                <label>Método:</label><br>
+                <select id="pagoMetodo">
+                    <option value="efectivo">Efectivo</option>
+                    <option value="tarjeta">Tarjeta</option>
+                    <option value="transferencia">Transferencia</option>
+                </select><br><br>
+                <label>Estado:</label><br>
+                <select id="pagoEstado">
+                    <option value="pagado">Pagado</option>
+                    <option value="pendiente">Pendiente</option>
+                </select><br><br>
+                <button id="registrarPagoBtn">Registrar Pago</button>
+            </div>
+            
+            <div class="dashboardCard">
+                <h2>Lista de Pagos Recientes</h2>
+                <div id="pagosList">Cargando pagos...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="Js/pagos.js"></script>
+</body>
+</html>
