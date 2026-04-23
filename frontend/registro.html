@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registrar Socio</title>
+  <link rel="stylesheet" href="stylee.css">
+</head>
+<body>
+
+
+<div class="container">
+
+  <h2>Registrar Nuevo Socio</h2>
+
+  <form id="registroForm">
+
+    <div class="campo">
+      <label for="nombre">Nombre del socio</label>
+      <input id="nombre" type="text" placeholder="Ej: Juan" required>
+    </div>
+
+    <div class="campo">
+      <label for="apellido">Apellido del socio</label>
+      <input id="apellido" type="text" placeholder="Ej: Pérez" required>
+    </div>
+
+    <div class="campo">
+      <label for="email">Correo del socio</label>
+      <input id="email" type="email" placeholder="correo@ejemplo.com" required>
+    </div>
+
+    <div class="campo">
+      <label for="password">Contraseña del socio</label>
+      <input id="password" type="password" placeholder="********" required>
+    </div>
+
+    <div class="campo">
+      <label for="telefono">Teléfono del socio</label>
+      <input id="telefono" type="text" placeholder="4431234567">
+    </div>
+
+    <div class="campo">
+      <label for="ine">INE del socio</label>
+      <input id="ine" type="text" placeholder="Clave INE" required>
+    </div>
+
+    <div class="campo">
+      <label for="direccion">Dirección del socio</label>
+      <input id="direccion" type="text" placeholder="Dirección completa" required>
+    </div>
+
+    <button type="submit">Registrar</button>
+
+  </form>
+
+  <p id="mensaje"></p>
+
+</div>
+
+<script src="js/registro.js"></script>
+
+</body>
+</html>
