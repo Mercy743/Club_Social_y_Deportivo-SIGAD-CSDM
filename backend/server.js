@@ -726,3 +726,106 @@ app.get('/', (req, res) => {
 app.listen(puerto, () => {
     console.log(`Servidor corriendo en http://localhost:${puerto}`);
 });
+
+
+// =========================
+// ACTIVIDADES
+// =========================
+
+// GET todas
+app.get("/api/actividades", async (req, res) => {
+  try {
+    const r = await pool.query("SELECT * FROM actividades ORDER BY id");
+    res.json(r.rows);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener actividades" });
+  }
+});
+
+// GET por id
+app.get("/api/actividades/:id", async (req, res) => {
+  try {
+    const r = await pool.query(
+      "SELECT * FROM actividades WHERE id=$1",
+      [req.params.id]
+    );
+
+    if (r.rows.length === 0) {
+      return res.status(404).json({ error: "No encontrada" });
+    }
+
+    res.json(r.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Error" });
+  }
+});
+
+// POST crear
+app.post("/api/actividades", async (req, res) => {
+  const { nombre, descripcion, capacidad } = req.body;
+
+  if (!nombre || !capacidad) {
+    return res.status(400).json({ error: "Datos incompletos" });
+  }
+
+  try {
+    const r = await pool.query(
+      "INSERT INTO actividades(nombre, descripcion, capacidad) VALUES($1,$2,$3) RETURNING *",
+      [nombre, descripcion, capacidad]
+    );
+
+    res.status(201).json(r.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Error al crear" });
+  }
+});
+
+// PUT editar
+app.put("/api/actividades/:id", async (req, res) => {
+  const { nombre, descripcion, capacidad } = req.body;
+
+  try {
+    const r = await pool.query(
+      "UPDATE actividades SET nombre=$1, descripcion=$2, capacidad=$3 WHERE id=$4 RETURNING *",
+      [nombre, descripcion, capacidad, req.params.id]
+    );
+
+    if (r.rows.length === 0) {
+      return res.status(404).json({ error: "No encontrada" });
+    }
+
+    res.json(r.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Error al actualizar" });
+  }
+});
+
+// DELETE
+app.delete("/api/actividades/:id", async (req, res) => {
+  try {
+    // validar inscripciones
+    const check = await pool.query(
+      "SELECT * FROM inscripciones WHERE actividad_id=$1 AND estado='activa'",
+      [req.params.id]
+    );
+
+    if (check.rows.length > 0) {
+      return res.status(400).json({
+        error: "No se puede eliminar, tiene inscripciones activas"
+      });
+    }
+
+    const r = await pool.query(
+      "DELETE FROM actividades WHERE id=$1 RETURNING *",
+      [req.params.id]
+    );
+
+    if (r.rows.length === 0) {
+      return res.status(404).json({ error: "No encontrada" });
+    }
+
+    res.json({ mensaje: "Actividad eliminada" });
+  } catch (error) {
+    res.status(500).json({ error: "Error al eliminar" });
+  }
+});
