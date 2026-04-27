@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulario Actividad</title>
+  <link rel="stylesheet" href="css/actividades.css">
+</head>
+<body>
+
+  <h1 id="tituloForm">Crear Actividad</h1>
+
+  <form id="formActividad">
+    <input type="text" id="nombre" placeholder="Ejemplo: Tenis Principiantes" required>
+
+    <textarea id="descripcion" placeholder="Describe la actividad"></textarea>
+
+    <input type="number" id="capacidad" value="10">
+
+    <select id="icono">
+      <option value="🎾">Tenis</option>
+      <option value="🏊">Natación</option>
+      <option value="🧘">Yoga</option>
+      <option value="🚴">Spinning</option>
+      <option value="🏓">Pádel</option>
+      <option value="🥊">Boxeo</option>
+    </select>
+
+    <select id="nivel">
+      <option>Principiante</option>
+      <option>Intermedio</option>
+      <option>Avanzado</option>
+    </select>
+
+  <select id="duracion" onchange="toggleCustomTime()">
+  <option value="30">30 min</option>
+  <option value="60">1 hora</option>
+  <option value="90">1.5 horas</option>
+  <option value="120">2 horas</option>
+  <option value="custom">Personalizado</option>
+</select>
+
+<input 
+  type="number" 
+  id="duracionCustom" 
+  placeholder="Minutos"
+  min="10" 
+  max="240" 
+  step="5"
+  style="display:none;">
+
+    <label>
+      <input type="checkbox" id="equipo">
+      Requiere equipo especial
+    </label>
+
+    <div class="botones">
+      <button type="submit">Guardar</button>
+      <button type="button" onclick="history.back()">Cancelar</button>
+    </div>
+  </form>
+
+  <script src="js/actividades.js"></script>
+</body>
+</html>

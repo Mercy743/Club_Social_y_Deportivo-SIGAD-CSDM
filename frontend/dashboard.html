@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - SIGAD</title>
+</head>
+<body>
+
+    <h1>SIGAD - Panel de Control</h1>
+    <p id="userInfo"></p>
+
+    <hr>
+
+    <div id="adminPanel" style="display:none;">
+        <h2>Buscar Socios</h2>
+        <div>
+            <input type="text" id="searchInput" placeholder="Buscar por ID, INE o Correo">
+            <button id="searchBtn">Buscar</button>
+            <button id="resetBtn">Mostrar todos</button>
+        </div>
+        <hr>
+        <h2>Lista de Usuarios</h2>
+    </div>
+
+    <div id="userList">Cargando...</div>
+
+    <hr>
+
+    <div id="statsPanel" style="display:none;">
+        <h2>Estadisticas del Sistema</h2>
+        <div id="stats">Cargando estadisticas...</div>
+    </div>
+
+    <hr>
+
+    <button id="logoutBtn">Cerrar sesion</button>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
