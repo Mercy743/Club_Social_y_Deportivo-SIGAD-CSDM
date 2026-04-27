@@ -732,16 +732,25 @@ app.listen(puerto, () => {
 // ACTIVIDADES
 // =========================
 
-// GET todas
+// GET todas (MEJORADO)
 app.get("/api/actividades", async (req, res) => {
   try {
-    const r = await pool.query("SELECT * FROM actividades ORDER BY id");
+    const r = await pool.query(`
+      SELECT 
+        a.*,
+        COUNT(i.id) AS inscritos
+      FROM actividades a
+      LEFT JOIN inscripciones i 
+        ON a.id = i.actividad_id AND i.estado = 'activa'
+      GROUP BY a.id
+      ORDER BY a.id
+    `);
+
     res.json(r.rows);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener actividades" });
   }
 });
-
 // GET por id
 app.get("/api/actividades/:id", async (req, res) => {
   try {

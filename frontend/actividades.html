@@ -1,13 +1,24 @@
-<h2>Gestión de Actividades</h2>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Actividades</title>
+<link rel="stylesheet" href="../css/actividades.css">
+</head>
+<body>
 
-<form id="formActividad">
-  <input id="nombre" placeholder="Nombre" required>
-  <input id="descripcion" placeholder="Descripción">
-  <input id="capacidad" type="number" placeholder="Capacidad" required>
-  <button>Guardar</button>
-</form>
+  <header class="header">
+    <h1>Actividades del Club</h1>
+    <div class="acciones">
+      <input type="text" id="busqueda" placeholder="Buscar actividad...">
+      <button id="btnCrear">+ Crear Nueva Actividad</button>
+    </div>
+  </header>
 
-<h3>Lista</h3>
-<ul id="lista"></ul>
+  <main>
+    <div id="contenedorActividades" class="grid"></div>
+  </main>
 
-<script src="js/actividades.js"></script>
+  <script src="js/actividades.js"></script>
+</body>
+</html>
