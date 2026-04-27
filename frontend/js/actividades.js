@@ -86,14 +86,14 @@ function renderActividades(filtro = "") {
         <div class="card">
           <h2>${act.icono || ""} ${act.nombre}</h2>
 
-          <p>🧑 ${act.inscritos}/${act.capacidad}</p>
+          <p>${act.inscritos}/${act.capacidad}</p>
 
           <div class="barra">
             <div class="progreso ${color}" style="width:${porcentaje}%"></div>
           </div>
 
-          <p>⏰ ${act.horario || "Sin horario"}</p>
-          <p>👨‍🏫 ${act.instructor || "Sin instructor"}</p>
+          <p>${act.horario || "Sin horario"}</p>
+          <p>${act.instructor || "Sin instructor"}</p>
 
           ${botonesAdmin}
           <button onclick="verDetalle(${act.id})">Detalles</button>
