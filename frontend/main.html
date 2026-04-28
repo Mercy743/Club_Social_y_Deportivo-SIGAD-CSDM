@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGAD - Club Social y Deportivo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/stylee.css">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <header class="nav" id="navbar">
+        <h2 class="nav-logo">SIGAD</h2>
+        <nav class="nav-links">
+            <a href="#about">Nosotros</a>
+            <a href="#deportes">Deportes</a>
+            <a href="#galeria">Galería</a>
+            <a href="#contacto">Contacto</a>
+        </nav>
+        <div class="menu" onclick="irLogin()">Iniciar sesión</div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-content">
+            <span class="hero-tag">Club Social y Deportivo · Morelia</span>
+            <h1>Tu santuario personal<br>de alto rendimiento.</h1>
+            <p>Espacios deportivos, eventos y comunidad para socios y familias.</p>
+            <button class="hero-btn" onclick="irLogin()">Acceder al sistema</button>
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="scroll">↓</div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="about" id="about">
+        <div class="about-inner">
+            <span class="section-tag">Nuestro club</span>
+            <h2>Más que un club,<br>una comunidad.</h2>
+            <p>
+                Somos un club deportivo enfocado en brindar actividades, eventos y espacios 
+                de calidad para nuestros socios y sus familias. Con más de 17 espacios 
+                deportivos y una variedad de disciplinas, tenemos algo para todos.
+            </p>
+            <div class="about-stats">
+                <div class="about-stat">
+                    <strong>17+</strong>
+                    <span>Espacios deportivos</span>
+                </div>
+                <div class="about-stat">
+                    <strong>6</strong>
+                    <span>Disciplinas</span>
+                </div>
+                <div class="about-stat">
+                    <strong>100%</strong>
+                    <span>Para socios y familias</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DEPORTES -->
+    <section id="deportes">
+
+        <div class="split">
+            <div class="img futbol"></div>
+            <div class="text">
+                <span class="section-tag light">Disciplina</span>
+                <h2>Fútbol</h2>
+                <p>Entrenamientos y partidos para todas las edades. Canchas de pasto y equipos para socios.</p>
+                <button onclick="irLogin()">Inscribirse</button>
+            </div>
+        </div>
+
+        <div class="split reverse">
+            <div class="img basquet"></div>
+            <div class="text">
+                <span class="section-tag light">Disciplina</span>
+                <h2>Basquetbol</h2>
+                <p>Clases técnicas y torneos internos con categorías para todas las edades.</p>
+                <button onclick="irLogin()">Inscribirse</button>
+            </div>
+        </div>
+
+        <div class="split">
+            <div class="img natacion"></div>
+            <div class="text">
+                <span class="section-tag light">Disciplina</span>
+                <h2>Natación</h2>
+                <p>Clases en alberca con instructores certificados. Grupos por nivel y edad.</p>
+                <button onclick="irLogin()">Inscribirse</button>
+            </div>
+        </div>
+
+        <div class="split reverse">
+            <div class="img gym"></div>
+            <div class="text">
+                <span class="section-tag light">Disciplina</span>
+                <h2>Gimnasio</h2>
+                <p>Área equipada para entrenamiento físico completo con asesoría profesional.</p>
+                <button onclick="irLogin()">Inscribirse</button>
+            </div>
+        </div>
+
+        <div class="split">
+            <div class="img voleibol"></div>
+            <div class="text">
+                <span class="section-tag light">Disciplina</span>
+                <h2>Voleibol</h2>
+                <p>Entrenamientos y competencias recreativas para socios y familias.</p>
+                <button onclick="irLogin()">Inscribirse</button>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- GALERÍA -->
+    <section class="gallery" id="galeria">
+        <span class="section-tag">Galería</span>
+        <h2>Nuestras instalaciones</h2>
+        <div class="grid">
+            <div class="grid-item g1"></div>
+            <div class="grid-item g2"></div>
+            <div class="grid-item g3"></div>
+            <div class="grid-item g4"></div>
+            <div class="grid-item g5"></div>
+            <div class="grid-item g6"></div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+        <h2>¿Listo para ser parte del club?</h2>
+        <p>Inicia sesión y accede a todos los servicios del sistema.</p>
+        <button onclick="irLogin()">Acceder al sistema →</button>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer" id="contacto">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <h3>SIGAD</h3>
+                <p>Sistema Integral de Gestión de Actividades Deportivas</p>
+                <p>Club Social y Deportivo · Morelia</p>
+            </div>
+            <div class="footer-info">
+                <h4>Contacto</h4>
+                <p>📞 443 123 4567</p>
+                <p>✉️ contacto@sigad.com</p>
+                <p>📍 Morelia, Michoacán, México</p>
+            </div>
+            <div class="footer-info">
+                <h4>Disciplinas</h4>
+                <p>Fútbol · Basquetbol</p>
+                <p>Natación · Gimnasio</p>
+                <p>Voleibol · Pádel</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 SIGAD - Club Social y Deportivo. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+    <script src="js/comunes.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

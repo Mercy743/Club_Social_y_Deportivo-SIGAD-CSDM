@@ -13,4 +13,73 @@
 
 <script src="js/eventos.js"></script>
 </body>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventos - SIGAD</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dashboardPage">
+
+    <!-- FONDO -->
+    <svg class="bg-playbook" viewBox="0 0 700 560" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <radialGradient id="vignette" cx="50%" cy="50%" r="60%">
+                <stop offset="30%" stop-color="#0d1618" stop-opacity="0"/>
+                <stop offset="100%" stop-color="#0d1618" stop-opacity="0.7"/>
+            </radialGradient>
+        </defs>
+        <rect x="60" y="40" width="580" height="490" rx="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.2"/>
+        <line x1="60" y1="285" x2="640" y2="285" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <circle cx="350" cy="285" r="55" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <rect width="700" height="560" fill="url(#vignette)"/>
+    </svg>
+
+    <div class="dashboardWrapper">
+
+        <!-- TOPBAR -->
+        <div class="dashboardTopbar">
+            <div class="topbarBrand">
+                <span class="topbarGreeting">Módulo de gestión</span>
+                <h1>SIGAD <span class="topbarRole">· Eventos</span></h1>
+            </div>
+            <div class="topbarActions">
+                <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">← Volver</button>
+                <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
+            </div>
+        </div>
+
+        <!-- FORMULARIO -->
+        <p class="section-label" id="formLabel">Nuevo evento</p>
+        <div class="dashboardCard" style="margin-bottom: 24px;">
+            <div class="eventForm">
+                <input type="hidden" id="eventoId">
+                <input type="text" id="nombreEvento" placeholder="Nombre del evento" required>
+                <input type="date" id="fechaEvento" required>
+                <input type="time" id="horaEvento">
+                <input type="text" id="descripcionEvento" placeholder="Descripción">
+                <div style="display:flex; gap:12px;">
+                    <button id="guardarBtn">Guardar evento</button>
+                    <button id="cancelarBtn" class="secondaryBtn" style="display:none;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LISTA -->
+        <p class="section-label">Eventos registrados</p>
+        <div id="eventList"></div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+    <p class="section-label" style="margin-bottom:0; flex:1;">Eventos registrados</p>
+    <button id="toggleReporteBtn" class="secondaryBtn" style="max-width:160px; padding:8px 16px; margin:0;">
+        Ver reporte
+    </button>
+</div>
+<div id="eventList"></div>
+    </div>
+    <script src="js/comunes.js"></script>
+    <script src="js/eventos.js"></script>
+</body>
 </html>

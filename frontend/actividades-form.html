@@ -1,64 +1,55 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Formulario Actividad</title>
-  <link rel="stylesheet" href="css/actividades.css">
+    <meta charset="UTF-8">
+    <title>Formulario Actividad - SIGAD</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/actividades.css">
 </head>
 <body>
-
-  <h1 id="tituloForm">Crear Actividad</h1>
-
-  <form id="formActividad">
-    <input type="text" id="nombre" placeholder="Ejemplo: Tenis Principiantes" required>
-
-    <textarea id="descripcion" placeholder="Describe la actividad"></textarea>
-
-    <input type="number" id="capacidad" value="10">
-
-    <select id="icono">
-      <option value="🎾">Tenis</option>
-      <option value="🏊">Natación</option>
-      <option value="🧘">Yoga</option>
-      <option value="🚴">Spinning</option>
-      <option value="🏓">Pádel</option>
-      <option value="🥊">Boxeo</option>
-    </select>
-
-    <select id="nivel">
-      <option>Principiante</option>
-      <option>Intermedio</option>
-      <option>Avanzado</option>
-    </select>
-
-  <select id="duracion" onchange="toggleCustomTime()">
-  <option value="30">30 min</option>
-  <option value="60">1 hora</option>
-  <option value="90">1.5 horas</option>
-  <option value="120">2 horas</option>
-  <option value="custom">Personalizado</option>
-</select>
-
-<input 
-  type="number" 
-  id="duracionCustom" 
-  placeholder="Minutos"
-  min="10" 
-  max="240" 
-  step="5"
-  style="display:none;">
-
-    <label>
-      <input type="checkbox" id="equipo">
-      Requiere equipo especial
-    </label>
-
-    <div class="botones">
-      <button type="submit">Guardar</button>
-      <button type="button" onclick="history.back()">Cancelar</button>
+<div class="particles"></div>
+<div class="container">
+    <div class="volver-container">
+        <button class="btn-volver" onclick="window.location.href='actividades.html'">Volver</button>
     </div>
-  </form>
-
-  <script src="js/actividades.js"></script>
+    <div class="form-card">
+        <h1 id="tituloForm">Nueva Actividad</h1>
+        <form id="formActividad" class="actividad-form" onsubmit="guardarActividad(event)">
+            <div class="campo"><label>Nombre</label><input type="text" id="nombre" placeholder="Ejemplo: Tenis Principiantes" required></div>
+            <div class="campo"><label>Descripción</label><textarea id="descripcion" rows="3" placeholder="Describe la actividad..."></textarea><small>Mínimo 20 caracteres</small></div>
+            <div class="campo-row">
+                <div class="campo"><label>Capacidad</label><input type="number" id="capacidad" min="1" max="100" value="10"></div>
+                <div class="campo"><label>Icono</label><select id="icono">
+                    <option value="🎾">🎾 Tenis</option>
+                    <option value="🏊">🏊 Natación</option>
+                    <option value="🧘">🧘 Yoga</option>
+                    <option value="🚴">🚴 Ciclismo</option>
+                    <option value="🏓">🏓 Pádel</option>
+                    <option value="🥊">🥊 Boxeo</option>
+                    <option value="⚽">⚽ Fútbol</option>
+                    <option value="🏀">🏀 Baloncesto</option>
+                    <option value="🏃">🏃 General</option>
+                </select></div>
+            </div>
+            <div class="campo-row">
+                <div class="campo"><label>Nivel</label><select id="nivel">
+                    <option value="Principiante">Principiante</option>
+                    <option value="Intermedio">Intermedio</option>
+                    <option value="Avanzado">Avanzado</option>
+                </select></div>
+                <div class="campo"><label>Duración</label><select id="duracion">
+                    <option value="30">30 minutos</option>
+                    <option value="60">1 hora</option>
+                    <option value="90">1.5 horas</option>
+                    <option value="120">2 horas</option>
+                </select></div>
+            </div>
+            <div class="campo-checkbox"><label><input type="checkbox" id="equipo"> Requiere equipo especial</label></div>
+            <div class="botones-form"><button type="submit" class="btn-guardar">Guardar</button><button type="button" class="btn-cancelar" onclick="window.location.href='actividades.html'">Cancelar</button></div>
+        </form>
+    </div>
+</div>
+<script src="js/comunes.js"></script>
+<script src="js/actividades.js"></script>
 </body>
 </html>

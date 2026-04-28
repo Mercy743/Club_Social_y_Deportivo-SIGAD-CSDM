@@ -1,16 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Detalle Actividad</title>
-  <link rel="stylesheet" href="../css/actividades.css">
+    <meta charset="UTF-8">
+    <title>Detalle Actividad - SIGAD</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/actividades.css">
 </head>
 <body>
 
-  <button onclick="history.back()">← Volver</button>
+<div class="particles"></div>
 
-  <div id="detalleActividad"></div>
+<div class="container">
+    <div class="volver-container">
+        <button class="btn-volver" onclick="window.location.href='actividades.html'">Volver a Actividades</button>
+    </div>
+    <div id="detalleActividad" class="detalle-card"></div>
+</div>
 
-  <script src="js/actividades.js"></script>
+<script src="js/comunes.js"></script>
+<script src="js/actividades.js"></script>
 </body>
 </html>

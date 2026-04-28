@@ -1,24 +1,41 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Actividades</title>
-<link rel="stylesheet" href="../css/actividades.css">
+    <meta charset="UTF-8">
+    <title>Actividades - SIGAD</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/actividades.css">
 </head>
 <body>
 
-  <header class="header">
-    <h1>Actividades del Club</h1>
-    <div class="acciones">
-      <input type="text" id="busqueda" placeholder="Buscar actividad...">
-      <button id="btnCrear">+ Crear Nueva Actividad</button>
+<!-- Partículas flotantes -->
+<div class="particles"></div>
+
+<div class="container">
+    <!-- Botón de volver al dashboard -->
+    <div class="volver-container">
+        <button class="btn-volver" onclick="window.location.href='dashboard.html'">
+            Volver al Dashboard
+        </button>
     </div>
-  </header>
 
-  <main>
-    <div id="contenedorActividades" class="grid"></div>
-  </main>
+    <header class="header">
+        <div class="header-titulo">
+            <h1>🏃 Actividades del Club</h1>
+        </div>
+        <div class="acciones">
+            <input type="text" id="busqueda" placeholder="Buscar actividad...">
+            <button id="btnCrear">Crear Nueva Actividad</button>
+        </div>
+    </header>
 
-  <script src="js/actividades.js"></script>
+    <main>
+        <div id="contenedorActividades" class="grid"></div>
+    </main>
+</div>
+
+<!-- Scripts -->
+<script src="js/comunes.js"></script>
+<script src="js/actividades.js"></script>
 </body>
 </html>

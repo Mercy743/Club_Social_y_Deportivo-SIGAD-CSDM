@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - SIGAD</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dashboardPage">
+
+    <!-- FONDO -->
+    <svg class="bg-playbook" viewBox="0 0 700 560" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <radialGradient id="vignette" cx="50%" cy="50%" r="60%">
+                <stop offset="30%" stop-color="#0d1618" stop-opacity="0"/>
+                <stop offset="100%" stop-color="#0d1618" stop-opacity="0.7"/>
+            </radialGradient>
+        </defs>
+        <rect x="60" y="40" width="580" height="490" rx="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.2"/>
+        <line x1="60" y1="285" x2="640" y2="285" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <circle cx="350" cy="285" r="55" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <rect width="700" height="560" fill="url(#vignette)"/>
+    </svg>
+
+    <div class="dashboardWrapper">
+
+        <!-- TOPBAR -->
+        <div class="dashboardTopbar">
+            <div class="topbarBrand">
+                <span class="topbarGreeting">Módulo de gestión</span>
+                <h1>SIGAD <span class="topbarRole">· Usuarios</span></h1>
+            </div>
+            <div class="topbarActions">
+                <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">← Volver</button>
+                <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
+            </div>
+        </div>
+
+        <!-- BUSCADOR -->
+        <p class="section-label">Buscar usuario</p>
+        <div class="dashboardCard" style="margin-bottom: 24px;">
+            <div class="userSearch" style="display:flex; flex-direction:row; gap:12px; align-items:center;">
+                <input type="text" id="searchInput" placeholder="Buscar por ID, INE o correo" style="flex:1; max-width:none; margin:0;">
+                <button id="searchBtn" class="secondaryBtn" style="max-width:140px; margin:0; padding:14px 20px;">Buscar</button>
+                <button id="resetBtn" class="secondaryBtn" style="max-width:160px; margin:0; padding:14px 20px;">Mostrar todos</button>
+            </div>
+        </div>
+
+        <!-- LISTA -->
+        <p class="section-label">Usuarios registrados</p>
+        <div class="dashboardCard">
+            <div id="userList">Cargando usuarios...</div>
+        </div>
+
+    </div>
+
+    <!-- MODAL EDITAR -->
+    <div id="modalBackdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:999;" onclick="cerrarTodo()"></div>
+
+    <div id="editPanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1000; width:100%; max-width:460px; padding:16px;">
+        <div class="dashboardCard">
+            <h2 style="margin-bottom:20px;">Editar usuario</h2>
+            <input type="hidden" id="editId">
+            <div style="display:grid; gap:12px;">
+                <input type="text"  id="editNombre"   placeholder="Nombre">
+                <input type="text"  id="editApellido" placeholder="Apellido">
+                <input type="email" id="editEmail"    placeholder="Email">
+                <input type="text"  id="editTelefono" placeholder="Teléfono">
+                <div style="display:flex; gap:12px; margin-top:8px;">
+                    <button onclick="guardarCambios()" style="margin:0; max-width:none; flex:1;">Guardar cambios</button>
+                    <button onclick="cerrarEditar()" class="secondaryBtn" style="margin:0; max-width:none; flex:1;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ELIMINAR -->
+    <div id="deletePanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1001; width:100%; max-width:400px; padding:16px;">
+        <div class="dashboardCard" style="border-color:rgba(228,32,27,0.3);">
+            <h2 style="margin-bottom:8px; color:#ff6b6b;">Eliminar usuario</h2>
+            <p style="color:rgba(255,255,255,0.5); font-size:13px; margin-bottom:16px;">
+                Ingresa tu contraseña de administrador para confirmar.
+            </p>
+            <div style="display:grid; gap:12px;">
+                <input type="password" id="deletePassword" placeholder="Contraseña de administrador">
+                <div style="display:flex; gap:12px;">
+                    <button id="confirmDeleteBtn" class="dangerBtn" style="margin:0; max-width:none; flex:1;">Confirmar eliminación</button>
+                    <button onclick="cerrarEliminar()" class="secondaryBtn" style="margin:0; max-width:none; flex:1;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/comunes.js"></script>
+    <script src="Js/usuarios.js"></script>
+</body>
+</html>

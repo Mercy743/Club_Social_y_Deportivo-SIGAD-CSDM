@@ -10,6 +10,9 @@ const puerto = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+app.use(express.static(path.join(__dirname, '../Frontend')));
+
+
 /* ===== CONEXION BD ===== */
 const pool = new Pool({
     user: process.env.DB_USER,
@@ -107,6 +110,92 @@ app.post('/api/usuarios', async (req, res) => {
     }
 });
 
+app.delete('/api/usuarios/:id/seguro', async (req, res) => {
+    const { id } = req.params;
+    const { admin_id, password } = req.body;
+
+    try {
+        // Verificar admin
+        const admin = await pool.query(`
+            SELECT u.password, r.nombre as rol
+            FROM usuarios u
+            JOIN roles r ON u.rol_id = r.id
+            WHERE u.id = $1
+        `, [admin_id]);
+
+        if (admin.rows.length === 0 || admin.rows[0].rol !== 'admin') {
+            return res.status(403).json({ error: "No autorizado" });
+        }
+
+        // Validar contraseña
+        if (admin.rows[0].password !== password) {
+            return res.status(401).json({ error: "Contraseña incorrecta" });
+        }
+
+        if (parseInt(id) === parseInt(admin_id)) {
+            return res.status(400).json({ error: "No puedes eliminarte a ti mismo" });
+        }
+
+        await pool.query('DELETE FROM familiares WHERE socio_id IN (SELECT id FROM socios WHERE usuario_id = $1)', [id]);
+        await pool.query('DELETE FROM socios WHERE usuario_id = $1', [id]);
+        await pool.query('DELETE FROM instructores WHERE usuario_id = $1', [id]);
+        await pool.query('DELETE FROM reservaciones WHERE usuario_id = $1', [id]);
+
+        await pool.query('DELETE FROM usuarios WHERE id = $1', [id]);
+
+        res.json({ mensaje: "Usuario eliminado correctamente" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al eliminar usuario" });
+    }
+});
+
+app.get('/api/usuarios/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const resultado = await pool.query(`
+            SELECT id, nombre, apellido, email, telefono
+            FROM usuarios
+            WHERE id = $1
+        `,[id]);
+
+        if (resultado.rows.length == 0) {
+            return res.status(404).json({error: "Usuario no encontrado"});
+        }
+
+        res.json(resultado.rows[0]);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al obtener usuarios" });
+    }
+});
+
+app.post('/api/usuarios', async (req, res) => {
+    const { nombre, email, password, rol_id, telefono } = req.body;
+
+    try {
+        const existe = await pool.query('SELECT id FROM usuarios WHERE email = $1', [email]);
+        if (existe.rows.length > 0) {
+            return res.status(400).json({ error: "Email ya registrado" });
+        }
+
+        const resultado = await pool.query(`
+            INSERT INTO usuarios(nombre, email, password, rol_id, telefono, activo)
+            VALUES($1, $2, $3, $4, $5, true)
+            RETURNING id
+        `, [nombre, email, password, rol_id, telefono]);
+
+        res.json({ id: resultado.rows[0].id, mensaje: "Usuario creado" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al crear usuario" });
+    }
+});
+
 app.put('/api/usuarios/:id', async (req, res) => {
     const { id } = req.params;
     const { nombre, email, telefono, activo, rol_id } = req.body;
@@ -115,6 +204,7 @@ app.put('/api/usuarios/:id', async (req, res) => {
         await pool.query(`
             UPDATE usuarios 
             SET nombre = $1, email = $2, telefono = $3, activo = $4, rol_id = $5
+            SET nombre = $1, email = $2, telefono = $3, activo = COALESCE($4, activo), rol_id = COALESCE($5, rol_id)
             WHERE id = $6
         `, [nombre, email, telefono, activo, rol_id, id]);
 
@@ -593,19 +683,6 @@ app.delete('/api/eventos/:id', async (req, res) => {
     }
 });
 
-/* ===== ACTIVIDADES ===== */
-app.get('/api/actividades', async (req, res) => {
-    try {
-        const resultado = await pool.query(`
-            SELECT * FROM actividades ORDER BY nombre
-        `);
-        res.json(resultado.rows);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al obtener actividades" });
-    }
-});
-
 /* ===== ESTADISTICAS ===== */
 app.get('/api/estadisticas', async (req, res) => {
     try {
@@ -714,12 +791,12 @@ app.put('/api/usuarios/:id/rol', async (req, res) => {
 });
 
 /* ===== FRONTEND ===== */
-const frontendPath = path.join(__dirname, '../frontend');
+const frontendPath = path.join(__dirname, '../Frontend');
 
 app.use(express.static(frontendPath));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
+    res.sendFile(path.join(frontendPath, 'main.html'));
 });
 
 /* ===== SERVER ===== */
@@ -728,113 +805,245 @@ app.listen(puerto, () => {
 });
 
 
-// =========================
-// ACTIVIDADES
-// =========================
+/* ===== ACTIVIDADES ===== */
 
-// GET todas (MEJORADO)
 app.get("/api/actividades", async (req, res) => {
   try {
     const r = await pool.query(`
-      SELECT 
-        a.*,
-        COUNT(i.id) AS inscritos
+      SELECT a.*, COUNT(i.id) AS inscritos
       FROM actividades a
-      LEFT JOIN inscripciones i 
-        ON a.id = i.actividad_id AND i.estado = 'activa'
-      GROUP BY a.id
-      ORDER BY a.id
+      LEFT JOIN inscripciones i ON a.id = i.actividad_id AND i.estado = 'activa'
+      GROUP BY a.id ORDER BY a.id
     `);
-
     res.json(r.rows);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener actividades" });
   }
 });
-// GET por id
+
 app.get("/api/actividades/:id", async (req, res) => {
   try {
-    const r = await pool.query(
-      "SELECT * FROM actividades WHERE id=$1",
-      [req.params.id]
-    );
-
-    if (r.rows.length === 0) {
-      return res.status(404).json({ error: "No encontrada" });
-    }
-
+    const r = await pool.query(`SELECT a.*, COALESCE((SELECT COUNT(*) FROM inscripciones WHERE actividad_id = a.id AND estado = 'activa'), 0) as inscritos FROM actividades a WHERE a.id = $1`, [req.params.id]);
+    if (r.rows.length === 0) return res.status(404).json({ error: "No encontrada" });
     res.json(r.rows[0]);
   } catch (error) {
     res.status(500).json({ error: "Error" });
   }
 });
 
-// POST crear
 app.post("/api/actividades", async (req, res) => {
-  const { nombre, descripcion, capacidad } = req.body;
-
-  if (!nombre || !capacidad) {
-    return res.status(400).json({ error: "Datos incompletos" });
-  }
-
+  const { nombre, descripcion, capacidad, icono, nivel, duracion, equipo } = req.body;
+  if (!nombre || !capacidad) return res.status(400).json({ error: "Datos incompletos" });
   try {
     const r = await pool.query(
-      "INSERT INTO actividades(nombre, descripcion, capacidad) VALUES($1,$2,$3) RETURNING *",
-      [nombre, descripcion, capacidad]
+      `INSERT INTO actividades(nombre, descripcion, capacidad, icono, nivel, duracion, equipo) 
+       VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [nombre, descripcion || '', capacidad, icono, nivel, duracion, equipo]
     );
-
     res.status(201).json(r.rows[0]);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Error al crear" });
   }
 });
-
-// PUT editar
 app.put("/api/actividades/:id", async (req, res) => {
-  const { nombre, descripcion, capacidad } = req.body;
-
+  const { nombre, descripcion, capacidad, icono, nivel, duracion, equipo } = req.body;
   try {
     const r = await pool.query(
-      "UPDATE actividades SET nombre=$1, descripcion=$2, capacidad=$3 WHERE id=$4 RETURNING *",
-      [nombre, descripcion, capacidad, req.params.id]
+      `UPDATE actividades SET nombre=$1, descripcion=$2, capacidad=$3, icono=$4, nivel=$5, duracion=$6, equipo=$7 WHERE id=$8 RETURNING *`,
+      [nombre, descripcion || '', capacidad, icono, nivel, duracion, equipo, req.params.id]
     );
-
-    if (r.rows.length === 0) {
-      return res.status(404).json({ error: "No encontrada" });
-    }
-
+    if (r.rows.length === 0) return res.status(404).json({ error: "No encontrada" });
     res.json(r.rows[0]);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Error al actualizar" });
   }
 });
 
-// DELETE
 app.delete("/api/actividades/:id", async (req, res) => {
   try {
-    // validar inscripciones
-    const check = await pool.query(
-      "SELECT * FROM inscripciones WHERE actividad_id=$1 AND estado='activa'",
-      [req.params.id]
-    );
-
-    if (check.rows.length > 0) {
-      return res.status(400).json({
-        error: "No se puede eliminar, tiene inscripciones activas"
-      });
-    }
-
-    const r = await pool.query(
-      "DELETE FROM actividades WHERE id=$1 RETURNING *",
-      [req.params.id]
-    );
-
-    if (r.rows.length === 0) {
-      return res.status(404).json({ error: "No encontrada" });
-    }
-
+    const check = await pool.query("SELECT * FROM inscripciones WHERE actividad_id=$1 AND estado='activa'", [req.params.id]);
+    if (check.rows.length > 0) return res.status(400).json({ error: "Tiene inscripciones activas" });
+    const r = await pool.query("DELETE FROM actividades WHERE id=$1 RETURNING *", [req.params.id]);
+    if (r.rows.length === 0) return res.status(404).json({ error: "No encontrada" });
     res.json({ mensaje: "Actividad eliminada" });
   } catch (error) {
     res.status(500).json({ error: "Error al eliminar" });
+  }
+});
+
+// ===== INSTRUCTOR: Asignarse a una actividad =====
+app.post('/api/actividades/:id/asignar-instructor', async (req, res) => {
+    const { id } = req.params;
+    const { instructor_id } = req.body;
+    
+    try {
+        const usuario = await pool.query(
+            `SELECT u.id, r.nombre as rol 
+             FROM usuarios u
+             JOIN roles r ON u.rol_id = r.id
+             WHERE u.id = $1 AND r.nombre = 'instructor' AND u.activo = true`,
+            [instructor_id]
+        );
+        
+        if (usuario.rows.length === 0) {
+            return res.status(403).json({ error: "No eres instructor o no existe" });
+        }
+        
+        const actividad = await pool.query(
+            "SELECT id FROM actividades WHERE id = $1",
+            [id]
+        );
+        
+        if (actividad.rows.length === 0) {
+            return res.status(404).json({ error: "Actividad no encontrada" });
+        }
+        
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS actividad_instructores (
+                id SERIAL PRIMARY KEY,
+                actividad_id INTEGER REFERENCES actividades(id) ON DELETE CASCADE,
+                instructor_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+                fecha_asignacion DATE DEFAULT CURRENT_DATE,
+                activo BOOLEAN DEFAULT true,
+                UNIQUE(actividad_id, instructor_id)
+            )
+        `);
+        
+        const existe = await pool.query(
+            `SELECT id FROM actividad_instructores 
+             WHERE actividad_id = $1 AND instructor_id = $2 AND activo = true`,
+            [id, instructor_id]
+        );
+        
+        if (existe.rows.length > 0) {
+            return res.status(400).json({ error: "Ya estás asignado a esta actividad" });
+        }
+        
+        await pool.query(
+            `INSERT INTO actividad_instructores (actividad_id, instructor_id, fecha_asignacion, activo)
+             VALUES ($1, $2, CURRENT_DATE, true)`,
+            [id, instructor_id]
+        );
+        
+        res.json({ mensaje: "Te has asignado como instructor de esta actividad" });
+        
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al asignar instructor" });
+    }
+});
+
+// ===== Obtener instructores de una actividad =====
+app.get('/api/actividades/:id/instructores', async (req, res) => {
+    const { id } = req.params;
+    
+    try {
+        const resultado = await pool.query(`
+            SELECT u.id, u.nombre, u.email
+            FROM actividad_instructores ai
+            JOIN usuarios u ON ai.instructor_id = u.id
+            WHERE ai.actividad_id = $1 AND ai.activo = true
+        `, [id]);
+        
+        res.json(resultado.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al obtener instructores" });
+    }
+});
+
+// ===== SOCIO: Inscribirse a una actividad =====
+app.post('/api/actividades/:id/inscribirse', async (req, res) => {
+    const { id } = req.params;
+    const { socio_id } = req.body;
+    
+    try {
+        const usuario = await pool.query(
+            `SELECT u.id, r.nombre as rol 
+             FROM usuarios u
+             JOIN roles r ON u.rol_id = r.id
+             WHERE u.id = $1 AND r.nombre = 'socio' AND u.activo = true`,
+            [socio_id]
+        );
+        
+        if (usuario.rows.length === 0) {
+            return res.status(403).json({ error: "No eres socio o no existe" });
+        }
+        
+        const actividad = await pool.query(
+            `SELECT a.capacidad, a.nombre,
+                    (SELECT COUNT(*) FROM inscripciones 
+                     WHERE actividad_id = a.id AND estado = 'activa') as inscritos
+             FROM actividades a
+             WHERE a.id = $1`,
+            [id]
+        );
+        
+        if (actividad.rows.length === 0) {
+            return res.status(404).json({ error: "Actividad no encontrada" });
+        }
+        
+        const inscritos = parseInt(actividad.rows[0].inscritos) || 0;
+        const capacidad = actividad.rows[0].capacidad;
+        
+        if (inscritos >= capacidad) {
+            return res.status(400).json({ error: "No hay cupo disponible" });
+        }
+        
+        const existe = await pool.query(
+            `SELECT id FROM inscripciones 
+             WHERE actividad_id = $1 AND socio_id = $2 AND estado = 'activa'`,
+            [id, socio_id]
+        );
+        
+        if (existe.rows.length > 0) {
+            return res.status(400).json({ error: "Ya estás inscrito en esta actividad" });
+        }
+        
+        await pool.query(
+            `INSERT INTO inscripciones (actividad_id, socio_id, fecha_inscripcion, estado)
+             VALUES ($1, $2, CURRENT_DATE, 'activa')`,
+            [id, socio_id]
+        );
+        
+        res.json({ mensaje: "Te has inscrito exitosamente a la actividad" });
+        
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al inscribirse" });
+    }
+});
+
+// ===== SOCIO: Verificar si está inscrito =====
+app.get('/api/actividades/:id/inscrito/:socio_id', async (req, res) => {
+    const { id, socio_id } = req.params;
+    
+    try {
+        const resultado = await pool.query(`
+            SELECT * FROM inscripciones 
+            WHERE actividad_id = $1 AND socio_id = $2 AND estado = 'activa'
+        `, [id, socio_id]);
+        
+        res.json({ inscrito: resultado.rows.length > 0 });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al verificar inscripción" });
+    }
+});
+
+/* ===== PAGOS ===== */
+app.post('/api/pagos', async (req, res) => {
+  const { usuario_id, monto, fecha, metodo_pago, estado } = req.body;
+  try {
+    await pool.query(`
+      INSERT INTO pagos (usuario_id, monto, fecha, metodo_pago, estado)
+      VALUES ($1, $2, $3, $4, $5)
+    `, [usuario_id, monto, fecha, metodo_pago, estado]);
+    res.json({ mensaje: "Pago registrado correctamente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al registrar pago" });
   }
 });
