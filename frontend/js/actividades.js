@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// ─── FORMULARIO ──────────────────────────────────────────────────────────────
+// ─── FORMULARIO 
 
 async function guardarActividad(event) {
     event.preventDefault();
@@ -272,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// ─── DETALLE ─────────────────────────────────────────────────────────────────
+// ─── DETALLE 
 
 async function cargarDetalle() {
     const contenedor = document.getElementById("detalleActividad");
