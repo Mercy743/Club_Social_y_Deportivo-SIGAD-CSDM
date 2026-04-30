@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulario Torneo</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<h1 id="tituloForm">Crear Torneo</h1>
+
+<form id="formTorneo">
+  <input type="text" id="nombre" placeholder="Nombre" required>
+  <textarea id="descripcion" placeholder="Descripción"></textarea>
+
+  <label>Fecha inicio</label>
+  <input type="date" id="fecha_inicio" required>
+
+  <label>Fecha fin</label>
+  <input type="date" id="fecha_fin" required>
+
+  <input type="number" id="actividad_id" placeholder="ID Actividad" required>
+
+  <button type="submit">Guardar</button>
+</form>
+
+<script src="js/torneos.js"></script>
+</body>
+</html>
