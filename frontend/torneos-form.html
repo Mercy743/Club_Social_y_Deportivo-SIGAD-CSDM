@@ -3,27 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <title>Formulario Torneo</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
 
-<h1 id="tituloForm">Crear Torneo</h1>
+  <button onclick="volver()">← Volver</button>
 
-<form id="formTorneo">
-  <input type="text" id="nombre" placeholder="Nombre" required>
-  <textarea id="descripcion" placeholder="Descripción"></textarea>
+  <h1 id="tituloForm">Crear Torneo</h1>
 
-  <label>Fecha inicio</label>
-  <input type="date" id="fecha_inicio" required>
+  <form id="formTorneo">
 
-  <label>Fecha fin</label>
-  <input type="date" id="fecha_fin" required>
+    <label>Nombre del torneo</label>
+    <input type="text" id="nombre" required>
 
-  <input type="number" id="actividad_id" placeholder="ID Actividad" required>
+    <label>Descripción</label>
+    <textarea id="descripcion"></textarea>
 
-  <button type="submit">Guardar</button>
-</form>
+    <label>Fecha inicio</label>
+    <input type="date" id="fecha_inicio" required>
 
-<script src="js/torneos.js"></script>
+    <label>Fecha fin</label>
+    <input type="date" id="fecha_fin" required>
+
+    <label>Actividad</label>
+    <select id="actividad_id" required>
+      <option value="">Selecciona una actividad</option>
+    </select>
+
+    <button type="submit">Guardar Torneo</button>
+
+  </form>
+
+  <script src="/js/torneos.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+
+      const id = new URLSearchParams(window.location.search).get("id");
+
+      // 🔥 IMPORTANTE: cargar actividades primero
+      await cargarActividades();
+
+      if (id) {
+        document.getElementById("tituloForm").innerText = "Editar Torneo";
+
+        try {
+          const t = await fetchJSON(`http://localhost:3000/api/torneos/${id}`);
+
+          document.getElementById("nombre").value = t.nombre || "";
+          document.getElementById("descripcion").value = t.descripcion || "";
+          document.getElementById("fecha_inicio").value = t.fecha_inicio?.split("T")[0];
+          document.getElementById("fecha_fin").value = t.fecha_fin?.split("T")[0];
+          document.getElementById("actividad_id").value = t.actividad_id || "";
+
+        } catch {
+          alert("Error al cargar datos");
+        }
+      }
+
+      // 🔹 Validación fechas
+      const inicio = document.getElementById("fecha_inicio");
+      const fin = document.getElementById("fecha_fin");
+
+      function validarFechas() {
+        if (inicio.value && fin.value && new Date(fin.value) < new Date(inicio.value)) {
+          fin.setCustomValidity("La fecha fin no puede ser menor");
+        } else {
+          fin.setCustomValidity("");
+        }
+      }
+
+      inicio.addEventListener("change", validarFechas);
+      fin.addEventListener("change", validarFechas);
+
+    });
+  </script>
+
 </body>
 </html>

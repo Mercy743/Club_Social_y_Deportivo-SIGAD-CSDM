@@ -3,17 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <title>Torneos</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
 
-<h1>Torneos</h1>
+  <!-- 🔹 Botón volver -->
+  <button onclick="volver()">← Volver</button>
 
-<input type="text" id="busqueda" placeholder="Buscar torneo...">
-<button id="btnCrear">Crear Torneo</button>
+  <h1>Torneos</h1>
 
-<div id="contenedorTorneos"></div>
+  <!-- 🔹 Buscador -->
+  <input 
+    type="text" 
+    id="busqueda" 
+    placeholder="Buscar torneo..."
+    autocomplete="off"
+  >
 
-<script src="js/torneos.js"></script>
+  <!-- 🔹 Crear -->
+  <button id="btnCrear">Crear Torneo</button>
+
+  <!-- 🔹 Contenedor -->
+  <div id="contenedorTorneos" class="grid"></div>
+
+  <!-- 🔹 Mensaje vacío -->
+  <p id="noResultados" style="display:none;">No se encontraron torneos</p>
+
+  <script src="/js/torneos.js"></script>
+
+  <!-- 🔹 Script mejorado -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const input = document.getElementById("busqueda");
+      const mensaje = document.getElementById("noResultados");
+
+      if (!input) return;
+
+      input.addEventListener("input", () => {
+        const filtro = input.value.toLowerCase();
+        const tarjetas = document.querySelectorAll(".card");
+
+        let visibles = 0;
+
+        tarjetas.forEach(card => {
+          const texto = card.innerText.toLowerCase();
+          const match = texto.includes(filtro);
+
+          card.style.display = match ? "" : "none";
+
+          if (match) visibles++;
+        });
+
+        // mostrar mensaje si no hay resultados
+        mensaje.style.display = visibles === 0 ? "block" : "none";
+      });
+    });
+  </script>
+
 </body>
 </html>
