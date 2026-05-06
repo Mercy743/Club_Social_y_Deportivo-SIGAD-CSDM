@@ -324,7 +324,7 @@ app.delete('/api/familiares/:id', async (req, res) => {
 app.get('/api/instructores', async (req, res) => {
     try {
         const resultado = await pool.query(`
-            SELECT u.id, u.nombre, u.email, u.telefono, u.activo,
+            SELECT i.id, u.nombre, u.email, u.telefono, u.activo,
                    i.especialidad, i.fecha_contratacion
             FROM usuarios u
             JOIN instructores i ON u.id = i.usuario_id
@@ -597,13 +597,12 @@ app.post('/api/torneos', async (req, res) => {
 
 /* ===== EVENTOS ===== */
 app.post('/api/eventos', async (req, res) => {
-    const { nombre, descripcion, fecha_evento, creado_por } = req.body;
+    const { nombre, descripcion, fecha_evento, hora, creado_por } = req.body;
 
     try {
         await pool.query(
-            `INSERT INTO eventos(nombre, descripcion, fecha_evento, creado_por)
-             VALUES($1, $2, $3, $4)`,
-            [nombre, descripcion, fecha_evento, creado_por]
+            'INSERT INTO eventos(nombre, descripcion, fecha_evento, hora, creado_por) VALUES($1, $2, $3, $4, $5)',
+            [nombre, descripcion, fecha_evento, hora, creado_por]
         );
         res.json({ mensaje: "Evento creado" });
     } catch (error) {
@@ -615,7 +614,7 @@ app.post('/api/eventos', async (req, res) => {
 app.get('/api/eventos', async (req, res) => {
     try {
         const resultado = await pool.query(`
-            SELECT e.id_evento, e.nombre, e.descripcion, e.fecha_evento, u.nombre AS creador
+            SELECT e.id_evento, e.nombre, e.descripcion, e.fecha_evento, e.hora, u.nombre AS creador
             FROM eventos e
             LEFT JOIN usuarios u ON e.creado_por = u.id
             ORDER BY e.fecha_evento DESC
@@ -629,14 +628,14 @@ app.get('/api/eventos', async (req, res) => {
 
 app.put('/api/eventos/:id', async (req, res) => {
     const { id } = req.params;
-    const { nombre, descripcion, fecha_evento } = req.body;
+    const { nombre, descripcion, fecha_evento, hora } = req.body;
 
     try {
         await pool.query(
             `UPDATE eventos 
              SET nombre=$1, descripcion=$2, fecha_evento=$3 
              WHERE id_evento=$4`,
-            [nombre, descripcion, fecha_evento, id]
+            [nombre, descripcion, fecha_evento, hora, id]
         );
         res.json({ mensaje: "Evento actualizado" });
     } catch (error) {
@@ -667,6 +666,112 @@ app.get('/api/actividades', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Error al obtener actividades" });
+    }
+});
+
+/* ===== HORARIOS ===== */
+
+// Obtener todos los horarios
+app.get('/api/horarios', async (req, res) => {
+    try {
+        const resultado = await pool.query(`
+            SELECT h.*, 
+                   e.nombre as espacio_nombre,
+                   a.nombre as actividad_nombre,
+                   u.nombre as instructor_nombre
+            FROM horarios h
+            LEFT JOIN espacios_deportivos e ON h.espacio_id = e.id
+            LEFT JOIN actividades a ON h.actividad_id = a.id
+            LEFT JOIN usuarios u ON h.instructor_id = u.id
+            ORDER BY h.dia_semana, h.hora_inicio
+        `);
+        res.json(resultado.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al obtener horarios" });
+    }
+});
+
+// Crear horario
+app.post('/api/horarios', async (req, res) => {
+    const { espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia } = req.body;
+
+    try {
+        // Validar que no haya horarios superpuestos
+        const conflicto = await pool.query(`
+            SELECT * FROM horarios
+            WHERE espacio_id = $1
+            AND dia_semana = $2
+            AND activo = true
+            AND (
+                (hora_inicio BETWEEN $3 AND $4) OR
+                (hora_fin BETWEEN $3 AND $4) OR
+                ($3 BETWEEN hora_inicio AND hora_fin)
+            )
+        `, [espacio_id, dia_semana, hora_inicio, hora_fin]);
+
+        if (conflicto.rows.length > 0) {
+            return res.status(409).json({ error: "Ya existe un horario en ese espacio y horario" });
+        }
+
+        const resultado = await pool.query(`
+            INSERT INTO horarios(espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia, activo)
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, true)
+            RETURNING *
+        `, [espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia]);
+
+        res.json(resultado.rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al crear horario" });
+    }
+});
+
+// Actualizar horario
+app.put('/api/horarios/:id', async (req, res) => {
+    const { id } = req.params;
+    const { espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia } = req.body;
+
+    try {
+        await pool.query(`
+            UPDATE horarios
+            SET espacio_id = $1, actividad_id = $2, instructor_id = $3,
+                dia_semana = $4, hora_inicio = $5, hora_fin = $6,
+                fecha_inicio_vigencia = $7, fecha_fin_vigencia = $8
+            WHERE id = $9
+        `, [espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia, id]);
+
+        res.json({ mensaje: "Horario actualizado" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al actualizar horario" });
+    }
+});
+
+// Activar/desactivar horario
+app.patch('/api/horarios/:id/estado', async (req, res) => {
+    const { id } = req.params;
+    const { activo } = req.body;
+
+    try {
+        await pool.query(`UPDATE horarios SET activo = $1 WHERE id = $2`, [activo, id]);
+        res.json({ mensaje: "Estado actualizado" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al actualizar estado" });
+    }
+});
+
+// Eliminar horario
+app.delete('/api/horarios/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        await pool.query('DELETE FROM horarios WHERE id = $1', [id]);
+        res.json({ mensaje: "Horario eliminado" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al eliminar horario" });
     }
 });
 
