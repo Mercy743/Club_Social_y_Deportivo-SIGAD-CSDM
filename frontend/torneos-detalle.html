@@ -7,12 +7,98 @@
 </head>
 <body>
 
-  <button onclick="volver()">← Volver</button>
+  <!-- ================================= -->
+  <!-- 🔥 VOLVER -->
+  <!-- ================================= -->
+
+  <button onclick="volver()">
+    ← Volver
+  </button>
+
+  <!-- ================================= -->
+  <!-- 🔥 TÍTULO -->
+  <!-- ================================= -->
 
   <h1>Detalle del Torneo</h1>
 
-  <!-- 🔹 Contenido -->
-  <div id="detalle">Cargando...</div>
+  <!-- ================================= -->
+  <!-- 🔥 INFO TORNEO -->
+  <!-- ================================= -->
+
+  <div id="detalle">
+    Cargando...
+  </div>
+
+  <!-- ================================= -->
+  <!-- 🔥 PARTICIPANTES -->
+  <!-- ================================= -->
+
+  <h2>Participantes</h2>
+
+  <div id="participantes"></div>
+
+  <!-- ================================= -->
+  <!-- 🔥 BOTÓN MOSTRAR PANEL -->
+  <!-- ================================= -->
+
+  <button onclick="togglePanelUsuarios()">
+    + Agregar Participante
+  </button>
+
+  <!-- ================================= -->
+  <!-- 🔥 PANEL USUARIOS -->
+  <!-- ================================= -->
+
+  <div
+    id="panelUsuarios"
+
+    style="
+      display:none;
+      margin-top:20px;
+      border:1px solid #ccc;
+      padding:15px;
+      max-width:500px;
+    "
+  >
+
+    <h3>Agregar Participante</h3>
+
+    <!-- 🔹 Buscador -->
+    <input
+      type="text"
+      id="buscarUsuario"
+      placeholder="Buscar usuario..."
+      style="
+        width:100%;
+        padding:10px;
+        margin-bottom:15px;
+      "
+    >
+
+    <!-- 🔹 Lista -->
+    <div id="listaUsuarios"></div>
+
+  </div>
+
+  <!-- ================================= -->
+  <!-- 🔥 BRACKET -->
+  <!-- ================================= -->
+
+  <h2>Bracket</h2>
+
+  <div id="bracket"></div>
+
+  <!-- ================================= -->
+  <!-- 🔥 TOP 3 -->
+  <!-- ================================= -->
+
+  <h2>Top 3</h2>
+
+  <div id="top3"></div>
+
+  <!-- ================================= -->
+  <!-- 🔥 JS -->
+  <!-- ================================= -->
 
   <script src="/js/torneos.js"></script>
 
