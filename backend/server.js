@@ -623,7 +623,7 @@ app.get('/api/torneos', async (req, res) => {
       FROM torneos t
       LEFT JOIN actividades a ON t.actividad_id = a.id
       LEFT JOIN usuarios u ON t.creado_por = u.id
-      ORDER BY t.fecha_inicio DESC
+      ORDER BY t.fecha_inicio ASC
     `);
 
     res.json(r.rows);
@@ -632,7 +632,6 @@ app.get('/api/torneos', async (req, res) => {
     res.status(500).json({ error: "Error al obtener torneos" });
   }
 });
-
 
 // =============================
 // POST TORNEO
@@ -695,29 +694,103 @@ app.get('/api/torneos/:id', async (req, res) => {
 // PUT TORNEO
 // =============================
 app.put('/api/torneos/:id', async (req, res) => {
+
   const { id } = req.params;
-  const { nombre, descripcion, fecha_inicio, fecha_fin, actividad_id } = req.body;
 
-  if (!nombre || !fecha_inicio || !fecha_fin || !actividad_id) {
-    return res.status(400).json({ error: "Datos incompletos" });
-  }
-
-  if (new Date(fecha_fin) < new Date(fecha_inicio)) {
-    return res.status(400).json({ error: "Fecha inválida" });
-  }
+  const {
+    nombre,
+    descripcion,
+    fecha_inicio,
+    fecha_fin,
+    actividad_id,
+    estado
+  } = req.body;
 
   try {
+
+    // =============================
+    // SOLO CAMBIAR ESTADO
+    // =============================
+    if (estado) {
+
+      const r = await pool.query(`
+
+        UPDATE torneos
+        SET estado = $1
+        WHERE id = $2
+        RETURNING *
+
+      `, [
+        estado,
+        id
+      ]);
+
+      return res.json(r.rows[0]);
+    }
+
+    // =============================
+    // VALIDAR EDICIÓN NORMAL
+    // =============================
+    if (
+      !nombre ||
+      !fecha_inicio ||
+      !fecha_fin ||
+      !actividad_id
+    ) {
+
+      return res.status(400).json({
+        error: "Datos incompletos"
+      });
+    }
+
+    if (
+      new Date(fecha_fin) <
+      new Date(fecha_inicio)
+    ) {
+
+      return res.status(400).json({
+        error: "Fecha inválida"
+      });
+    }
+
+    // =============================
+    // EDITAR TORNEO
+    // =============================
     const r = await pool.query(`
+
       UPDATE torneos
-      SET nombre=$1, descripcion=$2, fecha_inicio=$3, fecha_fin=$4, actividad_id=$5
-      WHERE id=$6
+
+      SET
+        nombre = $1,
+        descripcion = $2,
+        fecha_inicio = $3,
+        fecha_fin = $4,
+        actividad_id = $5
+
+      WHERE id = $6
+
       RETURNING *
-    `, [nombre, descripcion, fecha_inicio, fecha_fin, actividad_id, id]);
+
+    `, [
+
+      nombre,
+      descripcion,
+      fecha_inicio,
+      fecha_fin,
+      actividad_id,
+      id
+
+    ]);
 
     res.json(r.rows[0]);
 
-  } catch {
-    res.status(500).json({ error: "Error al actualizar" });
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: "Error al actualizar"
+    });
   }
 });
 
@@ -748,29 +821,53 @@ app.delete('/api/torneos/:id', async (req, res) => {
   }
 });
 
-
 // =============================
 // CAMBIAR ESTADO
 // =============================
 app.put('/api/torneos/:id/estado', async (req, res) => {
+
   const { id } = req.params;
   const { estado } = req.body;
 
-  const validos = ['programado', 'en curso', 'finalizado'];
+  const estadosValidos = [
 
-  if (!validos.includes(estado)) {
-    return res.status(400).json({ error: "Estado inválido" });
+    "programado",
+    "en curso",
+    "finalizado",
+    "cancelado"
+
+  ];
+
+  if (!estadosValidos.includes(estado)) {
+
+    return res.status(400).json({
+      error: "Estado inválido"
+    });
   }
 
   try {
+
     const r = await pool.query(`
-      UPDATE torneos SET estado=$1 WHERE id=$2 RETURNING *
-    `, [estado, id]);
+
+      UPDATE torneos
+      SET estado = $1
+      WHERE id = $2
+      RETURNING *
+
+    `, [
+      estado,
+      id
+    ]);
 
     res.json(r.rows[0]);
 
-  } catch {
-    res.status(500).json({ error: "Error" });
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: "Error"
+    });
   }
 });
 

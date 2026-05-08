@@ -109,12 +109,10 @@ async function cargarActividades() {
     console.error(error);
   }
 }
-
-
-
 // =============================
 // LISTAR TORNEOS
 // =============================
+
 async function cargarTorneos() {
 
   const contenedor =
@@ -147,10 +145,105 @@ async function cargarTorneos() {
 
     data.forEach(t => {
 
-      html += `
-        <div class="card">
+      let color = "#444";
 
-          <h2>
+      switch (
+        (t.actividad_nombre || "")
+          .toLowerCase()
+      ) {
+
+        case "futbol":
+          color = "#2e7d32";
+          break;
+
+        case "tenis":
+          color = "#1565c0";
+          break;
+
+        case "padel":
+          color = "#6a1b9a";
+          break;
+
+        case "natacion":
+          color = "#00838f";
+          break;
+
+        case "basquetbol":
+          color = "#ef6c00";
+          break;
+
+        case "voleibol":
+          color = "#ad1457";
+          break;
+
+        case "squash":
+          color = "#5d4037";
+          break;
+
+        case "fronton":
+          color = "#455a64";
+          break;
+      }
+
+      let estadoColor = "#777";
+
+      switch (
+        (t.estado || "")
+          .toLowerCase()
+      ) {
+
+        case "programado":
+          estadoColor = "#f9a825";
+          break;
+
+        case "en curso":
+          estadoColor = "#2e7d32";
+          break;
+
+        case "finalizado":
+          estadoColor = "#616161";
+          break;
+
+        case "cancelado":
+          estadoColor = "#c62828";
+          break;
+      }
+
+      html += `
+        <div
+          class="card"
+          style="
+            border:1px solid #ccc;
+            border-radius:12px;
+            padding:20px;
+            margin-bottom:20px;
+            background:white;
+            box-shadow:0 2px 8px rgba(0,0,0,0.1);
+          "
+        >
+
+          <div
+            style="
+              display:inline-block;
+              background:${color};
+              color:white;
+              padding:5px 12px;
+              border-radius:20px;
+              font-size:12px;
+              margin-bottom:10px;
+              font-weight:bold;
+            "
+          >
+            ${escapeHTML(
+              t.actividad_nombre || "General"
+            )}
+          </div>
+
+          <h2
+            style="
+              margin-top:0;
+            "
+          >
             ${escapeHTML(t.nombre)}
           </h2>
 
@@ -161,30 +254,137 @@ async function cargarTorneos() {
           </p>
 
           <p>
-            <strong>Estado:</strong>
-            ${escapeHTML(t.estado)}
+
+            <strong>
+              Estado:
+            </strong>
+
+            <select
+              onchange="
+                cambiarEstado(
+                  ${t.id},
+                  this.value
+                )
+              "
+              style="
+                padding:5px 10px;
+                border-radius:8px;
+                border:none;
+                background:${estadoColor};
+                color:white;
+                font-weight:bold;
+                cursor:pointer;
+              "
+            >
+
+              <option
+                value="programado"
+                ${
+                  t.estado === "programado"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Programado
+              </option>
+
+              <option
+                value="en curso"
+                ${
+                  t.estado === "en curso"
+                    ? "selected"
+                    : ""
+                }
+              >
+                En curso
+              </option>
+
+              <option
+                value="finalizado"
+                ${
+                  t.estado === "finalizado"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Finalizado
+              </option>
+
+              <option
+                value="cancelado"
+                ${
+                  t.estado === "cancelado"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Cancelado
+              </option>
+
+            </select>
+
           </p>
 
           <p>
-            <strong>Organizador:</strong>
+
+            <strong>
+              Inicio:
+            </strong>
+
+            ${new Date(
+              t.fecha_inicio
+            ).toLocaleDateString()}
+
+          </p>
+
+          <p>
+
+            <strong>
+              Fin:
+            </strong>
+
+            ${new Date(
+              t.fecha_fin
+            ).toLocaleDateString()}
+
+          </p>
+
+          <p>
+
+            <strong>
+              Organizador:
+            </strong>
+
             ${
               escapeHTML(
                 t.creador_nombre || "N/A"
               )
             }
+
           </p>
 
-          <button onclick="verDetalle(${t.id})">
-            Ver
-          </button>
+          <div
+            style="
+              display:flex;
+              gap:10px;
+              margin-top:15px;
+              flex-wrap:wrap;
+            "
+          >
 
-          <button onclick="editar(${t.id})">
-            Editar
-          </button>
+            <button onclick="verDetalle(${t.id})">
+              Ver
+            </button>
 
-          <button onclick="eliminar(${t.id})">
-            Eliminar
-          </button>
+            <button onclick="editar(${t.id})">
+              Editar
+            </button>
+
+            <button onclick="eliminar(${t.id})">
+              Eliminar
+            </button>
+
+          </div>
 
         </div>
       `;
@@ -200,8 +400,6 @@ async function cargarTorneos() {
       "<p>Error al cargar torneos</p>";
   }
 }
-
-
 // =============================
 // CREAR / EDITAR
 // =============================
@@ -358,7 +556,6 @@ async function eliminar(id) {
   }
 }
 
-
 // =============================
 // CAMBIAR ESTADO
 // =============================
@@ -386,15 +583,33 @@ async function cambiarEstado(
       }
     );
 
-    alert(
-      "Estado actualizado"
-    );
+    // refrescar lista
+    if (
+      document.getElementById(
+        "contenedorTorneos"
+      )
+    ) {
 
-    cargarDetalle();
+      cargarTorneos();
+    }
+
+    // refrescar detalle
+    if (
+      document.getElementById(
+        "detalle"
+      )
+    ) {
+
+      cargarDetalle();
+    }
 
   } catch (error) {
 
-    alert(error.message);
+    console.error(error);
+
+    alert(
+      error.message || "Error"
+    );
   }
 }
 
