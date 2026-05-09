@@ -27,12 +27,22 @@
 
         <!-- TOPBAR -->
         <div class="dashboardTopbar">
-            <div class="topbarBrand">
+            <div class="topbarBrand" style="display: flex; gap: 12px; align-items: center;">
                 <span class="topbarGreeting">Módulo de gestión</span>
                 <h1>SIGAD <span class="topbarRole">· Usuarios</span></h1>
             </div>
             <div class="topbarActions">
-                <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">← Volver</button>
+                 <!-- Botón importar -->
+                    <label for="excelUploadInput" class="btn-import">
+                        Importar Socios
+                    </label>
+
+                    <!-- Botón exportar -->
+                    <button id="exportarBtn" class="btn-export">
+                        Exportar Socios
+                    </button>
+                <input type="file" id="excelUploadInput" accept=".xlsx,.xls" style="display: none;">
+                <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">Volver</button>
                 <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
             </div>
         </div>
@@ -41,7 +51,7 @@
         <p class="section-label">Buscar usuario</p>
         <div class="dashboardCard" style="margin-bottom: 24px;">
             <div class="userSearch" style="display:flex; flex-direction:row; gap:12px; align-items:center;">
-                <input type="text" id="searchInput" placeholder="Buscar por ID, INE o correo" style="flex:1; max-width:none; margin:0;">
+                <input type="text" id="searchInput" placeholder="Buscar por ID, número de acción o correo" style="flex:1; max-width:none; margin:0;">
                 <button id="searchBtn" class="secondaryBtn" style="max-width:140px; margin:0; padding:14px 20px;">Buscar</button>
                 <button id="resetBtn" class="secondaryBtn" style="max-width:160px; margin:0; padding:14px 20px;">Mostrar todos</button>
             </div>
@@ -93,5 +103,18 @@
     </div>
     <script src="js/comunes.js"></script>
     <script src="Js/usuarios.js"></script>
+        <!-- MODAL DE PROGRESO PARA IMPORTACION -->
+        <div id="importModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center; padding:20px;">
+            <div class="dashboardCard" style="max-width:650px; max-height:80vh; width:100%; text-align:center; display:flex; flex-direction:column; overflow:hidden;">
+                <h3 id="importStatus" style="margin:0 0 16px 0;">Importando socios</h3>
+                <div id="importProgress" style="margin:0; text-align:left; font-size:13px; overflow-y:auto; flex:1; padding-right:8px;">
+                    Procesando...
+                </div>
+                <button id="closeImportBtn" style="display:none; margin-top:20px;" onclick="cerrarImportModal()" class="secondaryBtn">Cerrar</button>
+            </div>
+        </div>
+        <button id="closeImportBtn" style="display:none; margin-top:16px;" onclick="cerrarImportModal()" class="secondaryBtn">Cerrar</button>
+    </div>
+</div>
 </body>
 </html>
