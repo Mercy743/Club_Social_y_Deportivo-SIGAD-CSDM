@@ -138,6 +138,7 @@ app.post('/api/usuarios', async (req, res) => {
         res.json({ id: resultado.rows[0].id, mensaje: "Usuario creado" });
 
     } catch (error) {
+
         console.error(error);
         res.status(500).json({ error: "Error al crear usuario" });
     }
@@ -641,40 +642,1178 @@ app.get('/api/invitados/hoy', async (req, res) => {
         res.status(500).json({ error: "Error al obtener invitados" });
     }
 });
-
 /* ===== TORNEOS ===== */
+
+// =============================
+// GET TORNEOS
+// =============================
 app.get('/api/torneos', async (req, res) => {
-    try {
-        const resultado = await pool.query(`
-            SELECT t.*, a.nombre as actividad_nombre, u.nombre as creador_nombre
-            FROM torneos t
-            LEFT JOIN actividades a ON t.actividad_id = a.id
-            LEFT JOIN usuarios u ON t.creado_por = u.id
-            ORDER BY t.fecha_inicio DESC
-        `);
-        res.json(resultado.rows);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al obtener torneos" });
-    }
+  try {
+    const r = await pool.query(`
+      SELECT 
+        t.*, 
+        a.nombre AS actividad_nombre, 
+        u.nombre AS creador_nombre
+      FROM torneos t
+      LEFT JOIN actividades a ON t.actividad_id = a.id
+      LEFT JOIN usuarios u ON t.creado_por = u.id
+      ORDER BY t.fecha_inicio ASC
+    `);
+
+    res.json(r.rows);
+
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener torneos" });
+  }
 });
 
+// =============================
+// POST TORNEO
+// =============================
 app.post('/api/torneos', async (req, res) => {
-    const { nombre, descripcion, fecha_inicio, fecha_fin, actividad_id, creado_por } = req.body;
+  let { nombre, descripcion, fecha_inicio, fecha_fin, actividad_id, creado_por } = req.body;
 
-    try {
-        const resultado = await pool.query(`
-            INSERT INTO torneos(nombre, descripcion, fecha_inicio, fecha_fin, actividad_id, creado_por)
-            VALUES($1, $2, $3, $4, $5, $6)
-            RETURNING *
-        `, [nombre, descripcion, fecha_inicio, fecha_fin, actividad_id, creado_por]);
+  nombre = nombre?.trim();
+  descripcion = descripcion?.trim() || "";
 
-        res.json(resultado.rows[0]);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al crear torneo" });
-    }
+  if (!nombre || !fecha_inicio || !fecha_fin || !actividad_id) {
+    return res.status(400).json({ error: "Faltan campos obligatorios" });
+  }
+
+  if (new Date(fecha_fin) < new Date(fecha_inicio)) {
+    return res.status(400).json({ error: "Fecha inválida" });
+  }
+
+  try {
+    const usuarioId = creado_por || 1;
+
+    const r = await pool.query(`
+      INSERT INTO torneos(
+        nombre, descripcion, fecha_inicio, fecha_fin, actividad_id, estado, creado_por
+      )
+      VALUES($1,$2,$3,$4,$5,'programado',$6)
+      RETURNING *
+    `, [nombre, descripcion, fecha_inicio, fecha_fin, actividad_id, usuarioId]);
+
+    res.status(201).json(r.rows[0]);
+
+  } catch (error) {
+    res.status(500).json({ error: "Error al crear torneo" });
+  }
 });
+
+
+// =============================
+// GET TORNEO POR ID
+// =============================
+app.get('/api/torneos/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const r = await pool.query(`SELECT * FROM torneos WHERE id = $1`, [id]);
+
+    if (r.rows.length === 0) {
+      return res.status(404).json({ error: "No encontrado" });
+    }
+
+    res.json(r.rows[0]);
+
+  } catch {
+    res.status(500).json({ error: "Error" });
+  }
+});
+
+
+// =============================
+// PUT TORNEO
+// =============================
+app.put('/api/torneos/:id', async (req, res) => {
+
+  const { id } = req.params;
+
+  const {
+    nombre,
+    descripcion,
+    fecha_inicio,
+    fecha_fin,
+    actividad_id,
+    estado
+  } = req.body;
+
+  try {
+
+    // =============================
+    // SOLO CAMBIAR ESTADO
+    // =============================
+    if (estado) {
+
+      const r = await pool.query(`
+
+        UPDATE torneos
+        SET estado = $1
+        WHERE id = $2
+        RETURNING *
+
+      `, [
+        estado,
+        id
+      ]);
+
+      return res.json(r.rows[0]);
+    }
+
+    // =============================
+    // VALIDAR EDICIÓN NORMAL
+    // =============================
+    if (
+      !nombre ||
+      !fecha_inicio ||
+      !fecha_fin ||
+      !actividad_id
+    ) {
+
+      return res.status(400).json({
+        error: "Datos incompletos"
+      });
+    }
+
+    if (
+      new Date(fecha_fin) <
+      new Date(fecha_inicio)
+    ) {
+
+      return res.status(400).json({
+        error: "Fecha inválida"
+      });
+    }
+
+    // =============================
+    // EDITAR TORNEO
+    // =============================
+    const r = await pool.query(`
+
+      UPDATE torneos
+
+      SET
+        nombre = $1,
+        descripcion = $2,
+        fecha_inicio = $3,
+        fecha_fin = $4,
+        actividad_id = $5
+
+      WHERE id = $6
+
+      RETURNING *
+
+    `, [
+
+      nombre,
+      descripcion,
+      fecha_inicio,
+      fecha_fin,
+      actividad_id,
+      id
+
+    ]);
+
+    res.json(r.rows[0]);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: "Error al actualizar"
+    });
+  }
+});
+
+
+// =============================
+// DELETE TORNEO (CON REGLA)
+// =============================
+app.delete('/api/torneos/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const t = await pool.query(`SELECT estado FROM torneos WHERE id=$1`, [id]);
+
+    if (t.rows.length === 0) {
+      return res.status(404).json({ error: "No encontrado" });
+    }
+
+    if (t.rows[0].estado !== 'programado') {
+      return res.status(400).json({ error: "Solo se puede eliminar si está programado" });
+    }
+
+    await pool.query(`DELETE FROM torneos WHERE id=$1`, [id]);
+
+    res.json({ mensaje: "Eliminado" });
+
+  } catch {
+    res.status(500).json({ error: "Error al eliminar" });
+  }
+});
+
+// =============================
+// CAMBIAR ESTADO
+// =============================
+app.put('/api/torneos/:id/estado', async (req, res) => {
+
+  const { id } = req.params;
+  const { estado } = req.body;
+
+  const estadosValidos = [
+
+    "programado",
+    "en curso",
+    "finalizado",
+    "cancelado"
+
+  ];
+
+  if (!estadosValidos.includes(estado)) {
+
+    return res.status(400).json({
+      error: "Estado inválido"
+    });
+  }
+
+  try {
+
+    const r = await pool.query(`
+
+      UPDATE torneos
+      SET estado = $1
+      WHERE id = $2
+      RETURNING *
+
+    `, [
+      estado,
+      id
+    ]);
+
+    res.json(r.rows[0]);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: "Error"
+    });
+  }
+});
+
+
+
+/* ===== PARTICIPANTES ===== */
+
+// =============================
+// GET PARTICIPANTES
+// =============================
+app.get('/api/torneos/:id/participantes', async (req, res) => {
+
+  const { id } = req.params;
+
+  try {
+
+    const r = await pool.query(`
+
+      SELECT
+
+        pt.*,
+
+        u.nombre,
+        u.apellido,
+        u.email
+
+      FROM participantes_torneo pt
+
+      LEFT JOIN usuarios u
+        ON pt.usuario_id = u.id
+
+      WHERE pt.torneo_id = $1
+
+      ORDER BY pt.id
+
+    `, [id]);
+
+    res.json(r.rows);
+
+  } catch {
+
+    res.status(500).json({
+      error: "Error"
+    });
+  }
+});
+
+
+// =============================
+// POST PARTICIPANTE
+// =============================
+app.post('/api/torneos/:id/participantes', async (req, res) => {
+  const { id } = req.params;
+  const { usuario_id, nombre_invitado, cuota_pagada } = req.body;
+
+  try {
+    if (!usuario_id && !nombre_invitado) {
+      return res.status(400).json({ error: "Debe enviar usuario o invitado" });
+    }
+
+    if (usuario_id) {
+      const existe = await pool.query(`
+        SELECT id FROM participantes_torneo
+        WHERE torneo_id=$1 AND usuario_id=$2
+      `, [id, usuario_id]);
+
+      if (existe.rows.length > 0) {
+        return res.status(400).json({ error: "Ya registrado" });
+      }
+    }
+
+    const r = await pool.query(`
+      INSERT INTO participantes_torneo
+      (torneo_id, usuario_id, nombre_invitado, cuota_pagada)
+      VALUES ($1,$2,$3,$4)
+      RETURNING *
+    `, [id, usuario_id || null, nombre_invitado || null, cuota_pagada || 0]);
+
+    res.json(r.rows[0]);
+
+  } catch {
+    res.status(500).json({ error: "Error" });
+  }
+});
+
+
+// =============================
+// DELETE PARTICIPANTE
+// =============================
+app.delete('/api/torneos/:id/participantes/:pid', async (req, res) => {
+  const { pid } = req.params;
+
+  try {
+    await pool.query(`DELETE FROM participantes_torneo WHERE id=$1`, [pid]);
+
+    res.json({ mensaje: "Eliminado" });
+
+  } catch {
+    res.status(500).json({ error: "Error" });
+  }
+});
+
+
+// =============================
+// PUT RESULTADO
+// =============================
+app.put('/api/torneos/:id/participantes/:pid/resultado', async (req, res) => {
+  const { pid } = req.params;
+  const { resultado } = req.body;
+
+  try {
+    const r = await pool.query(`
+      UPDATE participantes_torneo
+      SET resultado=$1
+      WHERE id=$2
+      RETURNING *
+    `, [resultado, pid]);
+
+    res.json(r.rows[0]);
+
+  } catch {
+    res.status(500).json({ error: "Error" });
+  }
+});
+
+
+// =========================================
+// GENERAR BRACKET AUTOMATICO
+// =========================================
+app.post('/api/torneos/:id/generar-bracket', async (req, res) => {
+
+  const { id } = req.params;
+
+  try {
+
+    // 🔹 obtener participantes
+    const participantesResult = await pool.query(`
+      SELECT *
+      FROM participantes_torneo
+      WHERE torneo_id = $1
+      ORDER BY RANDOM()
+    `, [id]);
+
+    const participantes = participantesResult.rows;
+
+    if (participantes.length < 2) {
+      return res.status(400).json({
+        error: 'Se necesitan al menos 2 participantes'
+      });
+    }
+
+    // 🔹 validar pares
+    if (participantes.length % 2 !== 0) {
+      return res.status(400).json({
+        error: 'El número de participantes debe ser par'
+      });
+    }
+
+    // 🔹 detectar ronda
+    let ronda = 'Primera ronda';
+
+    if (participantes.length === 4) {
+      ronda = 'Semifinal';
+    }
+
+    if (participantes.length === 8) {
+      ronda = 'Cuartos';
+    }
+
+    if (participantes.length === 16) {
+      ronda = 'Octavos';
+    }
+
+    const partidosGenerados = [];
+
+    // 🔹 crear partidos
+    for (let i = 0; i < participantes.length; i += 2) {
+
+      const p1 = participantes[i];
+      const p2 = participantes[i + 1];
+
+      const partido = await pool.query(`
+        INSERT INTO partidos (
+          torneo_id,
+          participante1_id,
+          participante2_id,
+          ronda,
+          estado
+        )
+        VALUES ($1,$2,$3,$4,'pendiente')
+        RETURNING *
+      `, [
+        id,
+        p1.id,
+        p2.id,
+        ronda
+      ]);
+
+      partidosGenerados.push(partido.rows[0]);
+    }
+
+    res.json({
+      mensaje: 'Bracket generado correctamente',
+      ronda,
+      partidos: partidosGenerados
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error al generar bracket'
+    });
+  }
+});
+
+// =========================================
+// OBTENER BRACKET
+// =========================================
+app.get('/api/torneos/:id/bracket', async (req, res) => {
+
+  const { id } = req.params;
+
+  try {
+
+    const r = await pool.query(`
+
+      SELECT
+
+        p.*,
+
+        COALESCE(
+          u1.nombre,
+          pt1.nombre_invitado,
+          'Jugador 1'
+        ) AS jugador1,
+
+        COALESCE(
+          u2.nombre,
+          pt2.nombre_invitado,
+          'Jugador 2'
+        ) AS jugador2
+
+      FROM partidos p
+
+      LEFT JOIN participantes_torneo pt1
+        ON p.participante1_id = pt1.id
+
+      LEFT JOIN participantes_torneo pt2
+        ON p.participante2_id = pt2.id
+
+      LEFT JOIN usuarios u1
+        ON pt1.usuario_id = u1.id
+
+      LEFT JOIN usuarios u2
+        ON pt2.usuario_id = u2.id
+
+      WHERE p.torneo_id = $1
+
+      ORDER BY p.id
+
+    `, [id]);
+
+    const partidos = r.rows;
+
+    const bracket = {};
+
+    partidos.forEach(p => {
+
+      if (!bracket[p.ronda]) {
+
+        bracket[p.ronda] = [];
+      }
+
+      bracket[p.ronda].push(p);
+    });
+
+    res.json(bracket);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error al obtener bracket'
+    });
+  }
+});
+
+// =============================
+// GET PARTIDOS DE UN TORNEO
+// =============================
+app.get('/api/torneos/:id/partidos', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+
+    const r = await pool.query(`
+      SELECT *
+      FROM partidos
+      WHERE torneo_id = $1
+      ORDER BY fecha, hora_inicio
+    `, [id]);
+
+    res.json(r.rows);
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error al obtener partidos'
+    });
+  }
+});
+
+// =========================================
+// GENERAR SIGUIENTE RONDA
+// =========================================
+app.post('/api/torneos/:id/siguiente-ronda', async (req, res) => {
+
+  const { id } = req.params;
+
+  try {
+
+    // 🔹 obtener partidos finalizados
+    const partidosResult = await pool.query(`
+      SELECT *
+      FROM partidos
+      WHERE torneo_id = $1
+      AND estado = 'finalizado'
+      ORDER BY id
+    `, [id]);
+
+    const partidos = partidosResult.rows;
+
+    if (partidos.length === 0) {
+      return res.status(400).json({
+        error: 'No hay partidos finalizados'
+      });
+    }
+
+    // 🔹 obtener ganadores
+    const ganadores = partidos
+      .filter(p => p.ganador_id)
+      .map(p => p.ganador_id);
+
+    // =====================================
+    // 🔥 CAMPEÓN + TOP 3
+    // =====================================
+    if (ganadores.length === 1) {
+
+      const campeon = ganadores[0];
+
+      // 🔹 obtener final
+      const finalResult = await pool.query(`
+        SELECT *
+        FROM partidos
+        WHERE torneo_id = $1
+        AND ronda = 'Final'
+        AND estado = 'finalizado'
+        LIMIT 1
+      `, [id]);
+
+      let segundoLugar = null;
+
+      if (finalResult.rows.length > 0) {
+
+        const final = finalResult.rows[0];
+
+        segundoLugar =
+          final.participante1_id === campeon
+            ? final.participante2_id
+            : final.participante1_id;
+      }
+
+      // 🔹 semifinalistas perdedores
+      const semifinales = await pool.query(`
+        SELECT *
+        FROM partidos
+        WHERE torneo_id = $1
+        AND ronda = 'Semifinal'
+        AND estado = 'finalizado'
+      `, [id]);
+
+      let tercerLugar = null;
+
+      if (semifinales.rows.length > 0) {
+
+        const perdedores = semifinales.rows.map(s => {
+
+          return s.participante1_id === s.ganador_id
+            ? s.participante2_id
+            : s.participante1_id;
+        });
+
+        tercerLugar = perdedores[0] || null;
+      }
+
+      // 🔹 guardar top 3
+      await pool.query(`
+        INSERT INTO resultados_torneo (
+          torneo_id,
+          primer_lugar,
+          segundo_lugar,
+          tercer_lugar
+        )
+        VALUES ($1,$2,$3,$4)
+      `, [
+        id,
+        campeon,
+        segundoLugar,
+        tercerLugar
+      ]);
+
+      // 🔹 finalizar torneo
+      await pool.query(`
+        UPDATE torneos
+        SET estado = 'finalizado'
+        WHERE id = $1
+      `, [id]);
+
+      return res.json({
+        mensaje: 'Torneo finalizado',
+        campeon,
+        segundoLugar,
+        tercerLugar
+      });
+    }
+
+    // 🔹 validar suficientes ganadores
+    if (ganadores.length < 2) {
+      return res.status(400).json({
+        error: 'No hay suficientes ganadores'
+      });
+    }
+
+    // 🔹 detectar nueva ronda
+    let ronda = 'Nueva ronda';
+
+    if (ganadores.length === 2) {
+      ronda = 'Final';
+    }
+
+    if (ganadores.length === 4) {
+      ronda = 'Semifinal';
+    }
+
+    if (ganadores.length === 8) {
+      ronda = 'Cuartos';
+    }
+
+    const nuevosPartidos = [];
+
+    // 🔹 crear nueva ronda
+    for (let i = 0; i < ganadores.length; i += 2) {
+
+      const partido = await pool.query(`
+        INSERT INTO partidos (
+          torneo_id,
+          participante1_id,
+          participante2_id,
+          ronda,
+          estado
+        )
+        VALUES ($1,$2,$3,$4,'pendiente')
+        RETURNING *
+      `, [
+        id,
+        ganadores[i],
+        ganadores[i + 1],
+        ronda
+      ]);
+
+      nuevosPartidos.push(partido.rows[0]);
+    }
+
+    res.json({
+      mensaje: 'Siguiente ronda generada',
+      ronda,
+      partidos: nuevosPartidos
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error al generar siguiente ronda'
+    });
+  }
+});
+// =========================================
+// TOP 3 DEL TORNEO
+// =========================================
+app.get('/api/torneos/:id/top3', async (req, res) => {
+
+  const { id } = req.params;
+
+  try {
+
+    const r = await pool.query(`
+
+      SELECT
+
+        rt.*,
+
+        p1.nombre_invitado AS primer_nombre,
+        p1.usuario_id AS primer_usuario,
+
+        p2.nombre_invitado AS segundo_nombre,
+        p2.usuario_id AS segundo_usuario,
+
+        p3.nombre_invitado AS tercer_nombre,
+        p3.usuario_id AS tercer_usuario
+
+      FROM resultados_torneo rt
+
+      LEFT JOIN participantes_torneo p1
+        ON rt.primer_lugar = p1.id
+
+      LEFT JOIN participantes_torneo p2
+        ON rt.segundo_lugar = p2.id
+
+      LEFT JOIN participantes_torneo p3
+        ON rt.tercer_lugar = p3.id
+
+      WHERE rt.torneo_id = $1
+
+    `, [id]);
+
+    if (r.rows.length === 0) {
+
+      return res.status(404).json({
+        error: 'Top 3 no disponible'
+      });
+    }
+
+    res.json(r.rows[0]);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error al obtener top 3'
+    });
+  }
+});
+
+
+// =========================================
+// TABLA DE POSICIONES
+// =========================================
+app.get('/api/torneos/:id/tabla', async (req, res) => {
+
+  const { id } = req.params;
+
+  try {
+
+    // 🔹 obtener participantes
+    const participantesResult = await pool.query(`
+      SELECT *
+      FROM participantes_torneo
+      WHERE torneo_id = $1
+    `, [id]);
+
+    const participantes = participantesResult.rows;
+
+    // 🔹 obtener partidos finalizados
+    const partidosResult = await pool.query(`
+      SELECT *
+      FROM partidos
+      WHERE torneo_id = $1
+      AND estado = 'finalizado'
+    `, [id]);
+
+    const partidos = partidosResult.rows;
+
+    // 🔹 tabla
+    const tabla = {};
+
+    // inicializar
+    participantes.forEach(p => {
+
+      tabla[p.id] = {
+        participante_id: p.id,
+
+        nombre:
+          p.nombre_invitado ||
+          `Usuario ${p.usuario_id}`,
+
+        PJ: 0,
+        PG: 0,
+        PE: 0,
+        PP: 0,
+
+        GF: 0,
+        GC: 0,
+
+        PTS: 0
+      };
+    });
+
+    // 🔹 procesar partidos
+    partidos.forEach(partido => {
+
+      const p1 = tabla[partido.participante1_id];
+      const p2 = tabla[partido.participante2_id];
+
+      if (!p1 || !p2) return;
+
+      // PJ
+      p1.PJ++;
+      p2.PJ++;
+
+      // goles
+      p1.GF += partido.marcador1;
+      p1.GC += partido.marcador2;
+
+      p2.GF += partido.marcador2;
+      p2.GC += partido.marcador1;
+
+      // ganador
+      if (partido.marcador1 > partido.marcador2) {
+
+        p1.PG++;
+        p2.PP++;
+
+        p1.PTS += 3;
+
+      } else if (partido.marcador2 > partido.marcador1) {
+
+        p2.PG++;
+        p1.PP++;
+
+        p2.PTS += 3;
+
+      } else {
+
+        // empate
+        p1.PE++;
+        p2.PE++;
+
+        p1.PTS += 1;
+        p2.PTS += 1;
+      }
+    });
+
+    // 🔹 ordenar
+    const resultado = Object.values(tabla).sort((a, b) => {
+
+      // puntos
+      if (b.PTS !== a.PTS) {
+        return b.PTS - a.PTS;
+      }
+
+      // diferencia goles
+      const diffA = a.GF - a.GC;
+      const diffB = b.GF - b.GC;
+
+      return diffB - diffA;
+    });
+
+    res.json(resultado);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error al generar tabla'
+    });
+  }
+});
+
+
+/* =========================================
+   PARTIDOS
+========================================= */
+
+
+// =============================
+// GET PARTIDO POR ID
+// =============================
+app.get('/api/partidos/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+
+    const r = await pool.query(`
+      SELECT *
+      FROM partidos
+      WHERE id = $1
+    `, [id]);
+
+    if (r.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Partido no encontrado'
+      });
+    }
+
+    res.json(r.rows[0]);
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error al obtener partido'
+    });
+  }
+});
+
+
+// =============================
+// CREAR PARTIDO
+// =============================
+app.post('/api/torneos/:id/partidos', async (req, res) => {
+  const { id } = req.params;
+
+  const {
+    participante1_id,
+    participante2_id,
+    ronda,
+    espacio_id,
+    fecha,
+    hora_inicio,
+    hora_fin
+  } = req.body;
+
+  try {
+
+    const r = await pool.query(`
+      INSERT INTO partidos (
+        torneo_id,
+        participante1_id,
+        participante2_id,
+        ronda,
+        espacio_id,
+        fecha,
+        hora_inicio,
+        hora_fin
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      RETURNING *
+    `, [
+      id,
+      participante1_id,
+      participante2_id,
+      ronda,
+      espacio_id,
+      fecha,
+      hora_inicio,
+      hora_fin
+    ]);
+
+    res.status(201).json(r.rows[0]);
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error al crear partido'
+    });
+  }
+});
+
+
+// =============================
+// ACTUALIZAR PARTIDO
+// =============================
+app.put('/api/partidos/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const {
+    participante1_id,
+    participante2_id,
+    ronda,
+    espacio_id,
+    fecha,
+    hora_inicio,
+    hora_fin,
+    estado
+  } = req.body;
+
+  try {
+
+    const r = await pool.query(`
+      UPDATE partidos
+      SET
+        participante1_id = $1,
+        participante2_id = $2,
+        ronda = $3,
+        espacio_id = $4,
+        fecha = $5,
+        hora_inicio = $6,
+        hora_fin = $7,
+        estado = $8
+      WHERE id = $9
+      RETURNING *
+    `, [
+      participante1_id,
+      participante2_id,
+      ronda,
+      espacio_id,
+      fecha,
+      hora_inicio,
+      hora_fin,
+      estado,
+      id
+    ]);
+
+    if (r.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Partido no encontrado'
+      });
+    }
+
+    res.json(r.rows[0]);
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error al actualizar partido'
+    });
+  }
+});
+
+
+// =============================
+// ELIMINAR PARTIDO
+// =============================
+app.delete('/api/partidos/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+
+    const r = await pool.query(`
+      DELETE FROM partidos
+      WHERE id = $1
+      RETURNING *
+    `, [id]);
+
+    if (r.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Partido no encontrado'
+      });
+    }
+
+    res.json({
+      mensaje: 'Partido eliminado'
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error al eliminar partido'
+    });
+  }
+});
+
+
+// =============================
+// REGISTRAR RESULTADO
+// =============================
+app.put('/api/partidos/:id/resultado', async (req, res) => {
+  const { id } = req.params;
+
+  const {
+    marcador1,
+    marcador2,
+    ganador_id
+  } = req.body;
+
+  try {
+
+    const r = await pool.query(`
+      UPDATE partidos
+      SET
+        marcador1 = $1,
+        marcador2 = $2,
+        ganador_id = $3,
+        estado = 'finalizado'
+      WHERE id = $4
+      RETURNING *
+    `, [
+      marcador1,
+      marcador2,
+      ganador_id,
+      id
+    ]);
+
+    if (r.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Partido no encontrado'
+      });
+    }
+
+    res.json(r.rows[0]);
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error al registrar resultado'
+    });
+  }
+});
+
+
 
 /* ===== EVENTOS ===== */
 app.post('/api/eventos', async (req, res) => {
