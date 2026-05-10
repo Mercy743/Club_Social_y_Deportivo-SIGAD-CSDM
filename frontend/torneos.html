@@ -1,64 +1,47 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Torneos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Torneos - SIGAD</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/torneos.css">
 </head>
-<body>
+<body class="dashboardPage">
 
-  <!-- 🔹 Botón volver -->
-  <button onclick="volver()">← Volver</button>
+<svg class="bg-playbook" viewBox="0 0 700 560" ...>
+</svg>
 
-  <h1>Torneos</h1>
+<div class="dashboardWrapper">
+    <div class="dashboardTopbar">
+        <div class="topbarBrand">
+            <span class="topbarGreeting">Competencias</span>
+            <h1>SIGAD <span class="topbarRole">· Torneos</span></h1>
+        </div>
+        <div class="topbarActions">
+            <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">Volver</button>
+            <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
+        </div>
+    </div>
 
-  <!-- 🔹 Buscador -->
-  <input 
-    type="text" 
-    id="busqueda" 
-    placeholder="Buscar torneo..."
-    autocomplete="off"
-  >
+    <p class="section-label">Gestión de torneos</p>
+    
+    <div class="header-torneos">
+        <div class="buscador-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" id="busqueda" placeholder="Buscar torneo...">
+        </div>
+        <button id="btnCrear" class="btn-crear-torneo">
+            <i class="fas fa-plus"></i> Crear Torneo
+        </button>
+    </div>
 
-  <!-- 🔹 Crear -->
-  <button id="btnCrear">Crear Torneo</button>
+    <div id="contenedorTorneos" class="grid-torneos"></div>
+</div>
 
-  <!-- 🔹 Contenedor -->
-  <div id="contenedorTorneos" class="grid"></div>
-
-  <!-- 🔹 Mensaje vacío -->
-  <p id="noResultados" style="display:none;">No se encontraron torneos</p>
-
-  <script src="/js/torneos.js"></script>
-
-  <!-- 🔹 Script mejorado -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const input = document.getElementById("busqueda");
-      const mensaje = document.getElementById("noResultados");
-
-      if (!input) return;
-
-      input.addEventListener("input", () => {
-        const filtro = input.value.toLowerCase();
-        const tarjetas = document.querySelectorAll(".card");
-
-        let visibles = 0;
-
-        tarjetas.forEach(card => {
-          const texto = card.innerText.toLowerCase();
-          const match = texto.includes(filtro);
-
-          card.style.display = match ? "" : "none";
-
-          if (match) visibles++;
-        });
-
-        // mostrar mensaje si no hay resultados
-        mensaje.style.display = visibles === 0 ? "block" : "none";
-      });
-    });
-  </script>
-
+<script src="js/comunes.js"></script>
+<script src="js/torneos.js"></script>
 </body>
 </html>

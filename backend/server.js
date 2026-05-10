@@ -1876,19 +1876,6 @@ app.delete('/api/eventos/:id', async (req, res) => {
     }
 });
 
-/* ===== ACTIVIDADES ===== */
-app.get('/api/actividades', async (req, res) => {
-    try {
-        const resultado = await pool.query(`
-            SELECT * FROM actividades ORDER BY nombre
-        `);
-        res.json(resultado.rows);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al obtener actividades" });
-    }
-});
-
 /* ===== HORARIOS ===== */
 
 // Obtener todos los horarios
@@ -2510,13 +2497,13 @@ app.get("/api/actividades/:id", async (req, res) => {
 });
 
 app.post("/api/actividades", async (req, res) => {
-  const { nombre, descripcion, capacidad, icono, nivel, duracion, equipo } = req.body;
+  const { nombre, descripcion, capacidad, icono, nivel, duracion, equipo, tipo_actividad_id } = req.body;
   if (!nombre || !capacidad) return res.status(400).json({ error: "Datos incompletos" });
   try {
     const r = await pool.query(
-      `INSERT INTO actividades(nombre, descripcion, capacidad, icono, nivel, duracion, equipo) 
-       VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [nombre, descripcion || '', capacidad, icono, nivel, duracion, equipo]
+      `INSERT INTO actividades(nombre, descripcion, capacidad, icono, nivel, duracion, equipo, tipo_actividad_id) 
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [nombre, descripcion || '', capacidad, icono, nivel, duracion, equipo, tipo_actividad_id || null]
     );
     res.status(201).json(r.rows[0]);
   } catch (error) {
@@ -2524,12 +2511,13 @@ app.post("/api/actividades", async (req, res) => {
     res.status(500).json({ error: "Error al crear" });
   }
 });
+
 app.put("/api/actividades/:id", async (req, res) => {
-  const { nombre, descripcion, capacidad, icono, nivel, duracion, equipo } = req.body;
+  const { nombre, descripcion, capacidad, icono, nivel, duracion, equipo, tipo_actividad_id } = req.body;
   try {
     const r = await pool.query(
-      `UPDATE actividades SET nombre=$1, descripcion=$2, capacidad=$3, icono=$4, nivel=$5, duracion=$6, equipo=$7 WHERE id=$8 RETURNING *`,
-      [nombre, descripcion || '', capacidad, icono, nivel, duracion, equipo, req.params.id]
+      `UPDATE actividades SET nombre=$1, descripcion=$2, capacidad=$3, icono=$4, nivel=$5, duracion=$6, equipo=$7, tipo_actividad_id=$8 WHERE id=$9 RETURNING *`,
+      [nombre, descripcion || '', capacidad, icono, nivel, duracion, equipo, tipo_actividad_id || null, req.params.id]
     );
     if (r.rows.length === 0) return res.status(404).json({ error: "No encontrada" });
     res.json(r.rows[0]);

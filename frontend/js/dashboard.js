@@ -18,11 +18,11 @@ function controlarAccesoPorRol() {
     
     // Módulos que puede ver cada rol
     const accesos = {
-        admin: ['usuarios', 'eventos', 'pagos', 'torneos', 'reservaciones', 'estadisticas', 'actividades'],
-        instructor: ['torneos', 'reservaciones', 'actividades'],
-        socio: ['pagos', 'torneos', 'reservaciones', 'actividades']
+    admin: ['usuarios', 'eventos', 'pagos', 'torneos', 'horarios', 'reservaciones', 'estadisticas', 'actividades'],
+    instructor: ['torneos', 'horarios', 'reservaciones', 'actividades'],
+    socio: ['pagos', 'torneos', 'reservaciones', 'actividades']
     };
-    
+        
     const modulosPermitidos = accesos[rol] || ['actividades'];
     
     // Ocultar/mostrar tiles según el rol

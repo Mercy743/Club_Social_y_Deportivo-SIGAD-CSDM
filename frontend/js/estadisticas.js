@@ -96,22 +96,53 @@ async function cargarEstadisticas() {
             options: chartOptions
         });
 
-        // Grafica 3: Barra - Actividades populares
+        // Grafica 3: Actividades populares (top 10 del endpoint)
         if (charts.actividades) charts.actividades.destroy();
-        charts.actividades = new Chart(document.getElementById('actividadesChart'), {
-            type: 'bar',
-            data: {
-                labels: actividadesPopulares.map(item => item.nombre?.substring(0, 20) || 'N/A'),
-                datasets: [{
-                    label: 'Inscritos',
-                    data: actividadesPopulares.map(item => parseInt(item.inscritos)),
-                    backgroundColor: '#54cfe0',
-                    borderRadius: 6,
-                    barPercentage: 0.65
-                }]
-            },
-            options: barOptions
-        });
+
+        if (actividadesPopulares.length === 0) {
+            const container = document.getElementById('actividadesChart').parentElement;
+            container.innerHTML = '<div style="text-align:center; padding:40px;">No hay actividades con inscritos</div>';
+        } else {
+            charts.actividades = new Chart(document.getElementById('actividadesChart'), {
+                type: 'bar',
+                data: {
+                    labels: actividadesPopulares.map(item => {
+                        let nombre = item.nombre || 'Sin nombre';
+                        return nombre.length > 20 ? nombre.substring(0, 18) + '...' : nombre;
+                    }),
+                    datasets: [{
+                        label: 'Inscritos',
+                        data: actividadesPopulares.map(item => parseInt(item.inscritos || 0)),
+                        backgroundColor: '#54cfe0',
+                        borderRadius: 6,
+                        barPercentage: 0.7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { color: 'white', font: { size: 10 } } }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: 'rgba(255,255,255,0.6)', stepSize: 1 }
+                        },
+                        x: {
+                            ticks: { 
+                                color: 'rgba(255,255,255,0.6)', 
+                                rotation: 25,
+                                maxRotation: 35,
+                                autoSkip: true,
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
 
         // Grafica 4: Linea - Ingresos mensuales
         if (charts.ingresos) charts.ingresos.destroy();

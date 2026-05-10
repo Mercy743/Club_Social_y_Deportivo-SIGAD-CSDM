@@ -5,36 +5,49 @@
     <title>Actividades - SIGAD</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/actividades.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
 
-<!-- Partículas flotantes -->
 <div class="particles"></div>
 
 <div class="container">
-    <!-- Botón de volver al dashboard -->
     <div class="volver-container">
         <button class="btn-volver" onclick="window.location.href='dashboard.html'">
-            Volver al Dashboard
+            <i class="fas fa-arrow-left"></i> Volver al Dashboard
         </button>
     </div>
 
-    <header class="header">
-        <div class="header-titulo">
-            <h1>🏃 Actividades del Club</h1>
+    <div class="header-acciones">
+        <div class="buscador-container">
+            <div class="buscador-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="busqueda" placeholder="Buscar actividad...">
+            </div>
         </div>
-        <div class="acciones">
-            <input type="text" id="busqueda" placeholder="Buscar actividad...">
-            <button id="btnCrear">Crear Nueva Actividad</button>
-        </div>
-    </header>
+        <button id="btnCrear" class="btn-crear">
+            <i class="fas fa-plus"></i> Crear Actividad
+        </button>
+    </div>
 
-    <main>
-        <div id="contenedorActividades" class="grid"></div>
-    </main>
+    <div class="resultados-header">
+        <span id="totalResultados">0</span> actividades
+        <span id="paginaInfo" class="pagina-badge">Página 1</span>
+    </div>
+
+    <div id="contenedorActividades" class="grid"></div>
+
+    <div class="paginacion-container" id="paginacionContainer">
+        <button id="btnAnterior" class="btn-paginacion" disabled>
+            <i class="fas fa-chevron-left"></i> Anterior
+        </button>
+        <div id="paginacionNumeros" class="paginacion-numeros"></div>
+        <button id="btnSiguiente" class="btn-paginacion">
+            Siguiente <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
 </div>
 
-<!-- Scripts -->
 <script src="js/comunes.js"></script>
 <script src="js/actividades.js"></script>
 </body>

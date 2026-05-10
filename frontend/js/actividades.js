@@ -8,23 +8,54 @@ if (!loggedUser) {
 const rol = loggedUser.rol;
 const usuarioId = loggedUser.id;
 
+function formatearDuracion(minutos) {
+    if (!minutos) return '60 min';
+    
+    const horas = minutos / 60;
+    
+    // Si son horas exactas (sin decimales)
+    if (minutos % 60 === 0) {
+        if (horas === 1) return '1 hora';
+        return horas + ' horas';
+    }
+    
+    // Si tienen minutos sueltos
+    const horasEnteras = Math.floor(horas);
+    const minutosRestantes = minutos % 60;
+    
+    if (horasEnteras === 0) return minutos + ' minutos';
+    if (minutosRestantes === 0) return horasEnteras + (horasEnteras === 1 ? ' hora' : ' horas');
+    return horasEnteras + ' hora ' + minutosRestantes + ' min';
+}
+
 async function getActividades() {
     const res = await fetch(`${API_URL}/actividades`);
     return await res.json();
 }
+let paginaActual = 1;
+const actividadesPorPagina = 10;
 
 async function renderActividades(filtro = "") {
     const contenedor = document.getElementById("contenedorActividades");
     if (!contenedor) return;
 
     const actividades = await getActividades();
-    contenedor.innerHTML = "";
-
+    
     const filtradas = actividades.filter(a =>
         a.nombre.toLowerCase().includes(filtro.toLowerCase())
     );
+    
+    const totalPaginas = Math.ceil(filtradas.length / actividadesPorPagina);
+    const inicio = (paginaActual - 1) * actividadesPorPagina;
+    const paginadas = filtradas.slice(inicio, inicio + actividadesPorPagina);
+    
+    // Actualizar contador de resultados
+    const totalResultados = document.getElementById('totalResultados');
+    if (totalResultados) totalResultados.innerText = filtradas.length;
+    
+    contenedor.innerHTML = "";
 
-    for (const act of filtradas) {
+    for (const act of paginadas) {
         const inscritos = act.inscritos || 0;
         const capacidad = act.capacidad || 1;
         const porcentaje = capacidad > 0 ? (inscritos / capacidad) * 100 : 0;
@@ -44,27 +75,118 @@ async function renderActividades(filtro = "") {
         if (rol === 'instructor') {
             botones = `
                 <div class="botones-instructor">
-                    <button class="btn-asignarse" onclick="asignarseInstructor(${act.id})">Asignarme como instructor</button>
+                    <button class="btn-asignarse" onclick="asignarseInstructor(${act.id})">Asignarme</button>
                 </div>
             `;
         }
 
         contenedor.innerHTML += `
             <div class="card">
-                <div style="text-align:center; font-size:3rem; margin-bottom:10px;">${act.icono || '🏃'}</div>
+                <div class="card-badge">
+                    <span class="card-icono">${act.nivel || 'Principiante'}</span>
+                </div>
                 <h2>${act.nombre}</h2>
                 <p class="descripcion">${act.descripcion || "Sin descripción"}</p>
                 <p><strong>Capacidad:</strong> ${inscritos}/${capacidad}</p>
                 <div class="barra"><div class="progreso ${color}" style="width:${Math.min(porcentaje, 100)}%"></div></div>
-                <p><strong>Nivel:</strong> ${act.nivel || "Principiante"}</p>
-                <p><strong>Duración:</strong> ${act.duracion || "60 min"}</p>
-                <p><strong>Equipo especial:</strong> ${act.equipo ? "Requerido" : "No requerido"}</p>
-                <p><strong>Instructores:</strong> <span id="instructores-${act.id}">Cargando...</span></p>
+                <p><strong>Duración:</strong> ${formatearDuracion(parseInt(act.duracion || '60'))}</p>
                 ${botones}
                 <button class="btn-detalle" onclick="verDetalle(${act.id})">Ver detalles</button>
             </div>
         `;
         cargarInstructores(act.id);
+    }
+    
+    if (paginadas.length === 0) {
+        contenedor.innerHTML = '<div class="emptyState">No hay actividades registradas</div>';
+    }
+    
+    // Actualizar controles de paginación
+    const paginaInfo = document.getElementById('paginaInfo');
+    const btnAnterior = document.getElementById('btnAnterior');
+    const btnSiguiente = document.getElementById('btnSiguiente');
+    
+    if (paginaInfo) paginaInfo.innerText = `Página ${paginaActual}`;
+    if (btnAnterior) btnAnterior.disabled = paginaActual === 1;
+    if (btnSiguiente) btnSiguiente.disabled = paginaActual === totalPaginas || totalPaginas === 0;
+    
+    // Actualizar números de página
+    actualizarPaginacionNumeros(paginaActual, totalPaginas);
+}
+
+function actualizarPaginacionNumeros(paginaRef, totalPaginas) {
+    const contenedor = document.getElementById('paginacionNumeros');
+    if (!contenedor) return;
+    
+    contenedor.innerHTML = '';
+    
+    if (totalPaginas <= 1) return;
+    
+    // Mostrar máximo 5 números
+    let inicio = Math.max(1, paginaRef - 2);
+    let fin = Math.min(totalPaginas, inicio + 4);
+    
+    if (fin - inicio < 4 && inicio > 1) {
+        inicio = Math.max(1, fin - 4);
+    }
+    
+    for (let i = inicio; i <= fin; i++) {
+        const btn = document.createElement('button');
+        btn.innerText = i;
+        btn.className = 'paginacion-numero';
+        if (i === paginaRef) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+            paginaActual = i;
+            renderActividades(document.getElementById("busqueda")?.value || "");
+        });
+        contenedor.appendChild(btn);
+    }
+
+    const inputPagina = document.getElementById('irAPagina');
+    const btnIr = document.getElementById('btnIrPagina');
+
+    if (btnIr && inputPagina) {
+        btnIr.onclick = () => {
+            const num = parseInt(inputPagina.value);
+            if (num >= 1 && num <= totalPaginas) {
+                paginaActual = num;
+                renderActividades(document.getElementById("busqueda")?.value || "");
+                inputPagina.value = '';
+            }
+        };
+    }
+}
+
+// Configurar botones de paginación
+function configurarPaginacion() {
+    const btnAnterior = document.getElementById('btnAnterior');
+    const btnSiguiente = document.getElementById('btnSiguiente');
+    
+    if (btnAnterior) {
+        btnAnterior.addEventListener('click', () => {
+            if (paginaActual > 1) {
+                paginaActual--;
+                renderActividades(document.getElementById("busqueda")?.value || "");
+            }
+        });
+    }
+    
+    if (btnSiguiente) {
+        btnSiguiente.addEventListener('click', () => {
+            paginaActual++;
+            renderActividades(document.getElementById("busqueda")?.value || "");
+        });
+    }
+}
+
+// Modificar la búsqueda para resetear página
+function activarBusqueda() {
+    const input = document.getElementById("busqueda");
+    if (input) {
+        input.addEventListener("input", () => {
+            paginaActual = 1;
+            renderActividades(input.value);
+        });
     }
 }
 
@@ -150,6 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderActividades();
         activarBusqueda();
         configurarBotonCrear();
+        configurarPaginacion();
     }
 });
 
@@ -162,12 +285,15 @@ async function guardarActividad(event) {
     const id = urlParams.get('id');
 
     const nombre      = document.getElementById('nombre').value.trim();
+    const nombreFinal = document.getElementById('nombre').value.trim();
     const descripcion = document.getElementById('descripcion').value.trim();
     const capacidad   = parseInt(document.getElementById('capacidad').value);
-    const icono       = document.getElementById('icono').value;
+    const icono       = '';
     const nivel       = document.getElementById('nivel').value;
-    const duracionRaw = document.getElementById('duracion').value.replace(' min', '').trim();
-    const duracion    = duracionRaw + ' min';
+    const selDur      = document.getElementById('duracion');
+    const duracion    = selDur.value === 'personalizado'
+        ? document.getElementById('duracionPersonalizada').value.trim()
+        : selDur.value + ' min';
     const equipo      = document.getElementById('equipo').checked;
 
     if (!nombre || !capacidad) {
@@ -175,7 +301,7 @@ async function guardarActividad(event) {
         return;
     }
 
-    const data = { nombre, descripcion, capacidad, icono, nivel, duracion, equipo };
+    const data = { nombre, descripcion, capacidad, icono, nivel, duracion, equipo, tipo_actividad_id: document.getElementById('tipo_actividad').value };
 
     try {
         const url    = id ? `${API_URL}/actividades/${id}` : `${API_URL}/actividades`;
@@ -221,13 +347,6 @@ async function cargarDatosParaEditar() {
         document.getElementById('descripcion').value = actividad.descripcion || '';
         document.getElementById('capacidad').value   = actividad.capacidad || 10;
 
-        // Icono con fallback
-        let iconoValor = actividad.icono;
-        if (!iconoValor || iconoValor === '*' || iconoValor === '✖') iconoValor = '🏃';
-        const selectIcono = document.getElementById('icono');
-        selectIcono.value = iconoValor;
-        if (!selectIcono.value) selectIcono.value = '🏃';
-
         // Nivel
         document.getElementById('nivel').value = actividad.nivel || 'Principiante';
 
@@ -235,10 +354,22 @@ async function cargarDatosParaEditar() {
         const duracionValue = String(actividad.duracion || '60').replace(' min', '').trim();
         const selectDuracion = document.getElementById('duracion');
         selectDuracion.value = duracionValue;
-        if (!selectDuracion.value) selectDuracion.value = '60';
+        if (!selectDuracion.value) {
+            selectDuracion.value = 'personalizado';
+            const inputCustom = document.getElementById('duracionPersonalizada');
+            if (inputCustom) {
+                inputCustom.style.display = 'block';
+                inputCustom.value = actividad.duracion || '';
+            }
+        }
 
         // Equipo
         document.getElementById('equipo').checked = actividad.equipo === true;
+        // Tipo de actividad
+        const selectTipo = document.getElementById('tipo_actividad');
+        if (selectTipo && actividad.tipo_actividad_id) {
+            selectTipo.value = actividad.tipo_actividad_id;
+        }
 
     } catch (error) {
         console.error(error);
@@ -269,6 +400,27 @@ async function inicializarFormulario() {
 document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById('formActividad')) {
         inicializarFormulario();
+
+        const selDur = document.getElementById('duracion');
+        let duracion = '';
+        
+        if (selDur.value === 'personalizado') {
+            const minutos = parseInt(document.getElementById('duracionPersonalizada').value);
+            
+            if (!minutos || minutos < 15) {
+                alert('La duración mínima es de 15 minutos');
+                return;
+            }
+            
+            if (minutos > 480) {
+                alert('La duración máxima es de 480 minutos (8 horas)');
+                return;
+            }
+            
+            duracion = minutos + ' min';
+        } else {
+            duracion = selDur.value + ' min';
+        }
     }
 });
 
@@ -303,19 +455,42 @@ async function cargarDetalle() {
         const colorHex = colorBarra === 'verde' ? '#4CAF50' : colorBarra === 'naranja' ? '#FF9800' : '#f44336';
 
         contenedor.innerHTML = `
-            <div style="text-align:center; padding:30px;">
-                <div style="font-size:4rem;">${a.icono || '🏃'}</div>
+            <div class="detalle-header">
+                <div class="detalle-icono">${a.icono && a.icono.trim() ? a.icono : '🏃'}</div>
                 <h1>${a.nombre}</h1>
-                <p>${a.descripcion || "Sin descripción"}</p>
-                <p><strong>Capacidad:</strong> ${inscritos}/${capacidad}</p>
-                <div style="background:rgba(255,255,255,0.08); border-radius:10px; height:8px; margin:10px 0;">
-                    <div style="background:${colorHex}; width:${Math.min(porcentaje, 100)}%; height:8px; border-radius:10px;"></div>
+                <span class="card-icono">${a.nivel || 'Principiante'}</span>
+            </div>
+            <div class="detalle-info">
+                <div class="info-item">
+                    <span class="info-label">Descripción</span>
+                    <span class="info-value">${a.descripcion || "Sin descripción"}</span>
                 </div>
-                <p><strong>Nivel:</strong> ${a.nivel || "Principiante"}</p>
-                <p><strong>Duración:</strong> ${a.duracion || "60 min"}</p>
-                <p><strong>Equipo especial:</strong> ${a.equipo ? "Requerido" : "No requerido"}</p>
-                <p><strong>Instructores:</strong> ${instructores.length === 0 ? "Sin asignar" : instructores.map(i => i.nombre).join(", ")}</p>
-                <button onclick="window.location.href='actividades.html'" style="margin-top:20px; padding:10px 20px;">← Volver</button>
+                <div class="info-row">
+                    <div class="info-item">
+                        <span class="info-label">Capacidad</span>
+                        <span class="info-value">${inscritos} / ${capacidad} inscritos</span>
+                        <div class="barra-detalle">
+                            <div class="progreso ${colorBarra}" style="width:${Math.min(porcentaje, 100)}%"></div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Duración</span>
+                        <p><strong>Duración:</strong> ${formatearDuracion(parseInt(a.duracion || '60'))}</p>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-item">
+                        <span class="info-label">Equipo especial</span>
+                        <span class="info-value">${a.equipo ? "✔ Requerido" : "No requerido"}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Instructores</span>
+                        <span class="info-value">${instructores.length === 0 ? "Sin asignar" : instructores.map(i => i.nombre).join(", ")}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="detalle-acciones">
+                <button class="btn-volver" onclick="window.location.href='actividades.html'">← Volver a Actividades</button>
             </div>
         `;
     } catch (error) {

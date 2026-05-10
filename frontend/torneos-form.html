@@ -1,83 +1,69 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Formulario Torneo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Formulario Torneo - SIGAD</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body>
+<body class="dashboardPage">
 
-  <button onclick="volver()">← Volver</button>
+<div class="particles"></div>
 
-  <h1 id="tituloForm">Crear Torneo</h1>
+<div class="dashboardWrapper">
+    <div class="dashboardTopbar">
+        <div class="topbarBrand">
+            <span class="topbarGreeting">Competencias</span>
+            <h1>SIGAD <span class="topbarRole">· Crear Torneo</span></h1>
+        </div>
+        <div class="topbarActions">
+            <button onclick="window.location.href='torneos.html'" class="secondaryBtn">← Volver</button>
+            <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
+        </div>
+    </div>
 
-  <form id="formTorneo">
+    <div class="dashboardCard" style="max-width: 600px; margin: 0 auto;">
+        <h2 id="tituloForm" style="margin-bottom: 24px;">Crear Torneo</h2>
+        <form id="formTorneo" style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <div>
+                <label style="display: block; margin-bottom: 6px; font-size: 13px; color: rgba(255,255,255,0.6);">Nombre del torneo *</label>
+                <input type="text" id="nombre" placeholder="Ej: Copa de Verano 2024" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: white;" required>
+            </div>
 
-    <label>Nombre del torneo</label>
-    <input type="text" id="nombre" required>
+            <div>
+                <label style="display: block; margin-bottom: 6px; font-size: 13px; color: rgba(255,255,255,0.6);">Descripción</label>
+                <textarea id="descripcion" rows="4" placeholder="Describe el torneo..." style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: white;"></textarea>
+            </div>
 
-    <label>Descripción</label>
-    <textarea id="descripcion"></textarea>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-size: 13px; color: rgba(255,255,255,0.6);">Fecha inicio *</label>
+                    <input type="date" id="fecha_inicio" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: white;" required>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-size: 13px; color: rgba(255,255,255,0.6);">Fecha fin *</label>
+                    <input type="date" id="fecha_fin" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: white;" required>
+                </div>
+            </div>
 
-    <label>Fecha inicio</label>
-    <input type="date" id="fecha_inicio" required>
+            <div>
+                <label style="display: block; margin-bottom: 6px; font-size: 13px; color: rgba(255,255,255,0.6);">Actividad deportiva *</label>
+                <select id="actividad_id" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: white;" required>
+                    <option value="">Cargando actividades...</option>
+                </select>
+            </div>
 
-    <label>Fecha fin</label>
-    <input type="date" id="fecha_fin" required>
+            <div style="display: flex; gap: 12px; margin-top: 10px;">
+                <button type="submit" style="flex: 1; background: linear-gradient(135deg, #0E6873, #54cfe0); border: none; padding: 12px; border-radius: 12px; color: white; font-weight: 600; cursor: pointer;">Guardar Torneo</button>
+                <button type="button" onclick="window.location.href='torneos.html'" style="flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; color: white; cursor: pointer;">Cancelar</button>
+            </div>
 
-    <label>Actividad</label>
-    <select id="actividad_id" required>
-      <option value="">Selecciona una actividad</option>
-    </select>
+        </form>
+    </div>
+</div>
 
-    <button type="submit">Guardar Torneo</button>
-
-  </form>
-
-  <script src="/js/torneos.js"></script>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-
-      const id = new URLSearchParams(window.location.search).get("id");
-
-      // 🔥 IMPORTANTE: cargar actividades primero
-      await cargarActividades();
-
-      if (id) {
-        document.getElementById("tituloForm").innerText = "Editar Torneo";
-
-        try {
-          const t = await fetchJSON(`http://localhost:3000/api/torneos/${id}`);
-
-          document.getElementById("nombre").value = t.nombre || "";
-          document.getElementById("descripcion").value = t.descripcion || "";
-          document.getElementById("fecha_inicio").value = t.fecha_inicio?.split("T")[0];
-          document.getElementById("fecha_fin").value = t.fecha_fin?.split("T")[0];
-          document.getElementById("actividad_id").value = t.actividad_id || "";
-
-        } catch {
-          alert("Error al cargar datos");
-        }
-      }
-
-      // 🔹 Validación fechas
-      const inicio = document.getElementById("fecha_inicio");
-      const fin = document.getElementById("fecha_fin");
-
-      function validarFechas() {
-        if (inicio.value && fin.value && new Date(fin.value) < new Date(inicio.value)) {
-          fin.setCustomValidity("La fecha fin no puede ser menor");
-        } else {
-          fin.setCustomValidity("");
-        }
-      }
-
-      inicio.addEventListener("change", validarFechas);
-      fin.addEventListener("change", validarFechas);
-
-    });
-  </script>
-
+<script src="js/comunes.js"></script>
+<script src="js/torneos.js"></script>
 </body>
 </html>
