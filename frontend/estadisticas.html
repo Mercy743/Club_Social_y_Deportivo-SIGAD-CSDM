@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadisticas - SIGAD</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="dashboardPage">
+    <svg class="bg-playbook" viewBox="0 0 700 560" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <radialGradient id="vignette" cx="50%" cy="50%" r="60%">
+                <stop offset="30%" stop-color="#0d1618" stop-opacity="0"/>
+                <stop offset="100%" stop-color="#0d1618" stop-opacity="0.7"/>
+            </radialGradient>
+        </defs>
+        <rect x="60" y="40" width="580" height="490" rx="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.2"/>
+        <rect width="700" height="560" fill="url(#vignette)"/>
+    </svg>
+
+    <div class="dashboardWrapper">
+        <div class="dashboardTopbar">
+            <div class="topbarBrand">
+                <span class="topbarGreeting">Analisis de datos</span>
+                <h1>SIGAD <span class="topbarRole">· Estadisticas</span></h1>
+            </div>
+            <div class="topbarActions">
+                <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">Volver</button>
+                <button id="logoutBtn" class="logoutBtn">Cerrar sesion</button>
+            </div>
+        </div>
+
+        <p class="section-label">Resumen general</p>
+        <div class="stats-container" id="statsContainer">
+            <div class="stat-box">
+                <div class="stat-number" id="totalSocios">-</div>
+                <div class="stat-label">Socios Activos</div>
+                <div class="stat-sub">Miembros del club</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="totalInstructores">-</div>
+                <div class="stat-label">Instructores</div>
+                <div class="stat-sub">Personal deportivo</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="totalEventos">-</div>
+                <div class="stat-label">Eventos</div>
+                <div class="stat-sub">Actividades realizadas</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="ingresosTotales">-</div>
+                <div class="stat-label">Ingresos Totales</div>
+                <div class="stat-sub">Historicos del club</div>
+            </div>
+        </div>
+
+        <p class="section-label">Analisis grafico</p>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Socios por Tipo de Accion</h3>
+                <div class="chart-wrapper">
+                    <canvas id="tipoAccionChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Socios por Estatus</h3>
+                <div class="chart-wrapper">
+                    <canvas id="estatusAccionChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Actividades mas Populares</h3>
+                <div style="overflow-x: auto; overflow-y: hidden; margin-bottom: 8px;">
+                    <div style="min-width: 500px; height: 280px;">
+                        <canvas id="actividadesChart"></canvas>
+                    </div>
+                </div>
+                <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 8px; text-align: center;">
+                    Mostrando las 5 actividades con mas inscritos
+                </p>
+            </div>
+            <div class="chart-card">
+                <h3>Tendencia de Ingresos</h3>
+                <div class="chart-wrapper">
+                    <canvas id="ingresosChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/comunes.js"></script>
+    <script src="js/estadisticas.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Torneos - SIGAD</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/torneos.css">
+</head>
+<body class="dashboardPage">
+
+<svg class="bg-playbook" viewBox="0 0 700 560" ...>
+</svg>
+
+<div class="dashboardWrapper">
+    <div class="dashboardTopbar">
+        <div class="topbarBrand">
+            <span class="topbarGreeting">Competencias</span>
+            <h1>SIGAD <span class="topbarRole">· Torneos</span></h1>
+        </div>
+        <div class="topbarActions">
+            <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">Volver</button>
+            <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
+        </div>
+    </div>
+
+    <p class="section-label">Gestión de torneos</p>
+    
+    <div class="header-torneos">
+        <div class="buscador-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" id="busqueda" placeholder="Buscar torneo...">
+        </div>
+        <button id="btnCrear" class="btn-crear-torneo">
+            <i class="fas fa-plus"></i> Crear Torneo
+        </button>
+    </div>
+
+    <div id="contenedorTorneos" class="grid-torneos"></div>
+</div>
+
+<script src="js/comunes.js"></script>
+<script src="js/torneos.js"></script>
+</body>
+</html>
