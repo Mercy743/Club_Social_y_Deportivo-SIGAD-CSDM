@@ -116,35 +116,98 @@ async function cargarTorneos() {
         contenedor.innerHTML = '<div class="emptyState">Error al cargar torneos</div>';
     }
 }
-
 /* ===== GUARDAR TORNEO (CREAR/EDITAR) ===== */
 async function guardarTorneo(event) {
     event.preventDefault();
+
     const id = new URLSearchParams(window.location.search).get('id');
-    const nombre = document.getElementById('nombre').value.trim();
-    const descripcion = document.getElementById('descripcion').value.trim();
-    const fecha_inicio = document.getElementById('fecha_inicio').value;
-    const fecha_fin = document.getElementById('fecha_fin').value;
-    const actividad_id = document.getElementById('actividad_id').value;
-    
-    if (!nombre || !fecha_inicio || !fecha_fin || !actividad_id) {
+
+    const nombre =
+        document.getElementById('nombre').value.trim();
+
+    const descripcion =
+        document.getElementById('descripcion').value.trim();
+
+    const fecha_inicio =
+        document.getElementById('fecha_inicio').value;
+
+    const fecha_fin =
+        document.getElementById('fecha_fin').value;
+
+    const actividad_id =
+        document.getElementById('actividad_id').value;
+
+    // 🔹 NUEVO
+    const tipo_torneo =
+        document.getElementById('tipo_torneo').value;
+
+    // 🔹 validaciones
+    if (
+        !nombre ||
+        !fecha_inicio ||
+        !fecha_fin ||
+        !actividad_id ||
+        !tipo_torneo
+    ) {
         alert('Datos incompletos');
         return;
     }
+
+    // 🔹 validar fechas
     if (new Date(fecha_fin) < new Date(fecha_inicio)) {
         alert('La fecha fin no puede ser menor a la fecha inicio');
         return;
     }
-    
-    const data = { nombre, descripcion, fecha_inicio, fecha_fin, actividad_id: Number(actividad_id), creado_por: loggedUser.id };
-    const url = id ? `${API_URL}/torneos/${id}` : `${API_URL}/torneos`;
-    const method = id ? 'PUT' : 'POST';
-    
+
+    // 🔹 objeto
+    const data = {
+
+        nombre,
+        descripcion,
+
+        fecha_inicio,
+        fecha_fin,
+
+        actividad_id: Number(actividad_id),
+
+        // 🔹 NUEVO
+        tipo_torneo,
+
+        creado_por: loggedUser.id
+    };
+
+    const url =
+        id
+            ? `${API_URL}/torneos/${id}`
+            : `${API_URL}/torneos`;
+
+    const method =
+        id
+            ? 'PUT'
+            : 'POST';
+
     try {
-        await fetchJSON(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-        alert(id ? 'Torneo actualizado' : 'Torneo creado');
+
+        await fetchJSON(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        alert(
+            id
+                ? 'Torneo actualizado'
+                : 'Torneo creado'
+        );
+
         window.location.href = 'torneos.html';
-    } catch (error) { alert(error.message); }
+
+    } catch (error) {
+
+        alert(error.message);
+    }
 }
 
 /* ===== ELIMINAR TORNEO ===== */
@@ -262,20 +325,218 @@ async function cargarDetalle() {
 
 /* ===== CARGAR BRACKET ===== */
 async function cargarBracket(id) {
-    const contenedor = document.getElementById('bracket');
+
+    const contenedor =
+        document.getElementById('bracket');
+
     if (!contenedor) return;
+
     try {
-        const data = await fetchJSON(`${API_URL}/torneos/${id}/bracket`);
-        let html = '';
+
+        const data =
+            await fetchJSON(`${API_URL}/torneos/${id}/bracket`);
+
+        let html = `
+            <div style="
+                display:flex;
+                gap:40px;
+                overflow-x:auto;
+                padding:20px 0;
+            ">
+        `;
+
         for (const ronda in data) {
-            html += `<div class="ronda"><h3>${escapeHTML(ronda)}</h3>`;
+
+            html += `
+                <div style="min-width:280px;">
+                    <h3 style="
+                        margin-bottom:20px;
+                        color:#54cfe0;
+                    ">
+                        ${escapeHTML(ronda)}
+                    </h3>
+            `;
+
             for (const p of data[ronda]) {
-                html += `<div class="partido"><p><strong>${escapeHTML(p.jugador1)}</strong> vs <strong>${escapeHTML(p.jugador2)}</strong></p><p>Marcador: ${p.marcador1 ?? 0} - ${p.marcador2 ?? 0}</p><p>Estado: ${escapeHTML(p.estado || 'pendiente')}</p></div>`;
+
+                const finalizado =
+                    p.estado === 'finalizado';
+
+                const ganador1 =
+                    p.ganador_id == p.participante1_id;
+
+                const ganador2 =
+                    p.ganador_id == p.participante2_id;
+
+                html += `
+                    <div style="
+                        background:${finalizado ? 'rgba(84,207,224,0.12)' : 'rgba(255,255,255,0.05)'};
+                        border:${finalizado ? '1px solid #54cfe0' : '1px solid rgba(255,255,255,0.08)'};
+                        border-radius:16px;
+                        padding:18px;
+                        margin-bottom:20px;
+                    ">
+
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            margin-bottom:10px;
+                            font-weight:${ganador1 ? '700' : '500'};
+                            color:${ganador1 ? '#54cfe0' : 'white'};
+                        ">
+                            <span>${escapeHTML(p.jugador1)}</span>
+                            <span>${p.marcador1 ?? 0}</span>
+                        </div>
+
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            margin-bottom:16px;
+                            font-weight:${ganador2 ? '700' : '500'};
+                            color:${ganador2 ? '#54cfe0' : 'white'};
+                        ">
+                            <span>${escapeHTML(p.jugador2)}</span>
+                            <span>${p.marcador2 ?? 0}</span>
+                        </div>
+
+                        <div style="
+                            font-size:12px;
+                            opacity:0.7;
+                            margin-bottom:14px;
+                        ">
+                            Estado:
+                            ${escapeHTML(p.estado)}
+                        </div>
+                `;
+
+                if (!finalizado) {
+
+                    html += `
+                        <div style="
+                            display:flex;
+                            gap:10px;
+                            margin-bottom:10px;
+                        ">
+                            <input
+                                type="number"
+                                id="m1-${p.id}"
+                                placeholder="0"
+                                style="
+                                    width:100%;
+                                    padding:10px;
+                                    border-radius:10px;
+                                    border:none;
+                                    background:rgba(0,0,0,0.4);
+                                    color:white;
+                                "
+                            >
+
+                            <input
+                                type="number"
+                                id="m2-${p.id}"
+                                placeholder="0"
+                                style="
+                                    width:100%;
+                                    padding:10px;
+                                    border-radius:10px;
+                                    border:none;
+                                    background:rgba(0,0,0,0.4);
+                                    color:white;
+                                "
+                            >
+                        </div>
+
+                        <button
+                            onclick="guardarResultado(${p.id}, ${id})"
+                            style="
+                                width:100%;
+                                padding:10px;
+                                border:none;
+                                border-radius:10px;
+                                background:linear-gradient(135deg,#0E6873,#54cfe0);
+                                color:white;
+                                cursor:pointer;
+                                font-weight:600;
+                            "
+                        >
+                            Guardar resultado
+                        </button>
+                    `;
+                }
+
+                if (finalizado) {
+
+                    html += `
+                        <div style="
+                            margin-top:10px;
+                            color:#54cfe0;
+                            font-weight:700;
+                            text-align:center;
+                        ">
+                            ✅ Clasificado
+                        </div>
+                    `;
+                }
+
+                html += `</div>`;
             }
+
             html += `</div>`;
         }
-        contenedor.innerHTML = html || '<p>No hay bracket disponible</p>';
-    } catch (error) { contenedor.innerHTML = '<p>No hay bracket disponible</p>'; }
+
+        html += `</div>`;
+
+        contenedor.innerHTML =
+            html || '<p>No hay bracket disponible</p>';
+
+    } catch (error) {
+
+        console.error(error);
+
+        contenedor.innerHTML =
+            '<p>No hay bracket disponible</p>';
+    }
+}
+
+async function guardarResultado(partidoId, torneoId) {
+
+    const marcador1 =
+        document.getElementById(`m1-${partidoId}`).value;
+
+    const marcador2 =
+        document.getElementById(`m2-${partidoId}`).value;
+
+    if (
+        marcador1 === '' ||
+        marcador2 === ''
+    ) {
+        return alert('Ingrese ambos marcadores');
+    }
+
+    try {
+
+        await fetchJSON(
+            `${API_URL}/partidos/${partidoId}/resultado`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    marcador1,
+                    marcador2
+                })
+            }
+        );
+
+        alert('Resultado guardado');
+
+        cargarBracket(torneoId);
+
+    } catch (error) {
+
+        alert(error.message);
+    }
 }
 
 /* ===== CARGAR TOP 3 ===== */
