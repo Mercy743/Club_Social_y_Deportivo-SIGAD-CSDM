@@ -1418,3 +1418,330 @@ canvas {
 .timeList div:hover {
     background: rgba(255,255,255,0.1);
 }
+
+/* ===== RESERVACIONES ===== */
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.form-field-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.35);
+}
+
+.form-field input {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 12px 14px;
+    font-size: 13.5px;
+}
+
+.espacios-section-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 24px 0 10px;
+}
+
+.espacios-section-label span {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.35);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.espacios-section-label span::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    border-radius: 2px;
+    background: linear-gradient(to bottom, var(--teal), var(--teal2));
+}
+
+.espacios-section-label em {
+    font-style: normal;
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+}
+
+.espacios-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0;
+}
+
+.espacios-table thead tr {
+    background: rgba(255,255,255,0.025);
+}
+
+.espacios-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.espacios-table td {
+    padding: 11px 14px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13.5px;
+    color: rgba(255,255,255,0.65);
+    transition: color 0.15s;
+}
+
+.espacios-table tbody tr {
+    cursor: pointer;
+    transition: background 0.18s;
+}
+
+.espacios-table tbody tr:hover {
+    background: rgba(84,207,224,0.05);
+}
+
+.espacios-table tbody tr:hover td {
+    color: rgba(255,255,255,0.9);
+}
+
+.selectedRow {
+    background: rgba(84,207,224,0.1) !important;
+    border-left: 3px solid #54cfe0;
+}
+
+.selectedRow td {
+    color: white !important;
+}
+
+.espacio-tipo-badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.45);
+    border: 1px solid rgba(255,255,255,0.07);
+}
+
+.reserva-confirm-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.reserva-confirm-hint {
+    flex: 1;
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    margin: 0;
+}
+
+.reserva-confirm-hint strong {
+    color: var(--teal2);
+    font-weight: 600;
+}
+
+#guardarBtn {
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 12px 26px;
+    font-size: 13.5px;
+}
+
+.timeDropdown {
+    position: relative;
+}
+
+.timeList {
+    position: absolute;
+    top: calc(100% + 4px);
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #0f0f0f;
+    border-radius: 10px;
+    display: none;
+    z-index: 10;
+    border: 1px solid rgba(84,207,224,0.15);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+}
+
+.timeList div {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    transition: background 0.15s, color 0.15s;
+}
+
+.timeList div:hover {
+    background: rgba(84,207,224,0.12);
+    color: var(--teal2);
+}
+
+.reservas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.reserva-card {
+    background: rgba(18,18,18,0.75);
+    backdrop-filter: blur(16px);
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.07);
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    padding: 0;
+}
+
+.reserva-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, var(--teal), var(--teal2));
+}
+
+.reserva-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(84,207,224,0.18);
+    box-shadow: 0 14px 40px rgba(0,0,0,0.55);
+}
+
+.reserva-card-body {
+    padding: 20px 20px 16px;
+}
+
+.reserva-card h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: white;
+    margin: 0 0 14px;
+}
+
+.reserva-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    margin-bottom: 0;
+}
+
+.reserva-info p {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    color: rgba(255,255,255,0.5);
+    margin: 0;
+}
+
+.reserva-info p i {
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    width: 14px;
+    text-align: center;
+}
+
+.reserva-info p.full-row {
+    grid-column: 1 / -1;
+}
+
+.reserva-card-footer {
+    padding: 12px 20px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.reserva-card-footer .dangerBtn,
+.reserva-card-footer .secondaryBtn {
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 8px 16px;
+    font-size: 12px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.badge-confirmada {
+    background: rgba(84,207,224,0.15);
+    color: var(--teal2);
+    border: 1px solid rgba(84,207,224,0.25);
+}
+
+.badge-cancelada {
+    background: rgba(255,82,82,0.15);
+    color: #ff8a8a;
+    border: 1px solid rgba(255,82,82,0.25);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 56px 24px;
+    color: rgba(255,255,255,0.25);
+}
+
+.empty-state i {
+    font-size: 36px;
+    display: block;
+    margin-bottom: 12px;
+    opacity: 0.3;
+}
+
+.flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    .reserva-info {
+        grid-template-columns: 1fr;
+    }
+}

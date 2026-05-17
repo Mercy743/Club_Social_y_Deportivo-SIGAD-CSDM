@@ -5,52 +5,78 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reservaciones - SIGAD</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body class="dashboardPage">
 <div class="dashboardWrapper">
 
-<div class="dashboardTopbar">
-    <div class="topbarBrand">
-        <span class="topbarGreeting">Módulo de gestión</span>
-        <h1>SIGAD <span class="topbarRole">· Reservaciones</span></h1>
+    <div class="dashboardTopbar">
+        <div class="topbarBrand">
+            <span class="topbarGreeting">Modulo de gestion</span>
+            <h1>SIGAD <span class="topbarRole">· Reservaciones</span></h1>
+        </div>
+        <div class="topbarActions">
+            <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">
+                Volver
+            </button>
+            <button id="logoutBtn" class="logoutBtn">Cerrar sesion</button>
+        </div>
     </div>
-    <div class="topbarActions">
-        <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">← Atras</button>
-        <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
+
+    <p class="section-label">Nueva reservacion</p>
+    <div class="dashboardCard">
+        <input type="hidden" id="reservaId">
+        <input type="hidden" id="espacioSeleccionado" value="">
+
+        <div class="form-row">
+            <div class="form-field">
+                <span class="form-field-label">Fecha</span>
+                <input type="text" id="fecha" placeholder="Selecciona una fecha">
+            </div>
+            <div class="form-field">
+                <span class="form-field-label">Hora inicio</span>
+                <div class="timeDropdown">
+                    <input type="text" id="horaInicio" placeholder="Selecciona hora" readonly>
+                    <div class="timeList" id="listaInicio"></div>
+                </div>
+            </div>
+            <div class="form-field">
+                <span class="form-field-label">Hora fin</span>
+                <div class="timeDropdown">
+                    <input type="text" id="horaFin" placeholder="Selecciona hora" readonly>
+                    <div class="timeList" id="listaFin"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="espacios-section-label">
+            <span>Espacio deportivo</span>
+            <em>Selecciona una fila para confirmar</em>
+        </div>
+        <div id="tablaEspacios"></div>
+
+        <div class="reserva-confirm-bar">
+            <p class="reserva-confirm-hint" id="seleccionHint">Ningun espacio seleccionado</p>
+            <button id="guardarBtn">
+                <i class="fa-solid fa-check"></i> Confirmar reservacion
+            </button>
+        </div>
     </div>
+
+    <div class="flex-between">
+        <p class="section-label">Reservaciones activas</p>
+        <button id="refreshBtn" class="secondaryBtn">
+            <i class="fa-solid fa-rotate-right"></i> Actualizar
+        </button>
+    </div>
+    <div id="reservacionesList"></div>
+
 </div>
 
-<p class="section-label">Nueva reservación</p>
-
-<div class="dashboardCard">
-    <input type="hidden" id="reservaId">
-    <input type="hidden" id="espacio">
-    <input type="text" id="fecha">
-
-    <div class="timeDropdown">
-        <input type="text" id="horaInicio" placeholder="Hora inicio">
-        <div class="timeList" id="listaInicio"></div>
-    </div>
-
-    <div class="timeDropdown">
-        <input type="text" id="horaFin" placeholder="Hora fin">
-        <div class="timeList" id="listaFin"></div>
-    </div>
-
-    <div id="tablaEspacios"></div>
-
-    <div style="margin-top:12px;">
-        <button id="guardarBtn">Guardar reservación</button>
-    </div>
-</div>
-
-<p class="section-label">Reservaciones</p>
-<div id="reservacionesList"></div>
-
-</div>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="js/comunes.js"></script>
 <script src="js/reservaciones.js"></script>
 </body>
 </html>

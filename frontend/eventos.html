@@ -1,21 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Eventos</title>
-<link rel="stylesheet" href="styles.css">
-</head>
-
-<body>
-
-<h1>Eventos</h1>
-<div id="contenedorEventos"></div>
-
-<script src="js/eventos.js"></script>
-</body>
-<!DOCTYPE html>
-<html lang="es">
-<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eventos - SIGAD</title>
@@ -47,7 +32,7 @@
                 <h1>SIGAD <span class="topbarRole">· Eventos</span></h1>
             </div>
             <div class="topbarActions">
-                <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">← Volver</button>
+                <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">Volver</button>
                 <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
             </div>
         </div>
@@ -68,17 +53,17 @@
             </div>
         </div>
 
-        <!-- LISTA -->
-        <p class="section-label">Eventos registrados</p>
-        <div id="eventList"></div>
+        <!-- LISTA Y BOTÓN REPORTE -->
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-    <p class="section-label" style="margin-bottom:0; flex:1;">Eventos registrados</p>
-    <button id="toggleReporteBtn" class="secondaryBtn" style="max-width:160px; padding:8px 16px; margin:0;">
-        Ver reporte
-    </button>
-</div>
-<div id="eventList"></div>
+            <p class="section-label" style="margin-bottom:0; flex:1;">Eventos registrados</p>
+            <button id="toggleReporteBtn" class="secondaryBtn" style="max-width:160px; padding:8px 16px; margin:0;">
+                Ver reporte
+            </button>
+        </div>
+        <div id="eventList"></div>
+
     </div>
+
     <script src="js/comunes.js"></script>
     <script src="js/eventos.js"></script>
 </body>

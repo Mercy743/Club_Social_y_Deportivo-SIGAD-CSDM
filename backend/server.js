@@ -482,6 +482,32 @@ app.post('/api/reservaciones', async (req, res) => {
         if (conflicto.rows.length > 0) {
             return res.status(409).json({ error: "Espacio no disponible en ese horario" });
         }
+        // Obtener el rol del usuario
+        const usuarioRol = await pool.query(`
+            SELECT r.nombre as rol 
+            FROM usuarios u
+            JOIN roles r ON u.rol_id = r.id
+            WHERE u.id = $1
+        `, [usuario_id]);
+
+        const rol = usuarioRol.rows[0]?.rol;
+
+        let limite = 0;
+        if (rol === 'socio') limite = 3;
+        else if (rol === 'instructor') limite = 5;
+        else if (rol === 'admin') limite = 10; // Modificar según necesidades reales, o eliminar límite para admin
+
+        // Verificar limite de reservaciones activas
+        const reservacionesActivas = await pool.query(`
+            SELECT COUNT(*) FROM reservaciones 
+            WHERE usuario_id = $1 AND estado = 'confirmada' AND fecha_reserva >= CURRENT_DATE
+        `, [usuario_id]);
+
+        if (parseInt(reservacionesActivas.rows[0].count) >= limite && rol !== 'admin') {
+            return res.status(400).json({ 
+                error: `Maximo ${limite} reservaciones activas para ${rol}s` 
+            });
+        }
 
         const resultado = await pool.query(`
             INSERT INTO reservaciones(usuario_id, espacio_id, fecha_reserva, hora_inicio, hora_fin)
@@ -1665,7 +1691,7 @@ app.get('/api/socios/exportar-excel', async (req, res) => {
 
 /* ===== FRONTEND STATIC ===== */
 const frontendPath = path.join(__dirname, '../Frontend');
-app.use(express.static(frontendPath));
+app.use(express.static(frontendPath, { index: false }));
 app.get('/', (req, res) => {
     res.sendFile(path.join(frontendPath, 'main.html'));
 });
