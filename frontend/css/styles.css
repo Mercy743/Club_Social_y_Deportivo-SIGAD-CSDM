@@ -1365,3 +1365,56 @@ canvas {
         grid-template-columns: 1fr;
     }
 }
+
+#tablaEspacios table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#tablaEspacios th, #tablaEspacios td {
+    padding: 10px 14px;
+    text-align: left;
+}
+
+#tablaEspacios thead th {
+    opacity: .6;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+#tablaEspacios tbody tr {
+    cursor: pointer;
+    transition: .2s;
+}
+
+#tablaEspacios tbody tr:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.selectedRow {
+    background: rgba(84,207,224,0.2) !important;
+}
+
+.timeDropdown {
+    position: relative;
+}
+
+.timeList {
+    position: absolute;
+    width: 100%;
+    max-height: 150px;
+    overflow-y: auto;
+    background: #111;
+    border-radius: 8px;
+    display: none;
+    z-index: 10;
+}
+
+.timeList div {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.timeList div:hover {
+    background: rgba(255,255,255,0.1);
+}

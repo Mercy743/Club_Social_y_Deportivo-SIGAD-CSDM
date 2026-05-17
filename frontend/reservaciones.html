@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reservaciones - SIGAD</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+<body class="dashboardPage">
+<div class="dashboardWrapper">
+
+<div class="dashboardTopbar">
+    <div class="topbarBrand">
+        <span class="topbarGreeting">Módulo de gestión</span>
+        <h1>SIGAD <span class="topbarRole">· Reservaciones</span></h1>
+    </div>
+    <div class="topbarActions">
+        <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">← Atras</button>
+        <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
+    </div>
+</div>
+
+<p class="section-label">Nueva reservación</p>
+
+<div class="dashboardCard">
+    <input type="hidden" id="reservaId">
+    <input type="hidden" id="espacio">
+    <input type="text" id="fecha">
+
+    <div class="timeDropdown">
+        <input type="text" id="horaInicio" placeholder="Hora inicio">
+        <div class="timeList" id="listaInicio"></div>
+    </div>
+
+    <div class="timeDropdown">
+        <input type="text" id="horaFin" placeholder="Hora fin">
+        <div class="timeList" id="listaFin"></div>
+    </div>
+
+    <div id="tablaEspacios"></div>
+
+    <div style="margin-top:12px;">
+        <button id="guardarBtn">Guardar reservación</button>
+    </div>
+</div>
+
+<p class="section-label">Reservaciones</p>
+<div id="reservacionesList"></div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="js/reservaciones.js"></script>
+</body>
+</html>
