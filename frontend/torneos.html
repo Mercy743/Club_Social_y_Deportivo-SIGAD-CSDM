@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torneos - SIGAD</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dashboardPage">
+
+<svg class="bg-playbook" viewBox="0 0 700 560" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="rgba(14,104,115,0.5)"/>
+        </marker>
+        <marker id="arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="rgba(254,126,60,0.45)"/>
+        </marker>
+        <marker id="arr3" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="rgba(255,255,255,0.2)"/>
+        </marker>
+        <radialGradient id="vignette" cx="50%" cy="50%" r="60%">
+            <stop offset="30%" stop-color="#0d1618" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#0d1618" stop-opacity="0.7"/>
+        </radialGradient>
+    </defs>
+    <rect x="60" y="40" width="580" height="490" rx="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.2"/>
+    <line x1="60" y1="285" x2="640" y2="285" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <circle cx="350" cy="285" r="55" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <circle cx="350" cy="285" r="3" fill="rgba(255,255,255,0.08)"/>
+    <rect x="210" y="40" width="280" height="90" rx="2" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <rect x="280" y="40" width="140" height="45" rx="2" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <rect x="210" y="440" width="280" height="90" rx="2" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <rect x="280" y="475" width="140" height="55" rx="2" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <rect x="300" y="34" width="100" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <rect x="300" y="522" width="100" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <path d="M210,130 Q350,180 490,130" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <path d="M210,440 Q350,390 490,440" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <circle cx="350" cy="500" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="180" cy="430" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="520" cy="430" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="260" cy="370" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="440" cy="370" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="350" cy="340" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="350" cy="80" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+    <circle cx="200" cy="150" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+    <circle cx="500" cy="150" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+    <circle cx="280" cy="220" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+    <circle cx="420" cy="220" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+    <path d="M350,492 Q300,440 260,378" fill="none" stroke="rgba(14,104,115,0.5)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <path d="M260,362 Q300,310 350,334" fill="none" stroke="rgba(14,104,115,0.5)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <path d="M520,422 Q480,380 448,374" fill="none" stroke="rgba(14,104,115,0.5)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <path d="M180,422 Q200,380 252,374" fill="none" stroke="rgba(14,104,115,0.45)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <path d="M350,332 Q350,290 350,277" fill="none" stroke="rgba(14,104,115,0.4)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <path d="M280,212 Q260,170 208,158" fill="none" stroke="rgba(254,126,60,0.45)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr2)"/>
+    <path d="M420,212 Q440,170 492,158" fill="none" stroke="rgba(254,126,60,0.45)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr2)"/>
+    <path d="M200,142 Q260,110 342,86" fill="none" stroke="rgba(254,126,60,0.4)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr2)"/>
+    <path d="M500,142 Q440,110 358,86" fill="none" stroke="rgba(254,126,60,0.4)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr2)"/>
+    <circle cx="350" cy="285" r="6" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+    <path d="M350,279 Q390,240 440,220" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="3,5" marker-end="url(#arr3)"/>
+    <rect width="700" height="560" fill="url(#vignette)"/>
+</svg>
+
+<div class="particles"></div>
+
+<div class="dashboardWrapper">
+
+    <!-- TOPBAR -->
+    <div class="dashboardTopbar">
+        <div class="topbarBrand">
+            <span class="topbarGreeting">Competencias</span>
+            <h1>SIGAD <span class="topbarRole">· Torneos</span></h1>
+        </div>
+        <div class="topbarActions">
+            <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">← Volver</button>
+            <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
+        </div>
+    </div>
+
+    <!-- STATS RÁPIDAS -->
+    <p class="section-label">Resumen</p>
+    <div class="quickStats" style="margin-bottom: 28px;">
+        <div class="statPill">
+            <strong id="totalTorneos">—</strong>
+            <span>Total torneos</span>
+        </div>
+        <div class="statPill">
+            <strong id="torneosActivos">—</strong>
+            <span>En curso</span>
+        </div>
+        <div class="statPill">
+            <strong id="torneosProgramados">—</strong>
+            <span>Programados</span>
+        </div>
+        <div class="statPill">
+            <strong id="torneosFinalizados">—</strong>
+            <span>Finalizados</span>
+        </div>
+    </div>
+
+    <!-- HEADER CON BUSCADOR -->
+    <p class="section-label">Gestión de torneos</p>
+    <div class="header-torneos">
+        <div class="buscador-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" id="busqueda" placeholder="Buscar torneo...">
+        </div>
+        <button id="btnCrear" class="btn-crear-torneo">
+            <i class="fas fa-plus"></i> Crear Torneo
+        </button>
+    </div>
+
+    <!-- GRID DE TORNEOS -->
+    <div id="contenedorTorneos" class="grid-torneos"></div>
+
+</div>
+<script src="Js/config.js"></script>
+<script src="Js/torneos.js"></script>
+<script>
+// Stats de torneos
+async function cargarStatsTorneos() {
+    try {
+        const res = await fetch('http://localhost:3000/api/torneos');
+        const torneos = await res.json();
+        document.getElementById('totalTorneos').textContent = torneos.length;
+        document.getElementById('torneosActivos').textContent = torneos.filter(t => t.estado === 'en curso').length;
+        document.getElementById('torneosProgramados').textContent = torneos.filter(t => t.estado === 'programado').length;
+        document.getElementById('torneosFinalizados').textContent = torneos.filter(t => t.estado === 'finalizado').length;
+    } catch(e) { console.error(e); }
+}
+cargarStatsTorneos();
+
+// Buscador en tiempo real
+document.addEventListener('DOMContentLoaded', () => {
+    const busqueda = document.getElementById('busqueda');
+    if (busqueda) {
+        busqueda.addEventListener('input', () => {
+            const texto = busqueda.value.toLowerCase();
+            document.querySelectorAll('.card-torneo').forEach(card => {
+                const nombre = card.querySelector('h3')?.textContent.toLowerCase() || '';
+                card.style.display = nombre.includes(texto) ? 'block' : 'none';
+            });
+        });
+    }
+});
+</script>
+</body>
+</html>

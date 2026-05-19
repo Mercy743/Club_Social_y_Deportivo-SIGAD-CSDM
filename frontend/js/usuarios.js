@@ -1,4 +1,3 @@
-const API_URL = 'http://localhost:3000/api';
 const loggedUser = JSON.parse(localStorage.getItem('loggedUser'));
 
 if (!loggedUser) {
@@ -22,7 +21,10 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
 async function cargarTodosLosUsuarios() {
     try {
         const res = await fetch(API_URL + '/usuarios/except/' + loggedUser.id);
-        const usuarios = await res.json();
+        const data = await res.json();
+        
+        // ← aquí está el fix
+        const usuarios = data.usuarios || data;
 
         if (!usuarios.length) {
             document.getElementById('userList').innerHTML = '<div class="emptyState">No hay usuarios registrados.</div>';

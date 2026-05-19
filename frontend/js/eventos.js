@@ -1,4 +1,3 @@
-const API_URL = 'http://localhost:3000/api';
 const loggedUser = JSON.parse(localStorage.getItem('loggedUser'));
 
 if (!loggedUser) window.location.href = 'index.html';
@@ -18,6 +17,18 @@ const guardarBtn       = document.getElementById('guardarBtn');
 const cancelarBtn      = document.getElementById('cancelarBtn');
 const formLabel        = document.getElementById('formLabel');
 const eventList        = document.getElementById('eventList');
+const esAdmin          = loggedUser?.rol === 'admin';
+
+// ===== OCULTAR FORMULARIO SI NO ES ADMIN =====
+if (!esAdmin) {
+    document.querySelector('.eventForm')?.closest('.dashboardCard')?.style.setProperty('display', 'none');
+    formLabel?.style.setProperty('display', 'none');
+}
+
+// Cambiar label según rol
+if (!esAdmin) {
+    document.querySelector('.section-label:last-of-type').textContent = 'Eventos del club';
+}
 
 // ===== CARGAR EVENTOS =====
 async function cargarEventos() {
@@ -30,7 +41,7 @@ async function cargarEventos() {
                 <div class="emptyState">
                     <p>No hay eventos registrados.</p>
                     <p style="font-size:12px; margin-top:8px; opacity:.6;">
-                        Crea el primero usando el formulario de arriba.
+                        ${esAdmin ? 'Crea el primero usando el formulario de arriba.' : 'Próximamente habrá eventos disponibles.'}
                     </p>
                 </div>`;
             return;
@@ -53,7 +64,7 @@ async function cargarEventos() {
                         </thead>
                         <tbody>
                             ${eventos.map((e, i) => `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.04); transition:background .15s;">
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
                                     <td style="padding:12px 16px; color:rgba(255,255,255,0.35); font-size:13px;">${i + 1}</td>
                                     <td style="padding:12px 16px; color:white; font-weight:600; font-size:14px;">${e.nombre}</td>
                                     <td style="padding:12px 16px; color:#54cfe0; font-size:13px;">${formatearFecha(e.fecha_evento)}</td>
@@ -77,6 +88,7 @@ async function cargarEventos() {
                                 ${e.hora ? ' · ⏰ ' + e.hora : ''}
                             </p>
                             <p class="eventText">${e.descripcion || 'Sin descripción.'}</p>
+                            ${esAdmin ? `
                             <div class="eventActions">
                                 <button class="secondaryBtn" onclick="editarEvento(
                                     ${e.id_evento},
@@ -88,7 +100,7 @@ async function cargarEventos() {
                                 <button class="dangerBtn" onclick="eliminarEvento(${e.id_evento})">
                                     Eliminar
                                 </button>
-                            </div>
+                            </div>` : ''}
                         </div>
                     `).join('')}
                 </div>`;
@@ -100,8 +112,10 @@ async function cargarEventos() {
     }
 }
 
-// ===== GUARDAR (crear o editar) =====
-guardarBtn.addEventListener('click', async () => {
+// ===== GUARDAR (crear o editar) — solo admin =====
+guardarBtn?.addEventListener('click', async () => {
+    if (!esAdmin) return;
+
     const nombre      = nombreInput.value.trim();
     const fecha       = fechaInput.value;
     const hora        = horaInput.value;
@@ -144,8 +158,10 @@ guardarBtn.addEventListener('click', async () => {
     }
 });
 
-// ===== EDITAR =====
+// ===== EDITAR — solo admin =====
 function editarEvento(id, nombre, fecha, hora, descripcion) {
+    if (!esAdmin) return;
+
     eventoIdInput.value    = id;
     nombreInput.value      = nombre;
     fechaInput.value       = fecha.split('T')[0];
@@ -160,7 +176,7 @@ function editarEvento(id, nombre, fecha, hora, descripcion) {
 }
 
 // ===== CANCELAR EDICIÓN =====
-cancelarBtn.addEventListener('click', limpiarFormulario);
+cancelarBtn?.addEventListener('click', limpiarFormulario);
 
 function limpiarFormulario() {
     eventoIdInput.value    = '';
@@ -174,8 +190,9 @@ function limpiarFormulario() {
     cancelarBtn.style.display = 'none';
 }
 
-// ===== ELIMINAR =====
+// ===== ELIMINAR — solo admin =====
 async function eliminarEvento(id) {
+    if (!esAdmin) return;
     if (!confirm('¿Seguro que quieres eliminar este evento?')) return;
 
     try {
@@ -192,10 +209,10 @@ async function eliminarEvento(id) {
 function formatearFecha(fecha) {
     if (!fecha) return 'Sin fecha';
     const d = new Date(fecha);
-    return d.toLocaleDateString('es-MX', { 
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric' 
+    return d.toLocaleDateString('es-MX', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
     });
 }
 
@@ -207,7 +224,7 @@ function escapar(str) {
 let modoReporte = false;
 const toggleReporteBtn = document.getElementById('toggleReporteBtn');
 
-toggleReporteBtn.addEventListener('click', () => {
+toggleReporteBtn?.addEventListener('click', () => {
     modoReporte = !modoReporte;
     toggleReporteBtn.textContent = modoReporte ? 'Ver gestión' : 'Ver reporte';
     cargarEventos();

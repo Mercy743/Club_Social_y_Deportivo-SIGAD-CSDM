@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalle Torneo - SIGAD</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="dashboardPage">
+
+<div class="particles"></div>
+
+<div class="dashboardWrapper">
+    <div class="dashboardTopbar">
+        <div class="topbarBrand">
+            <span class="topbarGreeting">Competencias</span>
+            <h1>SIGAD <span class="topbarRole">· Detalle Torneo</span></h1>
+        </div>
+        <div class="topbarActions">
+            <button onclick="window.location.href='torneos.html'" class="secondaryBtn">Volver</button>
+            <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
+        </div>
+    </div>
+
+    <div id="detalle"></div>
+
+    <p class="section-label">Participantes</p>
+    <div id="participantes"></div>
+
+    <div style="text-align: center; margin: 20px 0;">
+        <button onclick="togglePanelUsuarios()" style="background: linear-gradient(135deg, #0E6873, #54cfe0); border: none; padding: 10px 20px; border-radius: 30px; color: white; cursor: pointer;">
+            <i class="fas fa-user-plus"></i> Agregar Participante
+        </button>
+    </div>
+
+    <div id="panelUsuarios" style="display:none; margin-top:20px; background: rgba(20,20,20,0.68); border-radius: 16px; padding: 20px;">
+        <input type="text" id="buscarUsuario" placeholder="Buscar usuario..." style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: white; margin-bottom: 15px;">
+        <div id="listaUsuarios"></div>
+    </div>
+
+    <p class="section-label">Bracket</p>
+    <div id="bracket"></div>
+
+    <p class="section-label">Podio</p>
+    <div id="top3"></div>
+</div>
+
+<script src="js/comunes.js"></script>
+<script src="js/torneos.js"></script>
+</body>
+</html>

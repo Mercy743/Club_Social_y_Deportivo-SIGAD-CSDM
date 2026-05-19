@@ -40,10 +40,12 @@
         <!-- BUSCADOR -->
         <p class="section-label">Buscar usuario</p>
         <div class="dashboardCard" style="margin-bottom: 24px;">
-            <div class="userSearch" style="display:flex; flex-direction:row; gap:12px; align-items:center;">
-                <input type="text" id="searchInput" placeholder="Buscar por ID, INE o correo" style="flex:1; max-width:none; margin:0;">
-                <button id="searchBtn" class="secondaryBtn" style="max-width:140px; margin:0; padding:14px 20px;">Buscar</button>
-                <button id="resetBtn" class="secondaryBtn" style="max-width:160px; margin:0; padding:14px 20px;">Mostrar todos</button>
+            <div class="userSearch">
+                <input type="text" id="searchInput" placeholder="Buscar por ID, INE o correo">
+                    <div class="botonesSearch">
+                        <button id="searchBtn" class="secondaryBtn" style="max-width:140px; margin:0; padding:14px 20px;">Buscar</button>
+                        <button id="resetBtn" class="secondaryBtn" style="max-width:160px; margin:0; padding:14px 20px;">Mostrar todos</button>
+                    </div>
             </div>
         </div>
 
@@ -91,7 +93,7 @@
             </div>
         </div>
     </div>
-
+    <script src="Js/config.js"></script>
     <script src="Js/usuarios.js"></script>
 </body>
 </html>
