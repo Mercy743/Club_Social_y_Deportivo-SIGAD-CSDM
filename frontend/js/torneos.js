@@ -3,6 +3,8 @@ const loggedUser = JSON.parse(localStorage.getItem('loggedUser'));
 
 if (!loggedUser) window.location.href = 'index.html';
 
+const esAdmin = loggedUser.rol === 'admin';
+
 let paginaActual = 1;
 const torneosPorPagina = 6;
 
@@ -90,8 +92,10 @@ async function cargarTorneos() {
                     <p class="descripcion-torneo">${escapeHTML(t.descripcion || 'Sin descripción')}</p>
                     <div class="botones-torneo">
                         <button class="btn-ver-torneo" onclick="verDetalle(${t.id})"><i class="fas fa-eye"></i> Ver</button>
-                        <button class="btn-editar-torneo" onclick="editarTorneo(${t.id})"><i class="fas fa-edit"></i> Editar</button>
-                        <button class="btn-eliminar-torneo" onclick="eliminarTorneo(${t.id})"><i class="fas fa-trash"></i> Eliminar</button>
+                        ${esAdmin ? `
+                            <button class="btn-editar-torneo" onclick="editarTorneo(${t.id})"><i class="fas fa-edit"></i> Editar</button>
+                            <button class="btn-eliminar-torneo" onclick="eliminarTorneo(${t.id})"><i class="fas fa-trash"></i> Eliminar</button>
+                        ` : ''}
                     </div>
                 </div>
             `;
@@ -117,15 +121,29 @@ async function cargarTorneos() {
 
 /* ===== ELIMINAR TORNEO ===== */
 async function eliminarTorneo(id) {
+    if (!esAdmin) {
+        alert('No tienes permiso para eliminar torneos.');
+        return;
+    }
+    const password = prompt('Ingresa tu contraseña de administrador:');
+    if (!password) return;
     if (!confirm('¿Eliminar este torneo?')) return;
     try {
-        await fetchJSON(`${API_URL}/torneos/${id}`, { method: 'DELETE' });
+        await fetchJSON(`${API_URL}/torneos/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario_id: loggedUser.id, password })
+        });
         cargarTorneos();
     } catch (error) { alert(error.message); }
 }
 
 /* ===== CAMBIAR ESTADO ===== */
 async function cambiarEstado(id, estado) {
+    if (!esAdmin) {
+        alert('No tienes permiso para cambiar el estado del torneo.');
+        return;
+    }
     try {
         await fetchJSON(`${API_URL}/torneos/${id}/estado`, {
             method: 'PUT',
@@ -145,6 +163,20 @@ async function cargarDetalle() {
     if (!id) return;
     try {
         const torneo = await fetchJSON(`${API_URL}/torneos/${id}`);
+        const puedeAgregar = (torneo.estado !== 'finalizado' && torneo.estado !== 'cancelado') && esAdmin;
+        const btnAgregar = document.getElementById('btnTogglePanel');
+        if (btnAgregar) {
+            btnAgregar.style.display = esAdmin ? 'inline-flex' : 'none';
+            if (!puedeAgregar && esAdmin) {
+                btnAgregar.disabled = true;
+                btnAgregar.textContent = 'Torneo finalizado';
+                btnAgregar.style.opacity = '0.5';
+            } else if (esAdmin) {
+                btnAgregar.disabled = false;
+                btnAgregar.textContent = 'Agregar Participante';
+                btnAgregar.style.opacity = '1';
+            }
+        }
         let participantes = [];
         try { participantes = await fetchJSON(`${API_URL}/torneos/${id}/participantes`); } catch(e) {}
         participantesGlobal = participantes;
@@ -153,12 +185,21 @@ async function cargarDetalle() {
         renderizarParticipantes();
         const puedeParticipar = (torneo.estado === 'programado' || torneo.estado === 'en curso');
         const botonParticipar = puedeParticipar ? `<button class="btn-crear-torneo" onclick="inscribirme(${id})">Participar</button>` : '<button disabled class="btn-crear-torneo">Torneo cerrado</button>';
-        const botonesAdmin = loggedUser.rol === 'admin' ? `<div class="botones-torneo" style="margin:20px 0;"><button class="btn-editar-torneo" onclick="generarBracket(${id})">Generar Bracket</button><button class="btn-ver-torneo" onclick="generarSiguienteRonda(${id})">Siguiente Ronda</button></div>` : '';
+        const botonesAdmin = esAdmin ? `<div class="botones-torneo" style="margin:20px 0;"><button class="btn-editar-torneo" onclick="generarBracket(${id})">Generar Bracket</button><button class="btn-ver-torneo" onclick="generarSiguienteRonda(${id})">Siguiente Ronda</button></div>` : '';
+        const estadoSelect = esAdmin ? `
+            <p><strong>Estado:</strong>
+                <select onchange="cambiarEstado(${id}, this.value)" class="estado-select">
+                    <option value="programado" ${torneo.estado === 'programado' ? 'selected' : ''}>Programado</option>
+                    <option value="en curso" ${torneo.estado === 'en curso' ? 'selected' : ''}>En curso</option>
+                    <option value="finalizado" ${torneo.estado === 'finalizado' ? 'selected' : ''}>Finalizado</option>
+                </select>
+            </p>` : `<p><strong>Estado:</strong> ${torneo.estado}</p>`;
+
         contenedor.innerHTML = `
             <div class="card-torneo">
                 <h2>${escapeHTML(torneo.nombre)}</h2>
                 <p>${escapeHTML(torneo.descripcion || 'Sin descripción')}</p>
-                <p><strong>Estado:</strong> <select onchange="cambiarEstado(${id}, this.value)" class="estado-select"><option value="programado" ${torneo.estado === 'programado' ? 'selected' : ''}>Programado</option><option value="en curso" ${torneo.estado === 'en curso' ? 'selected' : ''}>En curso</option><option value="finalizado" ${torneo.estado === 'finalizado' ? 'selected' : ''}>Finalizado</option></select></p>
+                ${estadoSelect}
                 <p><strong>Participantes:</strong> ${participantes.length} / ${torneo.max_participantes || 16}</p>
                 ${botonParticipar}
                 ${botonesAdmin}
@@ -187,7 +228,7 @@ function renderizarParticipantes() {
         html = paginados.map(p => `
             <div class="card-torneo" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <div><strong>${p.nombre ? escapeHTML(p.nombre + ' ' + (p.apellido || '')) : escapeHTML(p.nombre_invitado || 'Invitado')}</strong>${p.resultado ? `<div>Resultado: ${escapeHTML(p.resultado)}</div>` : ''}</div>
-                <button class="btn-eliminar-torneo" onclick="eliminarParticipante(${torneoIdActual}, ${p.id})">Eliminar</button>
+                ${esAdmin ? `<button class="btn-eliminar-torneo" onclick="eliminarParticipante(${torneoIdActual}, ${p.id})">Eliminar</button>` : ''}
             </div>
         `).join('');
     }
@@ -208,26 +249,36 @@ function siguientePaginaParticipantes() {
     if (paginaParticipantes < total) { paginaParticipantes++; renderizarParticipantes(); }
 }
 
-/* ===== USUARIOS DISPONIBLES CON PAGINACIÓN ===== */
+/* ===== USUARIOS DISPONIBLES (solo admin) ===== */
 async function cargarUsuariosDisponibles(idTorneo) {
     const contenedor = document.getElementById('listaUsuarios');
     if (!contenedor) return;
+    if (!esAdmin) {
+        contenedor.innerHTML = '';
+        return;
+    }
     torneoIdActualParaUsuarios = idTorneo;
     try {
         const usuarios = await fetchJSON(`${API_URL}/usuarios`);
-        usuariosGlobal = usuarios.filter(u => u.rol !== 'admin' && u.activo !== false);
+        const idsParticipantes = participantesGlobal.map(p => p.usuario_id).filter(id => id !== null);
+        let disponibles = usuarios.filter(u => u.rol !== 'admin' && u.activo !== false);
+        disponibles = disponibles.filter(u => !idsParticipantes.includes(u.id));
+        usuariosGlobal = disponibles;
         paginaUsuarios = 1;
         renderizarUsuarios();
+
         const buscador = document.getElementById('buscarUsuario');
         if (buscador) {
             const nuevoBuscador = buscador.cloneNode(true);
             buscador.parentNode.replaceChild(nuevoBuscador, buscador);
             nuevoBuscador.addEventListener('input', (e) => {
                 const texto = e.target.value.toLowerCase();
-                usuariosGlobal = usuarios.filter(u => 
-                    u.rol !== 'admin' && u.activo !== false &&
-                    (u.nombre.toLowerCase().includes(texto) || u.email.toLowerCase().includes(texto))
+                let filtrados = usuariosGlobal.filter(u => 
+                    u.nombre.toLowerCase().includes(texto) || u.email.toLowerCase().includes(texto)
                 );
+                const idsPart = participantesGlobal.map(p => p.usuario_id).filter(id => id !== null);
+                filtrados = filtrados.filter(u => !idsPart.includes(u.id));
+                usuariosGlobal = filtrados;
                 paginaUsuarios = 1;
                 renderizarUsuarios();
             });
@@ -241,6 +292,7 @@ async function cargarUsuariosDisponibles(idTorneo) {
 function renderizarUsuarios() {
     const contenedor = document.getElementById('listaUsuarios');
     if (!contenedor) return;
+    if (!esAdmin) return;
     const totalPaginas = Math.ceil(usuariosGlobal.length / usuariosPorPagina);
     if (paginaUsuarios > totalPaginas && totalPaginas > 0) paginaUsuarios = totalPaginas;
     if (paginaUsuarios < 1) paginaUsuarios = 1;
@@ -291,6 +343,10 @@ async function inscribirme(id) {
 }
 
 async function agregarParticipante(torneoId, usuarioId) {
+    if (!esAdmin) {
+        alert('No tienes permiso para agregar participantes.');
+        return;
+    }
     try {
         await fetchJSON(`${API_URL}/torneos/${torneoId}/participantes`, {
             method: 'POST',
@@ -303,6 +359,10 @@ async function agregarParticipante(torneoId, usuarioId) {
 }
 
 async function eliminarParticipante(torneoId, participanteId) {
+    if (!esAdmin) {
+        alert('No tienes permiso para eliminar participantes.');
+        return;
+    }
     if (!confirm('¿Eliminar participante?')) return;
     try {
         await fetchJSON(`${API_URL}/torneos/${torneoId}/participantes/${participanteId}`, { method: 'DELETE' });
@@ -311,6 +371,7 @@ async function eliminarParticipante(torneoId, participanteId) {
 }
 
 async function generarBracket(torneoId) {
+    if (!esAdmin) return alert('No autorizado');
     try {
         const data = await fetchJSON(`${API_URL}/torneos/${torneoId}/generar-bracket`, { method: 'POST' });
         alert(data.mensaje);
@@ -319,6 +380,7 @@ async function generarBracket(torneoId) {
 }
 
 async function generarSiguienteRonda(torneoId) {
+    if (!esAdmin) return alert('No autorizado');
     try {
         const data = await fetchJSON(`${API_URL}/torneos/${torneoId}/siguiente-ronda`, { method: 'POST' });
         alert(data.mensaje);
@@ -348,7 +410,7 @@ async function cargarBracket(id) {
                         </div>
                         <div style="font-size:12px; opacity:0.7; margin-bottom:14px;">Estado: ${escapeHTML(p.estado)}</div>
                 `;
-                if (!finalizado && loggedUser.rol === 'admin') {
+                if (!finalizado && esAdmin) {
                     html += `
                         <div style="display:flex; gap:10px; margin-bottom:10px;">
                             <input type="number" id="m1-${p.id}" placeholder="0" style="width:100%; padding:10px; border-radius:10px; border:none; background:rgba(0,0,0,0.4); color:white;">
@@ -372,6 +434,7 @@ async function cargarBracket(id) {
 }
 
 async function guardarResultado(partidoId, torneoId) {
+    if (!esAdmin) return alert('No autorizado');
     const marcador1 = document.getElementById(`m1-${partidoId}`).value;
     const marcador2 = document.getElementById(`m2-${partidoId}`).value;
     if (marcador1 === '' || marcador2 === '') return alert('Ingrese ambos marcadores');
@@ -399,7 +462,7 @@ async function cargarTop3(id) {
 function verDetalle(id) { window.location.href = `torneos-detalle.html?id=${id}`; }
 
 function editarTorneo(id) {
-    if (loggedUser.rol !== 'admin') return;
+    if (!esAdmin) return;
     fetch(`${API_URL}/torneos/${id}`)
         .then(res => res.json())
         .then(t => {
@@ -419,6 +482,7 @@ function editarTorneo(id) {
 }
 
 function togglePanelUsuarios() {
+    if (!esAdmin) return;
     const panel = document.getElementById('panelUsuarios');
     if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
 }
@@ -469,7 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modalTorneo').style.display = 'none';
     });
     document.getElementById('btnCrear')?.addEventListener('click', () => {
-        if (loggedUser.rol !== 'admin') {
+        if (!esAdmin) {
             alert('Solo administradores pueden crear torneos.');
             return;
         }

@@ -26,9 +26,13 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
 /* ===== CARGAR USUARIOS CON PAGINACION ===== */
 async function cargarTodosLosUsuarios() {
     try {
-        const res = await fetch(API_URL + `/usuarios/except/${loggedUser.id}?page=${paginaActual}&limit=${usuariosPorPagina}`);
+        const url = API_URL + `/usuarios/except/${loggedUser.id}?page=${paginaActual}&limit=${usuariosPorPagina}`;
+        console.log('🔍 URL consultada:', url);
+        const res = await fetch(url);
+        console.log('📡 Status HTTP:', res.status);
         const data = await res.json();
-        
+        console.log('📦 Datos recibidos:', data);
+
         const usuarios = data.usuarios || [];
         const paginacion = data.paginacion || {};
 
@@ -135,11 +139,11 @@ async function buscarSocios() {
     }
 
     try {
-        const res = await fetch(API_URL + '/socios/buscar?q=' + encodeURIComponent(termino));
-        const socios = await res.json();
+        const res = await fetch(API_URL + '/usuarios/buscar?q=' + encodeURIComponent(termino));
+        const usuarios = await res.json();
 
-        if (!socios.length) {
-            document.getElementById('userList').innerHTML = '<div class="emptyState">No se encontraron socios.</div>';
+        if (!usuarios.length) {
+            document.getElementById('userList').innerHTML = '<div class="emptyState">No se encontraron usuarios.</div>';
             return;
         }
 
@@ -148,35 +152,58 @@ async function buscarSocios() {
                 <table style="width:100%; border-collapse:collapse; font-size:13px;">
                     <thead>
                         <tr>
-                            <th style="padding:8px 10px;">No. Accion</th>
+                            <th style="padding:8px 10px;">ID / No. Acción</th>
                             <th style="padding:8px 10px;">Nombre</th>
                             <th style="padding:8px 10px;">Email</th>
-                            <th style="padding:8px 10px;">Telefono</th>
-                            <th style="padding:8px 10px;">Tipo</th>
-                            <th style="padding:8px 10px;">Estatus</th>
-                        </tr>
-                    </thead>
+                            <th style="padding:8px 10px;">Teléfono</th>
+                            <th style="padding:8px 10px;">Rol</th>
+                            <th style="padding:8px 10px;">Estado</th>
+                            <th style="padding:8px 10px;">Acciones</th>
+                        </thead>
                     <tbody>
-                        ${socios.map(s => `
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <td style="padding:10px;">${s.numero_accion || s.id}</td>
-                                <td style="padding:10px; font-weight:500;">${s.nombre || '—'} ${s.apellido || ''}</td>
-                                <td style="padding:10px;">${s.email || '—'}</td>
-                                <td style="padding:10px;">${s.telefono || '—'}</td>
-                                <td style="padding:10px;">${s.tipo_accion || '—'}</td>
-                                <td style="padding:10px;">${s.estatus_accion || '—'}</td>
-                            </tr>
+                        ${usuarios.map(u => `
+                            <tr data-user-id="${u.id}" style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td style="padding:10px;">${u.numero_accion || u.id}</td>
+                                <td style="padding:10px; font-weight:500;">${u.nombre || '—'} ${u.apellido || ''}</td>
+                                <td style="padding:10px;">${u.email || '—'}</td>
+                                <td style="padding:10px;">${u.telefono || '—'}</td>
+                                <td style="padding:10px;">
+                                    <span style="background:rgba(14,104,115,0.2); color:#54cfe0; border-radius:20px; padding:3px 10px; font-size:11px;">
+                                        ${u.rol}
+                                    </span>
+                                </td>
+                                <td style="padding:10px; text-align:center;">
+                                    <span style="background:${u.activo ? 'rgba(14,104,115,0.15)' : 'rgba(228,32,27,0.15)'}; color:${u.activo ? '#54cfe0' : '#ff6b6b'}; border-radius:20px; padding:3px 10px; font-size:11px;">
+                                        ${u.activo ? 'Activo' : 'Inactivo'}
+                                    </span>
+                                </td>
+                                <td style="padding:10px; text-align:center; white-space: nowrap;">
+                                    <button class="editBtn" style="margin-right:6px;">Editar</button>
+                                    <button class="deleteBtn">Eliminar</button>
+                                </tr>
                         `).join('')}
                     </tbody>
                 </table>
             </div>`;
         document.getElementById('userList').innerHTML = html;
+
+        // Reasignar eventos a los botones de editar/eliminar
+        document.querySelectorAll('.editBtn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                editarUsuario(this.closest('tr').dataset.userId);
+            });
+        });
+        document.querySelectorAll('.deleteBtn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                confirmarEliminar(this.closest('tr').dataset.userId);
+            });
+        });
+
     } catch (error) {
         console.error(error);
-        document.getElementById('userList').innerHTML = '<div class="emptyState">Error en la busqueda.</div>';
+        document.getElementById('userList').innerHTML = '<div class="emptyState">Error en la búsqueda.</div>';
     }
 }
-
 /* ===== EDITAR USUARIO ===== */
 async function editarUsuario(id) {
     const res = await fetch(API_URL + '/usuarios/' + id);
@@ -220,6 +247,7 @@ function cerrarEditar() {
 function cerrarTodo() {
     cerrarEditar();
     cerrarEliminar();
+    cerrarNuevoInstructor();
 }
 
 /* ===== ELIMINAR USUARIO ===== */
@@ -482,6 +510,74 @@ const exportarSocios = async () => {
         alert('Error al exportar socios');
     }
 };
+
+// ========== NUEVO INSTRUCTOR (MANUAL) ==========
+const nuevoInstructorBtn = document.getElementById('nuevoInstructorBtn');
+if (nuevoInstructorBtn) {
+    nuevoInstructorBtn.addEventListener('click', () => {
+        document.getElementById('nuevoInstructorPanel').style.display = 'block';
+        document.getElementById('modalBackdrop').style.display = 'block';
+        // Limpiar campos
+        document.getElementById('newInstNombre').value = '';
+        document.getElementById('newInstEmail').value = '';
+        document.getElementById('newInstTelefono').value = '';
+        document.getElementById('newInstEspecialidad').value = '';
+        document.getElementById('newInstFechaContrato').value = '';
+    });
+}
+
+window.cerrarNuevoInstructor = function() {
+    document.getElementById('nuevoInstructorPanel').style.display = 'none';
+    document.getElementById('modalBackdrop').style.display = 'none';
+};
+
+document.getElementById('guardarInstructorBtn')?.addEventListener('click', async () => {
+    const nombre = document.getElementById('newInstNombre').value.trim();
+    const email = document.getElementById('newInstEmail').value.trim();
+    const telefono = document.getElementById('newInstTelefono').value.trim();
+    const especialidad = document.getElementById('newInstEspecialidad').value.trim();
+    const fecha_contratacion = document.getElementById('newInstFechaContrato').value;
+
+    if (!nombre || !email) {
+        alert('Nombre y Email son obligatorios');
+        return;
+    }
+
+    // Generar contraseña temporal: primeras 4 letras del nombre (solo letras) + últimos 4 dígitos del teléfono (o '0000')
+    const soloLetras = nombre.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    const nombreBase = soloLetras.substring(0, 4);
+    const telefonoNum = telefono.replace(/\D/g, '');
+    const telefonoSufijo = telefonoNum.slice(-4);
+    const passwordTemp = (nombreBase || 'inst') + (telefonoSufijo || '0000');
+
+    try {
+        const res = await fetch(API_URL + '/instructores', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nombre: nombre,
+                email: email,
+                password: passwordTemp,
+                telefono: telefono,
+                especialidad: especialidad,
+                fecha_contratacion: fecha_contratacion || null
+            })
+        });
+
+        if (res.ok) {
+            alert(`Instructor creado exitosamente.\n\nEmail: ${email}\nContraseña temporal: ${passwordTemp}\n\nRecomienda cambiar la contraseña en el primer inicio.`);
+            cerrarNuevoInstructor();
+            paginaActual = 1;
+            cargarTodosLosUsuarios();
+        } else {
+            const err = await res.json();
+            alert('Error: ' + (err.error || 'desconocido'));
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Error de conexión');
+    }
+});
 
 /* ===== CERRAR MODAL IMPORTACION ===== */
 window.cerrarImportModal = () => {

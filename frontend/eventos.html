@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eventos - SIGAD</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="dashboardPage">
 
-    <!-- FONDO -->
+    <!-- Fondo SVG (mismo que usas en otras páginas) -->
     <svg class="bg-playbook" viewBox="0 0 700 560" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
         <defs>
             <radialGradient id="vignette" cx="50%" cy="50%" r="60%">
@@ -22,6 +23,8 @@
         <circle cx="350" cy="285" r="55" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
         <rect width="700" height="560" fill="url(#vignette)"/>
     </svg>
+
+    <div class="particles"></div>
 
     <div class="dashboardWrapper">
 
@@ -37,31 +40,54 @@
             </div>
         </div>
 
-        <!-- FORMULARIO -->
-        <p class="section-label" id="formLabel">Nuevo evento</p>
-        <div class="dashboardCard" style="margin-bottom: 24px;">
-            <div class="eventForm">
-                <input type="hidden" id="eventoId">
-                <input type="text" id="nombreEvento" placeholder="Nombre del evento" required>
-                <input type="date" id="fechaEvento" required>
-                <input type="time" id="horaEvento">
-                <input type="text" id="descripcionEvento" placeholder="Descripción">
-                <div style="display:flex; gap:12px;">
-                    <button id="guardarBtn">Guardar evento</button>
-                    <button id="cancelarBtn" class="secondaryBtn" style="display:none;">Cancelar</button>
-                </div>
-            </div>
+        <!-- Botón Crear Evento (solo admin) -->
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 24px;">
+            <button id="btnCrearEvento" class="btn-crear-torneo" style="display: none;">
+                <i class="fas fa-plus"></i> Crear Evento
+            </button>
         </div>
 
-        <!-- LISTA Y BOTÓN REPORTE -->
+        <!-- LISTA DE EVENTOS Y BOTÓN REPORTE -->
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-            <p class="section-label" style="margin-bottom:0; flex:1;">Eventos registrados</p>
+            <p class="section-label" id="eventosSectionLabel" style="margin-bottom:0; flex:1;">Próximos eventos</p>
             <button id="toggleReporteBtn" class="secondaryBtn" style="max-width:160px; padding:8px 16px; margin:0;">
                 Ver reporte
             </button>
         </div>
         <div id="eventList"></div>
 
+    </div>
+
+    <!-- MODAL PARA CREAR/EDITAR EVENTO -->
+    <div id="modalEvento" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index:1000; justify-content: center; align-items: center;">
+        <div class="dashboardCard" style="max-width: 500px; width: 90%; margin: auto; position: relative;">
+            <h2 id="modalEventoTitulo">Nuevo Evento</h2>
+            <form id="formEventoModal">
+                <input type="hidden" id="eventoIdModal">
+                <div class="campo">
+                    <label>Nombre *</label>
+                    <input type="text" id="nombreEventoModal" required>
+                </div>
+                <div class="campo">
+                    <label>Descripción</label>
+                    <textarea id="descripcionEventoModal" rows="2"></textarea>
+                </div>
+                <div class="campo-row">
+                    <div class="campo">
+                        <label>Fecha *</label>
+                        <input type="date" id="fechaEventoModal" required>
+                    </div>
+                    <div class="campo">
+                        <label>Hora</label>
+                        <input type="time" id="horaEventoModal">
+                    </div>
+                </div>
+                <div class="botones-form" style="margin-top: 20px;">
+                    <button type="submit" class="btn-guardar">Guardar</button>
+                    <button type="button" id="cerrarEventoModalBtn" class="btn-cancelar">Cancelar</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script src="js/comunes.js"></script>

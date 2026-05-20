@@ -256,30 +256,37 @@ button:hover {
 }
 
 .logoutBtn {
-    background: linear-gradient(135deg, var(--copper), #c89962);
-    box-shadow: 0 6px 18px rgba(249,187,151,0.35);
+    background: rgba(97,65,60,0.35);
+    color: #c89962;
+    border: 1px solid rgba(200,153,98,0.25);
+    box-shadow: none;
     min-width: 120px;
-    padding: 12px 16px;
+    padding: 11px 20px;
     max-width: none;
     margin: 0;
+    border-radius: 10px;
 }
 
 .logoutBtn:hover {
-    box-shadow: 0 10px 24px rgba(254,197,143,0.5);
+    background: rgba(97,65,60,0.55);
+    box-shadow: 0 6px 16px rgba(97,65,60,0.4);
+    transform: translateY(-2px);
 }
 
 .secondaryBtn {
-    background: rgba(255,255,255,0.08);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.75);
+    border: 1px solid rgba(255,255,255,0.10);
     min-width: 120px;
-    padding: 12px 16px;
+    padding: 11px 20px;
     max-width: none;
     margin: 0;
+    border-radius: 10px;
 }
 
 .secondaryBtn:hover {
-    background: rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.13);
+    transform: translateY(-1px);
 }
 
 .dangerBtn {
@@ -294,52 +301,67 @@ button:hover {
 
 .dangerBtn:hover { background: rgba(239,80,0,0.28); }
 
-/* Botón Importar */
-label[for="excelUploadInput"] {
-    background: linear-gradient(135deg, #2e7d32, #4caf50);
-    color: white;
-    border: none;
-    cursor: pointer;
-    min-width: 120px;
-    padding: 12px 16px;
-    max-width: none;
-    margin: 0;
-    border-radius: 12px;
-    font-weight: 600;
-    transition: 0.3s;
+/* btn-import: botón de acción primaria genérica (ej. Nuevo Instructor) */
+.btn-import {
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.85);
+    border: 1px solid rgba(255,255,255,0.12);
+}
+
+.btn-import:hover {
+    background: rgba(255,255,255,0.13);
+    transform: translateY(-1px);
+}
+
+/* ===== TOPBAR BUTTONS — tamaño y forma unificados ===== */
+/* Base compartida para todos los botones de la topbar */
+.btn-import,
+label[for="excelUploadInput"],
+.btn-export,
+.logoutBtn,
+.secondaryBtn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
+    min-width: 120px;
+    padding: 11px 20px;
+    max-width: none;
+    margin: 0;
+    border-radius: 10px;
     font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    border: none;
+    white-space: nowrap;
+}
+
+/* Botón Importar — acción principal positiva, usa teal del sistema */
+label[for="excelUploadInput"] {
+    background: linear-gradient(135deg, var(--teal), var(--teal2));
+    color: white;
+    box-shadow: 0 4px 14px rgba(14,104,115,0.35);
 }
 
 label[for="excelUploadInput"]:hover {
     transform: translateY(-2px);
-    background: linear-gradient(135deg, #1b5e20, #3d8b40);
+    box-shadow: 0 8px 22px rgba(14,104,115,0.5);
 }
 
-/* Botón Exportar (teal) - mismo tamaño que los demás */
+/* Botón Exportar — variante secundaria teal, más sutil */
 .btn-export {
-    background: linear-gradient(135deg, #1a5a6a, #3a9aae);
-    color: white;
-    border: none;
-    min-width: 120px;
-    padding: 12px 16px;
-    max-width: none;
-    margin: 0;
-    border-radius: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.3s;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'Poppins', sans-serif;
+    background: rgba(14,104,115,0.18);
+    color: var(--teal2);
+    border: 1px solid rgba(84,207,224,0.25);
+    box-shadow: none;
 }
 
 .btn-export:hover {
     transform: translateY(-2px);
-    background: linear-gradient(135deg, #0e4a5a, #2e8a9e);
+    background: rgba(14,104,115,0.30);
+    box-shadow: 0 6px 16px rgba(14,104,115,0.3);
 }
 
 /* Botones de editar/eliminar dentro de la tabla */
@@ -3293,4 +3315,112 @@ img {
 #btnAnterior:disabled, #btnSiguiente:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+}
+/* Estilos mejorados para eventos */
+.eventItem {
+    position: relative;
+    overflow: hidden;
+}
+.eventItem::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0E6873, #54cfe0, #FE7E3C);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.eventItem:hover::before {
+    opacity: 1;
+}
+.eventItem:hover {
+    transform: translateY(-4px);
+    border-color: rgba(84,207,224,0.25);
+    background: rgba(20,20,20,0.85);
+}
+/* ===== MODALES MEJORADOS (glassmorphism + brillo) ===== */
+#modalTorneo, #modalEvento {
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+}
+
+#modalTorneo .dashboardCard,
+#modalEvento .dashboardCard {
+    background: rgba(20, 30, 35, 0.95) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(84, 207, 224, 0.4);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(84, 207, 224, 0.1) inset;
+    border-radius: 24px;
+    transition: all 0.3s ease;
+}
+
+#modalTorneo .dashboardCard h2,
+#modalEvento .dashboardCard h2 {
+    color: #54cfe0;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px rgba(84, 207, 224, 0.3);
+    border-left: 3px solid #54cfe0;
+    padding-left: 15px;
+    margin-bottom: 24px;
+}
+
+#modalTorneo .campo label,
+#modalEvento .campo label {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+#modalTorneo .campo input,
+#modalTorneo .campo select,
+#modalTorneo .campo textarea,
+#modalEvento .campo input,
+#modalEvento .campo select,
+#modalEvento .campo textarea {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(84, 207, 224, 0.3);
+    color: white;
+    transition: all 0.2s;
+}
+
+#modalTorneo .campo input:focus,
+#modalTorneo .campo select:focus,
+#modalTorneo .campo textarea:focus,
+#modalEvento .campo input:focus,
+#modalEvento .campo select:focus,
+#modalEvento .campo textarea:focus {
+    border-color: #54cfe0;
+    box-shadow: 0 0 12px rgba(84, 207, 224, 0.3);
+    background: rgba(0, 0, 0, 0.8);
+}
+
+#modalTorneo .btn-guardar,
+#modalEvento .btn-guardar {
+    background: linear-gradient(135deg, #0E6873, #54cfe0);
+    border: none;
+    color: white;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#modalTorneo .btn-guardar:hover,
+#modalEvento .btn-guardar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(14, 104, 115, 0.5);
+}
+
+#modalTorneo .btn-cancelar,
+#modalEvento .btn-cancelar {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+#modalTorneo .btn-cancelar:hover,
+#modalEvento .btn-cancelar:hover {
+    background: rgba(255, 255, 255, 0.2);
 }

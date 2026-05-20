@@ -27,9 +27,30 @@ pool.connect()
     .then(() => console.log('Conectado a PostgreSQL'))
     .catch(err => console.error('Error conexión BD', err.stack));
 
+async function obtenerRolUsuario(usuario_id) {
+    if (!usuario_id) return null;
+    const res = await pool.query(`SELECT r.nombre as rol FROM usuarios u JOIN roles r ON u.rol_id = r.id WHERE u.id = $1`, [usuario_id]);
+    return res.rows[0]?.rol || null;
+}
+
+async function esAdmin(usuario_id) {
+    const rol = await obtenerRolUsuario(usuario_id);
+    return rol === 'admin';
+}
+
+function normalizarTexto(str) {
+    if (!str) return '';
+    return str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+}
+
 /* ===== LOGIN ===== */
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
+    const emailNormalizado = normalizarTexto(email);   // ← aquí está la clave
 
     try {
         const resultado = await pool.query(`
@@ -37,42 +58,28 @@ app.post('/api/login', async (req, res) => {
             FROM usuarios u
             JOIN roles r ON u.rol_id = r.id
             WHERE u.email = $1 AND u.activo = true
-        `, [email]);
+        `, [emailNormalizado]);
 
         if (resultado.rowCount === 0) {
             return res.status(401).json({ error: "Credenciales incorrectas" });
         }
 
         const usuario = resultado.rows[0];
-        
         const passwordValida = await bcrypt.compare(password, usuario.password);
-        
         if (!passwordValida) {
             return res.status(401).json({ error: "Credenciales incorrectas" });
         }
 
         let tipo_accion = null;
         if (usuario.rol === 'socio') {
-            const socio = await pool.query(`
-                SELECT tipo_accion FROM socios 
-                WHERE usuario_id = $1
-            `, [usuario.id]);
-            if (socio.rows.length > 0) {
-                tipo_accion = socio.rows[0].tipo_accion;
-            }
+            const socio = await pool.query(`SELECT tipo_accion FROM socios WHERE usuario_id = $1`, [usuario.id]);
+            if (socio.rows.length > 0) tipo_accion = socio.rows[0].tipo_accion;
         }
 
-        await pool.query(`
-            INSERT INTO auditoria(usuario_id, accion, ip_origen)
-            VALUES($1, $2, $3)
-        `, [usuario.id, 'login', req.ip]);
+        await pool.query(`INSERT INTO auditoria(usuario_id, accion, ip_origen) VALUES($1, $2, $3)`, [usuario.id, 'login', req.ip]);
 
         const { password: _, ...usuarioSinPassword } = usuario;
-        
-        res.json({
-            ...usuarioSinPassword,
-            tipo_accion
-        });
+        res.json({ ...usuarioSinPassword, tipo_accion });
 
     } catch (error) {
         console.error(error);
@@ -92,10 +99,12 @@ const upload = multer({
 });
 
 /* ─── Helpers ─────────────────────────────────────────────────────── */
-function generarPasswordTemporal(nombre, telefono) {
-    const prefijo = (nombre || '').replace(/\s/g, '').substring(0, 4).toLowerCase();
-    const sufijo  = String(telefono || '0000').slice(-4);
-    return `${prefijo}${sufijo}`;
+function generarPasswordTemporal(nombreCompleto, telefono) {
+    // Tomar primeras 4 letras del nombre limpio (sin acentos, sin espacios)
+    const nombreLimpio = normalizarTexto(nombreCompleto).replace(/\s/g, '').substring(0, 4);
+    // Últimos 4 dígitos del teléfono (solo números)
+    const telefonoLimpio = String(telefono || '0000').replace(/\D/g, '').slice(-4);
+    return (nombreLimpio || 'sigad') + telefonoLimpio;
 }
 
 function parsearFecha(valor) {
@@ -108,141 +117,6 @@ function parsearFecha(valor) {
     }
     return null;
 }
-
-/* ===== USUARIOS ===== */
-app.post('/api/usuarios', async (req, res) => {
-    const { nombre, email, password, rol_id, telefono } = req.body;
-
-    try {
-        const existe = await pool.query('SELECT id FROM usuarios WHERE email = $1', [email]);
-        if (existe.rows.length > 0) {
-            return res.status(400).json({ error: "Email ya registrado" });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const resultado = await pool.query(`
-            INSERT INTO usuarios(nombre, email, password, rol_id, telefono, activo)
-            VALUES($1, $2, $3, $4, $5, true)
-            RETURNING id
-        `, [nombre, email, hashedPassword, rol_id, telefono]);
-
-        res.json({ id: resultado.rows[0].id, mensaje: "Usuario creado" });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al crear usuario" });
-    }
-});
-
-app.delete('/api/usuarios/:id/seguro', async (req, res) => {
-    const { id } = req.params;
-    const { admin_id, password } = req.body;
-
-    try {
-        const admin = await pool.query(`
-            SELECT u.password, r.nombre as rol
-            FROM usuarios u
-            JOIN roles r ON u.rol_id = r.id
-            WHERE u.id = $1
-        `, [admin_id]);
-
-        if (admin.rows.length === 0 || admin.rows[0].rol !== 'admin') {
-            return res.status(403).json({ error: "No autorizado" });
-        }
-
-        const passwordValida = await bcrypt.compare(password, admin.rows[0].password);
-        if (!passwordValida) {
-            return res.status(401).json({ error: "Contraseña incorrecta" });
-        }
-
-        if (parseInt(id) === parseInt(admin_id)) {
-            return res.status(400).json({ error: "No puedes eliminarte a ti mismo" });
-        }
-
-        await pool.query('DELETE FROM familiares WHERE socio_id IN (SELECT id FROM socios WHERE usuario_id = $1)', [id]);
-        await pool.query('DELETE FROM socios WHERE usuario_id = $1', [id]);
-        await pool.query('DELETE FROM instructores WHERE usuario_id = $1', [id]);
-        await pool.query('DELETE FROM reservaciones WHERE usuario_id = $1', [id]);
-        await pool.query('DELETE FROM usuarios WHERE id = $1', [id]);
-
-        res.json({ mensaje: "Usuario eliminado correctamente" });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al eliminar usuario" });
-    }
-});
-
-app.get('/api/usuarios/:id', async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const resultado = await pool.query(`
-            SELECT id, nombre, apellido, email, telefono
-            FROM usuarios
-            WHERE id = $1
-        `,[id]);
-
-        if (resultado.rows.length == 0) {
-            return res.status(404).json({error: "Usuario no encontrado"});
-        }
-
-        res.json(resultado.rows[0]);
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al obtener usuarios" });
-    }
-});
-
-app.put('/api/usuarios/:id', async (req, res) => {
-    const { id } = req.params;
-    const { nombre, apellido, email, telefono } = req.body;
-
-    try {
-        await pool.query(`
-            UPDATE usuarios 
-            SET nombre = $1, apellido = $2, email = $3, telefono = $4
-            WHERE id = $5
-        `, [nombre, apellido, email, telefono, id]);
-
-        res.json({ mensaje: "Usuario actualizado" });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al actualizar usuario" });
-    }
-});
-
-app.delete('/api/usuarios/:id', async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        await pool.query('UPDATE usuarios SET activo = false WHERE id = $1', [id]);
-        res.json({ mensaje: "Usuario desactivado" });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al desactivar usuario" });
-    }
-});
-
-app.get('/api/usuarios', async (req, res) => {
-    try {
-        const resultado = await pool.query(`
-            SELECT u.id, u.nombre, u.apellido, u.email, u.activo, r.nombre AS rol
-            FROM usuarios u
-            LEFT JOIN roles r ON u.rol_id = r.id
-            WHERE u.activo = true
-            ORDER BY u.nombre
-        `);
-        res.json(resultado.rows);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error al obtener usuarios' });
-    }
-});
 
 /* ===== SOCIOS ===== */
 app.get('/api/socios', async (req, res) => {
@@ -761,6 +635,24 @@ app.put('/api/torneos/:id', async (req, res) => {
 
 app.delete('/api/torneos/:id', async (req, res) => {
     const { id } = req.params;
+    const { usuario_id, password } = req.body;
+
+    if (!usuario_id) return res.status(401).json({ error: "No autorizado" });
+
+    const adminCheck = await pool.query(`
+        SELECT u.password, r.nombre as rol
+        FROM usuarios u
+        JOIN roles r ON u.rol_id = r.id
+        WHERE u.id = $1
+    `, [usuario_id]);
+    if (adminCheck.rows.length === 0 || adminCheck.rows[0].rol !== 'admin') {
+        return res.status(403).json({ error: "No autorizado. Solo administradores pueden eliminar torneos." });
+    }
+    const passwordValida = await bcrypt.compare(password, adminCheck.rows[0].password);
+    if (!passwordValida) {
+        return res.status(401).json({ error: "Contraseña incorrecta" });
+    }
+
     try {
         const resultado = await pool.query('DELETE FROM torneos WHERE id = $1', [id]);
         if (resultado.rowCount === 0) {
@@ -815,6 +707,14 @@ app.post('/api/torneos/:id/participantes', async (req, res) => {
     const { usuario_id, nombre_invitado, cuota_pagada } = req.body;
 
     try {
+        const torneo = await pool.query('SELECT estado FROM torneos WHERE id = $1', [id]);
+        if (torneo.rows.length === 0) {
+            return res.status(404).json({ error: "Torneo no encontrado" });
+        }
+        const estado = torneo.rows[0].estado;
+        if (estado === 'finalizado' || estado === 'cancelado') {
+            return res.status(400).json({ error: "No se pueden agregar participantes a un torneo finalizado o cancelado" });
+        }
         if (!usuario_id && !nombre_invitado) {
             return res.status(400).json({ error: "Debe enviar usuario o invitado" });
         }
@@ -1192,6 +1092,13 @@ app.get('/api/torneos/:id/tabla', async (req, res) => {
 /* ===== EVENTOS ===== */
 app.post('/api/eventos', async (req, res) => {
     const { nombre, descripcion, fecha_evento, hora, creado_por } = req.body;
+    // Validar que la fecha no sea anterior a hoy
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaEvento = new Date(fecha_evento);
+    if (fechaEvento < hoy) {
+        return res.status(400).json({ error: "No se pueden crear eventos en fechas pasadas." });
+    }
     try {
         await pool.query('INSERT INTO eventos(nombre, descripcion, fecha_evento, hora, creado_por) VALUES($1, $2, $3, $4, $5)', [nombre, descripcion, fecha_evento, hora, creado_por]);
         res.json({ mensaje: "Evento creado" });
@@ -1216,9 +1123,31 @@ app.get('/api/eventos', async (req, res) => {
     }
 });
 
+/* ===== OBTENER EVENTO POR ID ===== */
+app.get('/api/eventos/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const resultado = await pool.query('SELECT * FROM eventos WHERE id_evento = $1', [id]);
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({ error: "Evento no encontrado" });
+        }
+        res.json(resultado.rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al obtener evento" });
+    }
+});
+
 app.put('/api/eventos/:id', async (req, res) => {
     const { id } = req.params;
     const { nombre, descripcion, fecha_evento, hora } = req.body;
+    // Validar que la fecha no sea anterior a hoy (opcional: permitir edición solo si la fecha no es pasada)
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaEvento = new Date(fecha_evento);
+    if (fechaEvento < hoy) {
+        return res.status(400).json({ error: "No se puede cambiar la fecha a una fecha pasada." });
+    }
     try {
         await pool.query(`UPDATE eventos SET nombre=$1, descripcion=$2, fecha_evento=$3, hora=$4 WHERE id_evento=$5`, [nombre, descripcion, fecha_evento, hora, id]);
         res.json({ mensaje: "Evento actualizado" });
@@ -1265,13 +1194,17 @@ app.get("/api/actividades/:id", async (req, res) => {
 });
 
 app.post("/api/actividades", async (req, res) => {
-    const { nombre, descripcion, capacidad, icono, nivel, duracion, equipo, tipo_actividad_id } = req.body;
+    const { nombre, descripcion, capacidad, icono, nivel, duracion, equipo, tipo_actividad_id, usuario_id } = req.body;
+    if (!usuario_id) return res.status(401).json({ error: "No autorizado" });
+    const rol = await obtenerRolUsuario(usuario_id);
+    if (rol !== 'admin' && rol !== 'instructor') return res.status(403).json({ error: "No autorizado" });
+
     if (!nombre || !capacidad) return res.status(400).json({ error: "Datos incompletos" });
     try {
         const r = await pool.query(`
-            INSERT INTO actividades(nombre, descripcion, capacidad, icono, nivel, duracion, equipo, tipo_actividad_id) 
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
-        `, [nombre, descripcion || '', capacidad, icono, nivel, duracion, equipo, tipo_actividad_id || null]);
+            INSERT INTO actividades(nombre, descripcion, capacidad, icono, nivel, duracion, equipo, tipo_actividad_id, creado_por) 
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *
+        `, [nombre, descripcion || '', capacidad, icono, nivel, duracion, equipo, tipo_actividad_id || null, usuario_id]);
         res.status(201).json(r.rows[0]);
     } catch (error) {
         console.error(error);
@@ -1280,30 +1213,62 @@ app.post("/api/actividades", async (req, res) => {
 });
 
 app.put("/api/actividades/:id", async (req, res) => {
-    const { nombre, descripcion, capacidad, icono, nivel, duracion, equipo, tipo_actividad_id } = req.body;
-    try {
-        const r = await pool.query(`
-            UPDATE actividades SET nombre=$1, descripcion=$2, capacidad=$3, icono=$4, nivel=$5, duracion=$6, equipo=$7, tipo_actividad_id=$8
-            WHERE id=$9 RETURNING *
-        `, [nombre, descripcion || '', capacidad, icono, nivel, duracion, equipo, tipo_actividad_id || null, req.params.id]);
-        if (r.rows.length === 0) return res.status(404).json({ error: "No encontrada" });
-        res.json(r.rows[0]);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al actualizar" });
+    const { id } = req.params;
+    const { nombre, descripcion, capacidad, icono, nivel, duracion, equipo, tipo_actividad_id, usuario_id, admin_id, password } = req.body;
+    const usuario = usuario_id || admin_id;
+    if (!usuario) return res.status(401).json({ error: "No autorizado" });
+
+    const rol = await obtenerRolUsuario(usuario);
+    if (rol !== 'admin' && rol !== 'instructor') return res.status(403).json({ error: "No autorizado" });
+
+    if (rol === 'admin') {
+        if (!password) return res.status(400).json({ error: "Contraseña requerida" });
+        const adminData = await pool.query(`SELECT password FROM usuarios WHERE id = $1`, [usuario]);
+        const passOk = await bcrypt.compare(password, adminData.rows[0].password);
+        if (!passOk) return res.status(401).json({ error: "Contraseña incorrecta" });
+    } else {
+        const actividad = await pool.query(`SELECT creado_por FROM actividades WHERE id = $1`, [id]);
+        if (actividad.rows.length === 0) return res.status(404).json({ error: "No encontrada" });
+        if (actividad.rows[0].creado_por !== usuario) {
+            return res.status(403).json({ error: "Solo puedes editar tus propias actividades" });
+        }
     }
+
+    const r = await pool.query(`
+        UPDATE actividades SET nombre=$1, descripcion=$2, capacidad=$3, icono=$4, nivel=$5, duracion=$6, equipo=$7, tipo_actividad_id=$8
+        WHERE id=$9 RETURNING *
+    `, [nombre, descripcion || '', capacidad, icono, nivel, duracion, equipo, tipo_actividad_id || null, id]);
+    if (r.rows.length === 0) return res.status(404).json({ error: "No encontrada" });
+    res.json(r.rows[0]);
 });
 
 app.delete("/api/actividades/:id", async (req, res) => {
-    try {
-        const check = await pool.query("SELECT * FROM inscripciones WHERE actividad_id=$1 AND estado='activa'", [req.params.id]);
-        if (check.rows.length > 0) return res.status(400).json({ error: "Tiene inscripciones activas" });
-        const r = await pool.query("DELETE FROM actividades WHERE id=$1 RETURNING *", [req.params.id]);
-        if (r.rows.length === 0) return res.status(404).json({ error: "No encontrada" });
-        res.json({ mensaje: "Actividad eliminada" });
-    } catch (error) {
-        res.status(500).json({ error: "Error al eliminar" });
+    const { id } = req.params;
+    const { usuario_id, admin_id, password } = req.body;
+    const usuario = usuario_id || admin_id;
+    if (!usuario) return res.status(401).json({ error: "No autorizado" });
+
+    const rol = await obtenerRolUsuario(usuario);
+    if (rol !== 'admin' && rol !== 'instructor') return res.status(403).json({ error: "No autorizado" });
+
+    if (rol === 'admin') {
+        if (!password) return res.status(400).json({ error: "Contraseña requerida" });
+        const adminData = await pool.query(`SELECT password FROM usuarios WHERE id = $1`, [usuario]);
+        const passOk = await bcrypt.compare(password, adminData.rows[0].password);
+        if (!passOk) return res.status(401).json({ error: "Contraseña incorrecta" });
+    } else {
+        const actividad = await pool.query(`SELECT creado_por FROM actividades WHERE id = $1`, [id]);
+        if (actividad.rows.length === 0) return res.status(404).json({ error: "No encontrada" });
+        if (actividad.rows[0].creado_por !== usuario) {
+            return res.status(403).json({ error: "Solo puedes eliminar tus propias actividades" });
+        }
     }
+
+    const check = await pool.query("SELECT * FROM inscripciones WHERE actividad_id=$1 AND estado='activa'", [id]);
+    if (check.rows.length > 0) return res.status(400).json({ error: "Tiene inscripciones activas" });
+    const r = await pool.query("DELETE FROM actividades WHERE id=$1 RETURNING *", [id]);
+    if (r.rows.length === 0) return res.status(404).json({ error: "No encontrada" });
+    res.json({ mensaje: "Actividad eliminada" });
 });
 
 /* ===== HORARIOS ===== */
@@ -1325,64 +1290,77 @@ app.get('/api/horarios', async (req, res) => {
 });
 
 app.post('/api/horarios', async (req, res) => {
-    const { espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia } = req.body;
-    try {
-        const conflicto = await pool.query(`
-            SELECT * FROM horarios WHERE espacio_id = $1 AND dia_semana = $2 AND activo = true
-            AND ((hora_inicio BETWEEN $3 AND $4) OR (hora_fin BETWEEN $3 AND $4) OR ($3 BETWEEN hora_inicio AND hora_fin))
-        `, [espacio_id, dia_semana, hora_inicio, hora_fin]);
-        if (conflicto.rows.length > 0) {
-            return res.status(409).json({ error: "Ya existe un horario en ese espacio y horario" });
-        }
-        const resultado = await pool.query(`
-            INSERT INTO horarios(espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia, activo)
-            VALUES($1, $2, $3, $4, $5, $6, $7, $8, true) RETURNING *
-        `, [espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia]);
-        res.json(resultado.rows[0]);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al crear horario" });
+    const { espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia, usuario_id } = req.body;
+    if (!usuario_id) return res.status(401).json({ error: "No autorizado" });
+    const rol = await obtenerRolUsuario(usuario_id);
+    if (rol !== 'admin' && rol !== 'instructor') return res.status(403).json({ error: "No autorizado" });
+    let instructorFinal = instructor_id;
+    if (rol === 'instructor') {
+        // Forzar que instructor_id sea el mismo que usuario_id
+        instructorFinal = usuario_id;
     }
+    // ... conflicto y demás
+    const resultado = await pool.query(`
+        INSERT INTO horarios(espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia, activo)
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, true) RETURNING *
+    `, [espacio_id, actividad_id, instructorFinal, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia]);
+    res.json(resultado.rows[0]);
 });
 
 app.put('/api/horarios/:id', async (req, res) => {
     const { id } = req.params;
-    const { espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia } = req.body;
-    try {
-        await pool.query(`
-            UPDATE horarios SET espacio_id=$1, actividad_id=$2, instructor_id=$3, dia_semana=$4, hora_inicio=$5, hora_fin=$6, fecha_inicio_vigencia=$7, fecha_fin_vigencia=$8
-            WHERE id=$9
-        `, [espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia, id]);
-        res.json({ mensaje: "Horario actualizado" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al actualizar horario" });
+    const { espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia, usuario_id } = req.body;
+    if (!usuario_id) return res.status(401).json({ error: "No autorizado" });
+    const rol = await obtenerRolUsuario(usuario_id);
+    if (rol !== 'admin' && rol !== 'instructor') return res.status(403).json({ error: "No autorizado" });
+    if (rol === 'instructor') {
+        const horario = await pool.query("SELECT instructor_id FROM horarios WHERE id = $1", [id]);
+        if (horario.rows.length === 0) return res.status(404).json({ error: "Horario no encontrado" });
+        if (horario.rows[0].instructor_id !== usuario_id) {
+            return res.status(403).json({ error: "Solo puedes editar tus propios horarios" });
+        }
     }
+    // ... actualización
+    await pool.query(`
+        UPDATE horarios SET espacio_id=$1, actividad_id=$2, instructor_id=$3, dia_semana=$4, hora_inicio=$5, hora_fin=$6, fecha_inicio_vigencia=$7, fecha_fin_vigencia=$8
+        WHERE id=$9
+    `, [espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia, id]);
+    res.json({ mensaje: "Horario actualizado" });
 });
 
 app.patch('/api/horarios/:id/estado', async (req, res) => {
     const { id } = req.params;
-    const { activo } = req.body;
-    try {
-        await pool.query(`UPDATE horarios SET activo = $1 WHERE id = $2`, [activo, id]);
-        res.json({ mensaje: "Estado actualizado" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al actualizar estado" });
+    const { activo, usuario_id } = req.body;
+    if (!usuario_id) return res.status(401).json({ error: "No autorizado" });
+    const rol = await obtenerRolUsuario(usuario_id);
+    if (rol !== 'admin' && rol !== 'instructor') return res.status(403).json({ error: "No autorizado" });
+    if (rol === 'instructor') {
+        const horario = await pool.query("SELECT instructor_id FROM horarios WHERE id = $1", [id]);
+        if (horario.rows.length === 0) return res.status(404).json({ error: "Horario no encontrado" });
+        if (horario.rows[0].instructor_id !== usuario_id) {
+            return res.status(403).json({ error: "No puedes modificar este horario" });
+        }
     }
+    await pool.query(`UPDATE horarios SET activo = $1 WHERE id = $2`, [activo, id]);
+    res.json({ mensaje: "Estado actualizado" });
 });
 
 app.delete('/api/horarios/:id', async (req, res) => {
     const { id } = req.params;
-    try {
-        await pool.query('DELETE FROM horarios WHERE id = $1', [id]);
-        res.json({ mensaje: "Horario eliminado" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al eliminar horario" });
+    const { usuario_id } = req.body;
+    if (!usuario_id) return res.status(401).json({ error: "No autorizado" });
+    const rol = await obtenerRolUsuario(usuario_id);
+    if (rol !== 'admin' && rol !== 'instructor') return res.status(403).json({ error: "No autorizado" });
+    if (rol === 'instructor') {
+        const horario = await pool.query("SELECT instructor_id FROM horarios WHERE id = $1", [id]);
+        if (horario.rows.length === 0) return res.status(404).json({ error: "Horario no encontrado" });
+        if (horario.rows[0].instructor_id !== usuario_id) {
+            return res.status(403).json({ error: "No puedes eliminar este horario" });
+        }
     }
+    await pool.query('DELETE FROM horarios WHERE id = $1', [id]);
+    res.json({ mensaje: "Horario eliminado" });
 });
-
 /* ===== INSTRUCTOR ASIGNAR A ACTIVIDAD ===== */
 app.post('/api/actividades/:id/asignar-instructor', async (req, res) => {
     const { id } = req.params;
@@ -1461,28 +1439,6 @@ app.get('/api/actividades/:id/inscrito/:socio_id', async (req, res) => {
     }
 });
 
-/* ===== PAGOS ===== */
-app.get('/api/pagos', async (req, res) => {
-    try {
-        const resultado = await pool.query(`SELECT * FROM pagos ORDER BY id DESC`);
-        res.json(resultado.rows);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al obtener pagos" });
-    }
-});
-
-app.post('/api/pagos', async (req, res) => {
-    const { usuario_id, monto, fecha, metodo_pago, estado } = req.body;
-    try {
-        await pool.query(`INSERT INTO pagos (usuario_id, monto, fecha, metodo_pago, estado) VALUES ($1, $2, $3, $4, $5)`, [usuario_id, monto, fecha, metodo_pago, estado]);
-        res.json({ mensaje: "Pago registrado correctamente" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al registrar pago" });
-    }
-});
-
 /* ===== ESTADISTICAS DASHBOARD ===== */
 app.get('/api/estadisticas', async (req, res) => {
     try {
@@ -1496,8 +1452,7 @@ app.get('/api/estadisticas', async (req, res) => {
         const sociosPorTipo = await pool.query(`SELECT s.tipo_accion, COUNT(*) as total FROM socios s JOIN usuarios u ON s.usuario_id = u.id WHERE u.activo = true GROUP BY s.tipo_accion`);
         const sociosPorEstatus = await pool.query(`SELECT s.estatus_accion, COUNT(*) as total FROM socios s JOIN usuarios u ON s.usuario_id = u.id WHERE u.activo = true AND s.estatus_accion IS NOT NULL GROUP BY s.estatus_accion`);
         const actividadesPopulares = await pool.query(`SELECT a.nombre, COUNT(i.id) as inscritos FROM actividades a LEFT JOIN inscripciones i ON a.id = i.actividad_id AND i.estado = 'activa' GROUP BY a.id ORDER BY inscritos DESC LIMIT 5`);
-        const ingresosMensuales = await pool.query(`SELECT TO_CHAR(fecha, 'YYYY-MM') as mes, SUM(monto) as total FROM pagos WHERE fecha >= CURRENT_DATE - INTERVAL '6 months' GROUP BY TO_CHAR(fecha, 'YYYY-MM') ORDER BY mes ASC`);
-        const ingresosTotales = await pool.query(`SELECT COALESCE(SUM(monto), 0) as total FROM pagos`);
+        
         const basicsPlano = {
             eventos: parseInt(eventos.rows[0].count),
             usuarios: parseInt(usuarios.rows[0].count),
@@ -1505,28 +1460,46 @@ app.get('/api/estadisticas', async (req, res) => {
             instructores: parseInt(instructores.rows[0].count),
             reservacionesHoy: parseInt(reservacionesHoy.rows[0].count),
             ludotecaActivos: parseInt(ludotecaActivos.rows[0].count),
-            invitadosHoy: parseInt(invitadosHoy.rows[0].count),
-            ingresosTotales: parseFloat(ingresosTotales.rows[0].total)
+            invitadosHoy: parseInt(invitadosHoy.rows[0].count)
         };
-        res.json({ ...basicsPlano, basics: basicsPlano, sociosPorTipo: sociosPorTipo.rows, sociosPorEstatus: sociosPorEstatus.rows, actividadesPopulares: actividadesPopulares.rows, ingresosMensuales: ingresosMensuales.rows });
+        res.json({ ...basicsPlano, basics: basicsPlano, sociosPorTipo: sociosPorTipo.rows, sociosPorEstatus: sociosPorEstatus.rows, actividadesPopulares: actividadesPopulares.rows });
     } catch (error) {
         console.error('Error en estadisticas:', error);
         res.status(500).json({ error: "Error al obtener estadisticas" });
     }
 });
 
-/* ===== BUSCAR SOCIOS ===== */
-app.get('/api/socios/buscar', async (req, res) => {
+/* ===== BUSCAR USUARIOS (socios + instructores) ===== */
+app.get('/api/usuarios/buscar', async (req, res) => {
     const { q } = req.query;
     if (!q || q.trim() === '') return res.json([]);
     try {
         const esNumero = /^\d+$/.test(q);
         let query, params;
         if (esNumero) {
-            query = `SELECT u.id, u.nombre, u.apellido, u.email, u.telefono, u.telefono_particular, u.fecha_nacimiento, s.numero_accion, s.tipo_accion, s.estatus_accion FROM usuarios u JOIN socios s ON u.id = s.usuario_id WHERE u.rol_id = (SELECT id FROM roles WHERE nombre = 'socio') AND (u.id = $1 OR s.numero_accion = $2) ORDER BY u.nombre LIMIT 20`;
+            // Buscar por ID de usuario o número de acción (solo socios tienen número)
+            query = `
+                SELECT u.id, u.nombre, u.apellido, u.email, u.telefono, u.activo, r.nombre AS rol,
+                       s.numero_accion, s.tipo_accion
+                FROM usuarios u
+                LEFT JOIN socios s ON u.id = s.usuario_id
+                JOIN roles r ON u.rol_id = r.id
+                WHERE u.id = $1 OR s.numero_accion = $2
+                ORDER BY u.nombre
+                LIMIT 20
+            `;
             params = [parseInt(q), String(q)];
         } else {
-            query = `SELECT u.id, u.nombre, u.apellido, u.email, u.telefono, u.telefono_particular, u.fecha_nacimiento, s.numero_accion, s.tipo_accion, s.estatus_accion FROM usuarios u JOIN socios s ON u.id = s.usuario_id WHERE u.rol_id = (SELECT id FROM roles WHERE nombre = 'socio') AND (u.email ILIKE $1 OR u.nombre ILIKE $1 OR u.apellido ILIKE $1) ORDER BY u.nombre LIMIT 20`;
+            query = `
+                SELECT u.id, u.nombre, u.apellido, u.email, u.telefono, u.activo, r.nombre AS rol,
+                       s.numero_accion, s.tipo_accion
+                FROM usuarios u
+                LEFT JOIN socios s ON u.id = s.usuario_id
+                JOIN roles r ON u.rol_id = r.id
+                WHERE u.email ILIKE $1 OR u.nombre ILIKE $1 OR u.apellido ILIKE $1
+                ORDER BY u.nombre
+                LIMIT 20
+            `;
             params = [`%${q}%`];
         }
         const resultado = await pool.query(query, params);
@@ -1534,17 +1507,6 @@ app.get('/api/socios/buscar', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Error en búsqueda" });
-    }
-});
-
-app.get('/api/usuarios/buscar', async (req, res) => {
-    const { q } = req.query;
-    try {
-        const r = await pool.query(`SELECT id, nombre, email FROM usuarios WHERE (nombre ILIKE $1 OR email ILIKE $1) AND activo = true LIMIT 10`, [`%${q}%`]);
-        res.json(r.rows);
-    } catch (error) {
-        console.error("Error en búsqueda de usuarios:", error);
-        res.status(500).json({ error: "Error en la búsqueda" });
     }
 });
 
@@ -1563,6 +1525,141 @@ app.get('/api/usuarios/except/:admin_id', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Error al obtener usuarios" });
+    }
+});
+
+/* ===== USUARIOS ===== */
+app.post('/api/usuarios', async (req, res) => {
+    const { nombre, email, password, rol_id, telefono } = req.body;
+
+    try {
+        const existe = await pool.query('SELECT id FROM usuarios WHERE email = $1', [email]);
+        if (existe.rows.length > 0) {
+            return res.status(400).json({ error: "Email ya registrado" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const resultado = await pool.query(`
+            INSERT INTO usuarios(nombre, email, password, rol_id, telefono, activo)
+            VALUES($1, $2, $3, $4, $5, true)
+            RETURNING id
+        `, [nombre, email, hashedPassword, rol_id, telefono]);
+
+        res.json({ id: resultado.rows[0].id, mensaje: "Usuario creado" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al crear usuario" });
+    }
+});
+
+app.delete('/api/usuarios/:id/seguro', async (req, res) => {
+    const { id } = req.params;
+    const { admin_id, password } = req.body;
+
+    try {
+        const admin = await pool.query(`
+            SELECT u.password, r.nombre as rol
+            FROM usuarios u
+            JOIN roles r ON u.rol_id = r.id
+            WHERE u.id = $1
+        `, [admin_id]);
+
+        if (admin.rows.length === 0 || admin.rows[0].rol !== 'admin') {
+            return res.status(403).json({ error: "No autorizado" });
+        }
+
+        const passwordValida = await bcrypt.compare(password, admin.rows[0].password);
+        if (!passwordValida) {
+            return res.status(401).json({ error: "Contraseña incorrecta" });
+        }
+
+        if (parseInt(id) === parseInt(admin_id)) {
+            return res.status(400).json({ error: "No puedes eliminarte a ti mismo" });
+        }
+
+        await pool.query('DELETE FROM familiares WHERE socio_id IN (SELECT id FROM socios WHERE usuario_id = $1)', [id]);
+        await pool.query('DELETE FROM socios WHERE usuario_id = $1', [id]);
+        await pool.query('DELETE FROM instructores WHERE usuario_id = $1', [id]);
+        await pool.query('DELETE FROM reservaciones WHERE usuario_id = $1', [id]);
+        await pool.query('DELETE FROM usuarios WHERE id = $1', [id]);
+
+        res.json({ mensaje: "Usuario eliminado correctamente" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al eliminar usuario" });
+    }
+});
+
+app.get('/api/usuarios/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const resultado = await pool.query(`
+            SELECT id, nombre, apellido, email, telefono
+            FROM usuarios
+            WHERE id = $1
+        `,[id]);
+
+        if (resultado.rows.length == 0) {
+            return res.status(404).json({error: "Usuario no encontrado"});
+        }
+
+        res.json(resultado.rows[0]);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al obtener usuarios" });
+    }
+});
+
+app.put('/api/usuarios/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nombre, apellido, email, telefono } = req.body;
+
+    try {
+        await pool.query(`
+            UPDATE usuarios 
+            SET nombre = $1, apellido = $2, email = $3, telefono = $4
+            WHERE id = $5
+        `, [nombre, apellido, email, telefono, id]);
+
+        res.json({ mensaje: "Usuario actualizado" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al actualizar usuario" });
+    }
+});
+
+app.delete('/api/usuarios/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        await pool.query('UPDATE usuarios SET activo = false WHERE id = $1', [id]);
+        res.json({ mensaje: "Usuario desactivado" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al desactivar usuario" });
+    }
+});
+
+app.get('/api/usuarios', async (req, res) => {
+    try {
+        const resultado = await pool.query(`
+            SELECT u.id, u.nombre, u.apellido, u.email, u.activo, r.nombre AS rol
+            FROM usuarios u
+            LEFT JOIN roles r ON u.rol_id = r.id
+            WHERE u.activo = true
+            ORDER BY u.nombre
+        `);
+        res.json(resultado.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al obtener usuarios' });
     }
 });
 
@@ -1586,24 +1683,30 @@ app.put('/api/usuarios/:id/rol', async (req, res) => {
 app.post('/api/socios/importar-excel', upload.single('archivo'), async (req, res) => {
     const { admin_id } = req.body;
     if (!admin_id) return res.status(401).json({ error: "Se requiere identificacion de administrador" });
+
     const adminCheck = await pool.query(`SELECT r.nombre FROM usuarios u JOIN roles r ON u.rol_id = r.id WHERE u.id = $1 AND u.activo = true`, [admin_id]);
     if (adminCheck.rows.length === 0 || adminCheck.rows[0].nombre !== 'admin') {
         return res.status(403).json({ error: "No autorizado. Solo administradores pueden importar socios." });
     }
     if (!req.file) return res.status(400).json({ error: 'No se recibio ningun archivo' });
+
     try {
         const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
         const hoja = workbook.Sheets[workbook.SheetNames[0]];
         const filas = XLSX.utils.sheet_to_json(hoja, { defval: null });
         if (filas.length === 0) return res.status(400).json({ error: 'El archivo esta vacio' });
+
         const columnasRequeridas = ['Numero_Accion', 'Nombre_Completo', 'Email'];
         const columnasFaltantes = columnasRequeridas.filter(c => !filas[0].hasOwnProperty(c));
         if (columnasFaltantes.length > 0) {
             return res.status(400).json({ error: `Faltan columnas: ${columnasFaltantes.join(', ')}` });
         }
+
         const rolSocio = await pool.query("SELECT id FROM roles WHERE nombre = 'socio'");
         if (rolSocio.rows.length === 0) return res.status(500).json({ error: "No existe el rol 'socio'" });
         const rolSocioId = rolSocio.rows[0].id;
+
+        // Agrupar por Numero_Accion
         const grupos = new Map();
         for (const fila of filas) {
             const numAccion = fila.Numero_Accion;
@@ -1611,16 +1714,34 @@ app.post('/api/socios/importar-excel', upload.single('archivo'), async (req, res
             if (!grupos.has(numAccion)) grupos.set(numAccion, []);
             grupos.get(numAccion).push(fila);
         }
+
         let insertados = 0, omitidos = 0, errores = 0;
         const detalle = [], credencialesGeneradas = [];
+
         for (const [numAccion, miembros] of grupos) {
             const titular = miembros.find(m => m.Rol === 'Titular');
-            if (!titular) { omitidos++; detalle.push({ numAccion, error: 'No tiene titular' }); continue; }
+            if (!titular) {
+                omitidos++;
+                detalle.push({ numAccion, error: 'No tiene titular' });
+                continue;
+            }
+
             const client = await pool.connect();
             try {
                 await client.query('BEGIN');
-                const existe = await client.query(`SELECT u.id FROM usuarios u JOIN socios s ON u.id = s.usuario_id WHERE u.email = $1 OR s.numero_accion = $2`, [titular.Email?.toLowerCase(), String(numAccion)]);
-                if (existe.rows.length > 0) { omitidos++; detalle.push({ numAccion, error: 'Ya existe (email o numero accion duplicado)' }); await client.query('ROLLBACK'); continue; }
+
+                const emailNormalizado = normalizarTexto(titular.Email);
+                const existe = await client.query(
+                    `SELECT u.id FROM usuarios u JOIN socios s ON u.id = s.usuario_id WHERE u.email = $1 OR s.numero_accion = $2`,
+                    [emailNormalizado, String(numAccion)]
+                );
+                if (existe.rows.length > 0) {
+                    omitidos++;
+                    detalle.push({ numAccion, error: 'Ya existe (email o numero accion duplicado)' });
+                    await client.query('ROLLBACK');
+                    continue;
+                }
+
                 const nombreCompleto = titular.Nombre_Completo || '';
                 const partes = nombreCompleto.trim().split(' ');
                 const nombre = partes[0] || '';
@@ -1628,29 +1749,71 @@ app.post('/api/socios/importar-excel', upload.single('archivo'), async (req, res
                 const passwordTemp = generarPasswordTemporal(nombreCompleto, titular.Telefono_Celular);
                 const hashedPassword = await bcrypt.hash(passwordTemp, 10);
                 const fechaNacimiento = parsearFecha(titular.Fecha_Nacimiento);
-                const nuevoUsuario = await client.query(`INSERT INTO usuarios(nombre, apellido, email, password, rol_id, telefono, telefono_particular, fecha_nacimiento, activo) VALUES($1, $2, $3, $4, $5, $6, $7, $8, true) RETURNING id`, [nombre, apellido, titular.Email?.toLowerCase(), hashedPassword, rolSocioId, titular.Telefono_Celular ? String(titular.Telefono_Celular) : null, titular.Telefono_Particular ? String(titular.Telefono_Particular) : null, fechaNacimiento]);
-                credencialesGeneradas.push({ numero_accion: String(numAccion), nombre: nombreCompleto, email: titular.Email?.toLowerCase(), contrasena: passwordTemp });
-                await client.query(`INSERT INTO socios(usuario_id, numero_accion, tipo_accion, estatus_accion, rol_en_accion, activo) VALUES($1, $2, $3, $4, $5, true)`, [nuevoUsuario.rows[0].id, String(numAccion), titular.Tipo_Accion || null, titular.Estatus_Accion || null, 'Titular']);
+
+                const nuevoUsuario = await client.query(`
+                    INSERT INTO usuarios(nombre, apellido, email, password, rol_id, telefono, telefono_particular, fecha_nacimiento, activo)
+                    VALUES($1, $2, $3, $4, $5, $6, $7, $8, true)
+                    RETURNING id
+                `, [
+                    nombre,
+                    apellido,
+                    emailNormalizado,
+                    hashedPassword,
+                    rolSocioId,
+                    titular.Telefono_Celular ? String(titular.Telefono_Celular).replace(/\D/g, '') : null,
+                    titular.Telefono_Particular ? String(titular.Telefono_Particular).replace(/\D/g, '') : null,
+                    fechaNacimiento
+                ]);
+
+                credencialesGeneradas.push({
+                    numero_accion: String(numAccion),
+                    nombre: nombreCompleto,
+                    email: emailNormalizado,
+                    contrasena: passwordTemp
+                });
+
+                await client.query(`
+                    INSERT INTO socios(usuario_id, numero_accion, tipo_accion, estatus_accion, rol_en_accion, activo)
+                    VALUES($1, $2, $3, $4, $5, true)
+                `, [nuevoUsuario.rows[0].id, String(numAccion), titular.Tipo_Accion || null, titular.Estatus_Accion || null, 'Titular']);
+
                 let familiaresInsertados = 0;
                 for (const miembro of miembros) {
                     if (miembro.Rol === 'Titular') continue;
                     const nombreFamiliar = miembro.Nombre_Completo;
                     if (!nombreFamiliar) continue;
                     const fechaNacFamiliar = parsearFecha(miembro.Fecha_Nacimiento);
-                    await client.query(`INSERT INTO familiares(socio_id, nombre_completo, parentesco, fecha_nacimiento, activo) SELECT s.id, $1, $2, $3, true FROM socios s WHERE s.usuario_id = $4`, [nombreFamiliar, miembro.Parentesco || 'Familiar', fechaNacFamiliar, nuevoUsuario.rows[0].id]);
+                    await client.query(`
+                        INSERT INTO familiares(socio_id, nombre_completo, parentesco, fecha_nacimiento, activo)
+                        SELECT s.id, $1, $2, $3, true FROM socios s WHERE s.usuario_id = $4
+                    `, [nombreFamiliar, miembro.Parentesco || 'Familiar', fechaNacFamiliar, nuevoUsuario.rows[0].id]);
                     familiaresInsertados++;
                 }
+
                 await client.query('COMMIT');
                 insertados++;
                 detalle.push({ numAccion, exito: true, usuario_id: nuevoUsuario.rows[0].id, familiares: familiaresInsertados });
+
             } catch (err) {
                 await client.query('ROLLBACK');
                 errores++;
                 detalle.push({ numAccion, error: err.message });
                 console.error(`Error importando ${numAccion}:`, err.message);
-            } finally { client.release(); }
+            } finally {
+                client.release();
+            }
         }
-        res.json({ mensaje: 'Importacion completada', total_grupos: grupos.size, insertados, omitidos, errores, credenciales: credencialesGeneradas, detalle: detalle.slice(0, 100) });
+
+        res.json({
+            mensaje: 'Importacion completada',
+            total_grupos: grupos.size,
+            insertados,
+            omitidos,
+            errores,
+            credenciales: credencialesGeneradas,
+            detalle: detalle.slice(0, 100)
+        });
+
     } catch (error) {
         console.error('Error en importacion:', error);
         res.status(500).json({ error: 'Error al procesar el archivo: ' + error.message });

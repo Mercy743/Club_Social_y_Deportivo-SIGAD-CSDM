@@ -59,12 +59,10 @@ async function cargarEstadisticas() {
         document.getElementById('totalEventos').innerText = (basics.eventos || 0).toLocaleString();
         
         const totalIngresos = basics.ingresosTotales || 0;
-        document.getElementById('ingresosTotales').innerHTML = '$' + totalIngresos.toLocaleString();
 
         const sociosPorTipo = data.sociosPorTipo || [];
         const sociosPorEstatus = data.sociosPorEstatus || [];
         const actividadesPopulares = data.actividadesPopulares || [];
-        const ingresosMensuales = data.ingresosMensuales || [];
 
         // Grafica 1: Doughnut - Socios por tipo
         if (charts.tipoAccion) charts.tipoAccion.destroy();
@@ -142,46 +140,10 @@ async function cargarEstadisticas() {
                     }
                 }
             });
-        }
-
-        // Grafica 4: Linea - Ingresos mensuales
-        if (charts.ingresos) charts.ingresos.destroy();
-        charts.ingresos = new Chart(document.getElementById('ingresosChart'), {
-            type: 'line',
-            data: {
-                labels: ingresosMensuales.map(item => {
-                    const [year, month] = item.mes.split('-');
-                    return `${month}/${year.slice(2)}`;
-                }),
-                datasets: [{
-                    label: 'Ingresos',
-                    data: ingresosMensuales.map(item => parseFloat(item.total || 0)),
-                    borderColor: '#4caf50',
-                    backgroundColor: 'rgba(76,175,80,0.05)',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#4caf50',
-                    pointBorderColor: 'transparent',
-                    tension: 0.3,
-                    fill: true
-                }]
-            },
-            options: {
-                ...barOptions,
-                plugins: {
-                    ...chartOptions.plugins,
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => '$' + ctx.raw.toLocaleString()
-                        }
-                    }
-                }
-            }
-        });
-
+        };
     } catch (error) {
         console.error('Error cargando estadisticas:', error);
     }
 }
-
 cargarEstadisticas();
 setInterval(cargarEstadisticas, 30000);

@@ -33,6 +33,7 @@
             </div>
             <div class="topbarActions">
                  <!-- Botón importar -->
+                    <button id="nuevoInstructorBtn" class="btn-import" >Nuevo Instructor</button>
                     <label for="excelUploadInput" class="btn-import">
                         Importar Socios
                     </label>
@@ -97,6 +98,23 @@
                 <div style="display:flex; gap:12px;">
                     <button id="confirmDeleteBtn" class="dangerBtn" style="margin:0; max-width:none; flex:1;">Confirmar eliminación</button>
                     <button onclick="cerrarEliminar()" class="secondaryBtn" style="margin:0; max-width:none; flex:1;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- MODAL NUEVO INSTRUCTOR -->
+    <div id="nuevoInstructorPanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1000; width:100%; max-width:500px; padding:16px;">
+        <div class="dashboardCard">
+            <h2 style="margin-bottom:20px;">Registrar Instructor</h2>
+            <div style="display:grid; gap:12px;">
+                <input type="text" id="newInstNombre" placeholder="Nombre completo *">
+                <input type="email" id="newInstEmail" placeholder="Email *">
+                <input type="text" id="newInstTelefono" placeholder="Teléfono">
+                <input type="text" id="newInstEspecialidad" placeholder="Especialidad (ej. Yoga, Crossfit)">
+                <input type="date" id="newInstFechaContrato" placeholder="Fecha contratación">
+                <div style="display:flex; gap:12px; margin-top:8px;">
+                    <button id="guardarInstructorBtn" style="margin:0; max-width:none; flex:1;">Guardar Instructor</button>
+                    <button onclick="cerrarNuevoInstructor()" class="secondaryBtn" style="margin:0; max-width:none; flex:1;">Cancelar</button>
                 </div>
             </div>
         </div>
