@@ -2,41 +2,82 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Actividades - SIGAD</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/actividades.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body>
+<body class="dashboardPage">
+<svg class="bg-playbook" viewBox="0 0 700 560" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="rgba(14,104,115,0.5)"/>
+        </marker>
+        <marker id="arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="rgba(254,126,60,0.45)"/>
+        </marker>
+        <marker id="arr3" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="rgba(255,255,255,0.2)"/>
+        </marker>
+        <radialGradient id="vignette" cx="50%" cy="50%" r="60%">
+            <stop offset="30%" stop-color="#0d1618" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#0d1618" stop-opacity="0.7"/>
+        </radialGradient>
+    </defs>
+    <rect x="60" y="40" width="580" height="490" rx="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.2"/>
+    <line x1="60" y1="285" x2="640" y2="285" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <circle cx="350" cy="285" r="55" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <circle cx="350" cy="285" r="3" fill="rgba(255,255,255,0.08)"/>
+    <rect x="210" y="40" width="280" height="90" rx="2" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <rect x="280" y="40" width="140" height="45" rx="2" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <rect x="210" y="440" width="280" height="90" rx="2" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <rect x="280" y="475" width="140" height="55" rx="2" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <circle cx="350" cy="500" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="180" cy="430" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="520" cy="430" r="8" fill="rgba(14,104,115,0.35)" stroke="rgba(14,104,115,0.7)" stroke-width="1.2"/>
+    <circle cx="350" cy="80" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+    <circle cx="200" cy="150" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+    <circle cx="500" cy="150" r="8" fill="rgba(254,126,60,0.3)" stroke="rgba(254,126,60,0.65)" stroke-width="1.2"/>
+    <path d="M350,492 Q300,440 260,378" fill="none" stroke="rgba(14,104,115,0.5)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <path d="M280,212 Q260,170 208,158" fill="none" stroke="rgba(254,126,60,0.45)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr2)"/>
+    <path d="M420,212 Q440,170 492,158" fill="none" stroke="rgba(254,126,60,0.45)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arr2)"/>
+    <circle cx="350" cy="285" r="6" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+    <rect width="700" height="560" fill="url(#vignette)"/>
+</svg>
 
 <div class="particles"></div>
 
-<div class="container">
-    <div class="volver-container">
-        <button class="btn-volver" onclick="window.location.href='dashboard.html'">
-                Volver al Dashboard
-        </button>
-    </div>
-
-    <div class="header-acciones">
-        <div class="buscador-container">
-            <div class="buscador-wrapper">
-                <i class="fas fa-search"></i>
-                <input type="text" id="busqueda" placeholder="Buscar actividad...">
-            </div>
+<div class="dashboardWrapper">
+    <div class="dashboardTopbar">
+        <div class="topbarBrand">
+            <span class="topbarGreeting">Catálogo deportivo</span>
+            <h1>SIGAD <span class="topbarRole">· Actividades</span></h1>
         </div>
-        <button id="btnCrear" class="btn-crear">
+        <div class="topbarActions">
+            <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">← Volver</button>
+            <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
+        </div>
+    </div>
+    <p class="section-label">Gestión de actividades</p>
+    <div class="header-torneos" style="margin-bottom: 16px;">
+        <div class="buscador-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" id="busqueda" placeholder="Buscar actividad...">
+        </div>
+        <button id="btnCrear" class="btn-crear-torneo">
             <i class="fas fa-plus"></i> Crear Actividad
         </button>
     </div>
-
-    <div class="resultados-header">
-        <span id="totalResultados">0</span> actividades
-        <span id="paginaInfo" class="pagina-badge">Página 1</span>
+    <div class="resultados-info" style="margin-bottom: 16px;">
+        <div>
+            <span id="totalResultados" style="color:#54cfe0; font-weight:600; font-size:16px;">0</span>
+            <span style="color:rgba(255,255,255,0.4); font-size:13px;"> actividades</span>
+            <span id="paginaInfo" class="pagina-badge" style="margin-left:8px;">Página 1</span>
+        </div>
     </div>
-
     <div id="contenedorActividades" class="grid"></div>
-
     <div class="paginacion-container" id="paginacionContainer">
         <button id="btnAnterior" class="btn-paginacion" disabled>
             <i class="fas fa-chevron-left"></i> Anterior
@@ -46,6 +87,7 @@
             Siguiente <i class="fas fa-chevron-right"></i>
         </button>
     </div>
+
 </div>
 
 <script src="js/comunes.js"></script>

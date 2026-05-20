@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = '/api';
 const loggedUser = JSON.parse(localStorage.getItem('loggedUser'));
 
 if (!loggedUser) window.location.href = 'index.html';
@@ -274,4 +274,4 @@ async function init() {
     await cargarHorarios();
 }
 
-init(); 
+init();

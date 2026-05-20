@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = '/api';
+
 const loginForm = document.getElementById("loginForm");
 const message = document.getElementById("message");
 
@@ -10,7 +11,7 @@ if (loginForm) {
         const password = document.getElementById("password").value;
         
         message.textContent = "Conectando...";
-        message.style.color = "blue";
+        message.style.color = "#54cfe0";  // usando tu color teal2
         
         try {
             const res = await fetch(`${API_URL}/login`, {
@@ -23,12 +24,12 @@ if (loginForm) {
             
             if (!res.ok) {
                 message.textContent = data.error || "Error al iniciar sesión";
-                message.style.color = "red";
+                message.style.color = "#ff6b6b";
                 return;
             }
             
             message.textContent = "¡Éxito! Redirigiendo...";
-            message.style.color = "green";
+            message.style.color = "#54cfe0";
             
             localStorage.setItem("loggedUser", JSON.stringify(data));
             
@@ -39,11 +40,10 @@ if (loginForm) {
         } catch (error) {
             console.error("Error:", error);
             message.textContent = "Error de conexión con el servidor. ¿El backend está corriendo?";
-            message.style.color = "red";
+            message.style.color = "#ff6b6b";
         }
     });
 }
-
 
 // ===== FRASES MOTIVACIONALES =====
 const frases = [

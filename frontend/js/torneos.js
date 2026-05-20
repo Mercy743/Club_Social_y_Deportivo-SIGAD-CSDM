@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = '/api';
 const loggedUser = JSON.parse(localStorage.getItem('loggedUser'));
 
 if (!loggedUser) window.location.href = 'index.html';
@@ -6,8 +6,21 @@ if (!loggedUser) window.location.href = 'index.html';
 let paginaActual = 1;
 const torneosPorPagina = 6;
 
+// Paginación para participantes
+let paginaParticipantes = 1;
+const participantesPorPagina = 5;
+let participantesGlobal = [];
+let torneoIdActual = null;
+
+// Paginación para usuarios disponibles
+let paginaUsuarios = 1;
+const usuariosPorPagina = 6;
+let usuariosGlobal = [];
+let torneoIdActualParaUsuarios = null;
+
 function escapeHTML(str) {
-    return String(str || '').replace(/[&<>]/g, function(m) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
         if (m === '&') return '&amp;';
         if (m === '<') return '&lt;';
         if (m === '>') return '&gt;';
@@ -27,51 +40,39 @@ function formatearFecha(fecha) {
     return new Date(fecha).toLocaleDateString('es-MX');
 }
 
-/* ===== CARGAR ACTIVIDADES PARA SELECT ===== */
-async function cargarActividadesEnSelect() {
-    const select = document.getElementById('actividad_id');
+/* ===== CARGAR ACTIVIDADES PARA EL SELECT DEL MODAL ===== */
+async function cargarActividadesEnSelectModal() {
+    const select = document.getElementById('actividadTorneo');
     if (!select) return;
     try {
-        const data = await fetchJSON(`${API_URL}/actividades`);
+        const res = await fetch(`${API_URL}/actividades`);
+        const actividades = await res.json();
         select.innerHTML = '<option value="">Seleccione actividad</option>';
-        data.forEach(a => {
+        actividades.forEach(a => {
             if (a.nombre !== 'Ludoteca') {
                 select.innerHTML += `<option value="${a.id}">${escapeHTML(a.nombre)}</option>`;
             }
         });
-    } catch (error) { console.error(error); }
+    } catch (error) {
+        console.error('Error cargando actividades:', error);
+    }
 }
 
 /* ===== CARGAR LISTA DE TORNEOS ===== */
 async function cargarTorneos() {
     const contenedor = document.getElementById('contenedorTorneos');
     if (!contenedor) return;
-    
     try {
         const torneos = await fetchJSON(`${API_URL}/torneos`);
         if (!torneos.length) {
             contenedor.innerHTML = '<div class="emptyState">No hay torneos</div>';
             return;
         }
-        
         const totalPaginas = Math.ceil(torneos.length / torneosPorPagina);
         const inicio = (paginaActual - 1) * torneosPorPagina;
         const paginados = torneos.slice(inicio, inicio + torneosPorPagina);
-        
         let html = '<div class="grid-torneos">';
         for (const t of paginados) {
-            let color = '#444';
-            switch ((t.actividad_nombre || '').toLowerCase()) {
-                case 'futbol': color = '#2e7d32'; break;
-                case 'tenis': color = '#1565c0'; break;
-                case 'padel': color = '#6a1b9a'; break;
-                case 'natacion': color = '#00838f'; break;
-                case 'basquetbol': color = '#ef6c00'; break;
-                case 'voleibol': color = '#ad1457'; break;
-                case 'squash': color = '#5d4037'; break;
-                default: color = '#0E6873';
-            }
-            
             let estadoClass = '';
             switch (t.estado) {
                 case 'programado': estadoClass = 'estado-programado'; break;
@@ -80,7 +81,6 @@ async function cargarTorneos() {
                 case 'cancelado': estadoClass = 'estado-cancelado'; break;
                 default: estadoClass = 'estado-programado';
             }
-            
             html += `
                 <div class="card-torneo">
                     <span class="estado-torneo ${estadoClass}">${t.estado || 'Programado'}</span>
@@ -97,7 +97,6 @@ async function cargarTorneos() {
             `;
         }
         html += '</div>';
-        
         if (totalPaginas > 1) {
             html += `
                 <div class="paginacion-container">
@@ -108,105 +107,11 @@ async function cargarTorneos() {
             `;
         }
         contenedor.innerHTML = html;
-        
         document.getElementById('btnAnterior')?.addEventListener('click', () => { if (paginaActual > 1) { paginaActual--; cargarTorneos(); } });
         document.getElementById('btnSiguiente')?.addEventListener('click', () => { paginaActual++; cargarTorneos(); });
     } catch (error) {
         console.error(error);
         contenedor.innerHTML = '<div class="emptyState">Error al cargar torneos</div>';
-    }
-}
-/* ===== GUARDAR TORNEO (CREAR/EDITAR) ===== */
-async function guardarTorneo(event) {
-    event.preventDefault();
-
-    const id = new URLSearchParams(window.location.search).get('id');
-
-    const nombre =
-        document.getElementById('nombre').value.trim();
-
-    const descripcion =
-        document.getElementById('descripcion').value.trim();
-
-    const fecha_inicio =
-        document.getElementById('fecha_inicio').value;
-
-    const fecha_fin =
-        document.getElementById('fecha_fin').value;
-
-    const actividad_id =
-        document.getElementById('actividad_id').value;
-
-    // 🔹 NUEVO
-    const tipo_torneo =
-        document.getElementById('tipo_torneo').value;
-
-    // 🔹 validaciones
-    if (
-        !nombre ||
-        !fecha_inicio ||
-        !fecha_fin ||
-        !actividad_id ||
-        !tipo_torneo
-    ) {
-        alert('Datos incompletos');
-        return;
-    }
-
-    // 🔹 validar fechas
-    if (new Date(fecha_fin) < new Date(fecha_inicio)) {
-        alert('La fecha fin no puede ser menor a la fecha inicio');
-        return;
-    }
-
-    // 🔹 objeto
-    const data = {
-
-        nombre,
-        descripcion,
-
-        fecha_inicio,
-        fecha_fin,
-
-        actividad_id: Number(actividad_id),
-
-        // 🔹 NUEVO
-        tipo_torneo,
-
-        creado_por: loggedUser.id
-    };
-
-    const url =
-        id
-            ? `${API_URL}/torneos/${id}`
-            : `${API_URL}/torneos`;
-
-    const method =
-        id
-            ? 'PUT'
-            : 'POST';
-
-    try {
-
-        await fetchJSON(url, {
-            method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-
-        alert(
-            id
-                ? 'Torneo actualizado'
-                : 'Torneo creado'
-        );
-
-        window.location.href = 'torneos.html';
-
-    } catch (error) {
-
-        alert(error.message);
     }
 }
 
@@ -222,88 +127,33 @@ async function eliminarTorneo(id) {
 /* ===== CAMBIAR ESTADO ===== */
 async function cambiarEstado(id, estado) {
     try {
-        await fetchJSON(`${API_URL}/torneos/${id}/estado`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado }) });
+        await fetchJSON(`${API_URL}/torneos/${id}/estado`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado })
+        });
         if (document.getElementById('contenedorTorneos')) cargarTorneos();
         if (document.getElementById('detalle')) cargarDetalle();
     } catch (error) { alert(error.message); }
 }
 
-/* ===== INSCRIBIRSE (SOCIO) ===== */
-async function inscribirme(id) {
-    if (!loggedUser) return alert('Debes iniciar sesión');
-    try {
-        await fetchJSON(`${API_URL}/torneos/${id}/participantes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usuario_id: loggedUser.id }) });
-        alert('Inscripción exitosa');
-        cargarDetalle();
-    } catch (error) { alert(error.message); }
-}
-
-/* ===== AGREGAR PARTICIPANTE (ADMIN) ===== */
-async function agregarParticipante(torneoId, usuarioId) {
-    try {
-        await fetchJSON(`${API_URL}/torneos/${torneoId}/participantes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usuario_id: usuarioId }) });
-        alert('Participante agregado');
-        cargarDetalle();
-    } catch (error) { alert(error.message); }
-}
-
-/* ===== ELIMINAR PARTICIPANTE ===== */
-async function eliminarParticipante(torneoId, participanteId) {
-    if (!confirm('¿Eliminar participante?')) return;
-    try {
-        await fetchJSON(`${API_URL}/torneos/${torneoId}/participantes/${participanteId}`, { method: 'DELETE' });
-        cargarDetalle();
-    } catch (error) { alert(error.message); }
-}
-
-/* ===== GENERAR BRACKET ===== */
-async function generarBracket() {
-    const id = new URLSearchParams(window.location.search).get('id');
-    if (!id) return;
-    try {
-        const data = await fetchJSON(`${API_URL}/torneos/${id}/generar-bracket`, { method: 'POST' });
-        alert(data.mensaje);
-        cargarDetalle();
-    } catch (error) { alert(error.message); }
-}
-
-/* ===== SIGUIENTE RONDA ===== */
-async function generarSiguienteRonda() {
-    const id = new URLSearchParams(window.location.search).get('id');
-    if (!id) return;
-    try {
-        const data = await fetchJSON(`${API_URL}/torneos/${id}/siguiente-ronda`, { method: 'POST' });
-        alert(data.mensaje);
-        cargarDetalle();
-    } catch (error) { alert(error.message); }
-}
-
-/* ===== CARGAR DETALLE DEL TORNEO ===== */
+/* ===== DETALLE DEL TORNEO ===== */
 async function cargarDetalle() {
     const contenedor = document.getElementById('detalle');
     if (!contenedor) return;
     const id = new URLSearchParams(window.location.search).get('id');
     if (!id) return;
-    
     try {
         const torneo = await fetchJSON(`${API_URL}/torneos/${id}`);
         let participantes = [];
         try { participantes = await fetchJSON(`${API_URL}/torneos/${id}/participantes`); } catch(e) {}
-        
+        participantesGlobal = participantes;
+        torneoIdActual = id;
+        paginaParticipantes = 1;
+        renderizarParticipantes();
         const puedeParticipar = (torneo.estado === 'programado' || torneo.estado === 'en curso');
         const botonParticipar = puedeParticipar ? `<button class="btn-crear-torneo" onclick="inscribirme(${id})">Participar</button>` : '<button disabled class="btn-crear-torneo">Torneo cerrado</button>';
-        const botonesAdmin = loggedUser.rol === 'admin' ? `<div class="botones-torneo" style="margin:20px 0;"><button class="btn-editar-torneo" onclick="generarBracket()">Generar Bracket</button><button class="btn-ver-torneo" onclick="generarSiguienteRonda()">Siguiente Ronda</button></div>` : '';
-        
-        let listaParticipantes = participantes.length ? '' : '<p>No hay participantes</p>';
-        for (const p of participantes) {
-            listaParticipantes += `
-                <div class="card-torneo" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <div><strong>${p.nombre ? escapeHTML(p.nombre + ' ' + (p.apellido || '')) : escapeHTML(p.nombre_invitado || 'Invitado')}</strong>${p.resultado ? `<div>Resultado: ${escapeHTML(p.resultado)}</div>` : ''}</div>
-                    <button class="btn-eliminar-torneo" onclick="eliminarParticipante(${id}, ${p.id})">Eliminar</button>
-                </div>
-            `;
-        }
-        
+        const botonesAdmin = loggedUser.rol === 'admin' ? `<div class="botones-torneo" style="margin:20px 0;"><button class="btn-editar-torneo" onclick="generarBracket(${id})">Generar Bracket</button><button class="btn-ver-torneo" onclick="generarSiguienteRonda(${id})">Siguiente Ronda</button></div>` : '';
         contenedor.innerHTML = `
             <div class="card-torneo">
                 <h2>${escapeHTML(torneo.nombre)}</h2>
@@ -314,282 +164,327 @@ async function cargarDetalle() {
                 ${botonesAdmin}
             </div>
         `;
-        document.getElementById('participantes').innerHTML = listaParticipantes;
         cargarBracket(id);
         cargarTop3(id);
-        cargarUsuariosDisponibles(id);
+        await cargarUsuariosDisponibles(id);
     } catch (error) {
         contenedor.innerHTML = '<div class="emptyState">Error al cargar detalle</div>';
     }
 }
 
-/* ===== CARGAR BRACKET ===== */
-async function cargarBracket(id) {
-
-    const contenedor =
-        document.getElementById('bracket');
-
+function renderizarParticipantes() {
+    const contenedor = document.getElementById('participantes');
     if (!contenedor) return;
+    const totalPaginas = Math.ceil(participantesGlobal.length / participantesPorPagina);
+    if (paginaParticipantes > totalPaginas && totalPaginas > 0) paginaParticipantes = totalPaginas;
+    if (paginaParticipantes < 1) paginaParticipantes = 1;
+    const inicio = (paginaParticipantes - 1) * participantesPorPagina;
+    const paginados = participantesGlobal.slice(inicio, inicio + participantesPorPagina);
+    let html = '';
+    if (paginados.length === 0) {
+        html = '<p>No hay participantes</p>';
+    } else {
+        html = paginados.map(p => `
+            <div class="card-torneo" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div><strong>${p.nombre ? escapeHTML(p.nombre + ' ' + (p.apellido || '')) : escapeHTML(p.nombre_invitado || 'Invitado')}</strong>${p.resultado ? `<div>Resultado: ${escapeHTML(p.resultado)}</div>` : ''}</div>
+                <button class="btn-eliminar-torneo" onclick="eliminarParticipante(${torneoIdActual}, ${p.id})">Eliminar</button>
+            </div>
+        `).join('');
+    }
+    contenedor.innerHTML = html;
+    const btnAnt = document.getElementById('btnAnteriorParticipantes');
+    const btnSig = document.getElementById('btnSiguienteParticipantes');
+    const info = document.getElementById('paginaParticipantesInfo');
+    if (btnAnt) btnAnt.disabled = (paginaParticipantes === 1 || totalPaginas === 0);
+    if (btnSig) btnSig.disabled = (paginaParticipantes === totalPaginas || totalPaginas === 0);
+    if (info) info.textContent = `Página ${paginaParticipantes} de ${totalPaginas || 1}`;
+}
 
+function anteriorPaginaParticipantes() {
+    if (paginaParticipantes > 1) { paginaParticipantes--; renderizarParticipantes(); }
+}
+function siguientePaginaParticipantes() {
+    const total = Math.ceil(participantesGlobal.length / participantesPorPagina);
+    if (paginaParticipantes < total) { paginaParticipantes++; renderizarParticipantes(); }
+}
+
+/* ===== USUARIOS DISPONIBLES CON PAGINACIÓN ===== */
+async function cargarUsuariosDisponibles(idTorneo) {
+    const contenedor = document.getElementById('listaUsuarios');
+    if (!contenedor) return;
+    torneoIdActualParaUsuarios = idTorneo;
     try {
+        const usuarios = await fetchJSON(`${API_URL}/usuarios`);
+        usuariosGlobal = usuarios.filter(u => u.rol !== 'admin' && u.activo !== false);
+        paginaUsuarios = 1;
+        renderizarUsuarios();
+        const buscador = document.getElementById('buscarUsuario');
+        if (buscador) {
+            const nuevoBuscador = buscador.cloneNode(true);
+            buscador.parentNode.replaceChild(nuevoBuscador, buscador);
+            nuevoBuscador.addEventListener('input', (e) => {
+                const texto = e.target.value.toLowerCase();
+                usuariosGlobal = usuarios.filter(u => 
+                    u.rol !== 'admin' && u.activo !== false &&
+                    (u.nombre.toLowerCase().includes(texto) || u.email.toLowerCase().includes(texto))
+                );
+                paginaUsuarios = 1;
+                renderizarUsuarios();
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        contenedor.innerHTML = '<div class="emptyState">Error al cargar usuarios</div>';
+    }
+}
 
-        const data =
-            await fetchJSON(`${API_URL}/torneos/${id}/bracket`);
+function renderizarUsuarios() {
+    const contenedor = document.getElementById('listaUsuarios');
+    if (!contenedor) return;
+    const totalPaginas = Math.ceil(usuariosGlobal.length / usuariosPorPagina);
+    if (paginaUsuarios > totalPaginas && totalPaginas > 0) paginaUsuarios = totalPaginas;
+    if (paginaUsuarios < 1) paginaUsuarios = 1;
+    const inicio = (paginaUsuarios - 1) * usuariosPorPagina;
+    const paginados = usuariosGlobal.slice(inicio, inicio + usuariosPorPagina);
+    if (paginados.length === 0) {
+        contenedor.innerHTML = '<div class="emptyState">No hay usuarios disponibles</div>';
+    } else {
+        contenedor.innerHTML = paginados.map(u => `
+            <div class="card" style="padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: rgba(20,20,20,0.8); border-radius: 12px;">
+                <div>
+                    <strong>${escapeHTML(u.nombre)}</strong>
+                    <div style="font-size: 11px; color: #54cfe0;">${u.email}</div>
+                    <div style="font-size: 10px; opacity: 0.6;">${u.rol}</div>
+                </div>
+                <button class="btn-editar-torneo" onclick="agregarParticipante(${torneoIdActualParaUsuarios}, ${u.id})" style="width: auto; padding: 4px 10px; font-size: 11px; border-radius: 20px; background: #0E6873; color: white; border: none; display: inline-flex; align-items: center; gap: 4px; flex: none; cursor: pointer;"><i class="fas fa-plus" style="font-size: 10px;"></i> Agregar</button>
+            </div>
+        `).join('');
+    }
+    const btnAnt = document.getElementById('btnAnteriorUsuarios');
+    const btnSig = document.getElementById('btnSiguienteUsuarios');
+    const info = document.getElementById('paginaUsuariosInfo');
+    if (btnAnt) btnAnt.disabled = (paginaUsuarios === 1 || totalPaginas === 0);
+    if (btnSig) btnSig.disabled = (paginaUsuarios === totalPaginas || totalPaginas === 0);
+    if (info) info.textContent = `Página ${paginaUsuarios} de ${totalPaginas || 1}`;
+}
 
-        let html = `
-            <div style="
-                display:flex;
-                gap:40px;
-                overflow-x:auto;
-                padding:20px 0;
-            ">
-        `;
+function anteriorPaginaUsuarios() {
+    if (paginaUsuarios > 1) { paginaUsuarios--; renderizarUsuarios(); }
+}
+function siguientePaginaUsuarios() {
+    const total = Math.ceil(usuariosGlobal.length / usuariosPorPagina);
+    if (paginaUsuarios < total) { paginaUsuarios++; renderizarUsuarios(); }
+}
 
+// ===== OPERACIONES CRUD =====
+async function inscribirme(id) {
+    if (!loggedUser) return alert('Debes iniciar sesión');
+    try {
+        await fetchJSON(`${API_URL}/torneos/${id}/participantes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario_id: loggedUser.id })
+        });
+        alert('Inscripción exitosa');
+        await cargarDetalle();
+    } catch (error) { alert(error.message); }
+}
+
+async function agregarParticipante(torneoId, usuarioId) {
+    try {
+        await fetchJSON(`${API_URL}/torneos/${torneoId}/participantes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario_id: usuarioId })
+        });
+        alert('Participante agregado');
+        await cargarDetalle();
+    } catch (error) { alert(error.message); }
+}
+
+async function eliminarParticipante(torneoId, participanteId) {
+    if (!confirm('¿Eliminar participante?')) return;
+    try {
+        await fetchJSON(`${API_URL}/torneos/${torneoId}/participantes/${participanteId}`, { method: 'DELETE' });
+        await cargarDetalle();
+    } catch (error) { alert(error.message); }
+}
+
+async function generarBracket(torneoId) {
+    try {
+        const data = await fetchJSON(`${API_URL}/torneos/${torneoId}/generar-bracket`, { method: 'POST' });
+        alert(data.mensaje);
+        cargarDetalle();
+    } catch (error) { alert(error.message); }
+}
+
+async function generarSiguienteRonda(torneoId) {
+    try {
+        const data = await fetchJSON(`${API_URL}/torneos/${torneoId}/siguiente-ronda`, { method: 'POST' });
+        alert(data.mensaje);
+        cargarDetalle();
+    } catch (error) { alert(error.message); }
+}
+
+async function cargarBracket(id) {
+    const contenedor = document.getElementById('bracket');
+    if (!contenedor) return;
+    try {
+        const data = await fetchJSON(`${API_URL}/torneos/${id}/bracket`);
+        let html = '<div style="display:flex; gap:40px; overflow-x:auto; padding:20px 0;">';
         for (const ronda in data) {
-
-            html += `
-                <div style="min-width:280px;">
-                    <h3 style="
-                        margin-bottom:20px;
-                        color:#54cfe0;
-                    ">
-                        ${escapeHTML(ronda)}
-                    </h3>
-            `;
-
+            html += `<div style="min-width:280px;"><h3 style="margin-bottom:20px; color:#54cfe0;">${escapeHTML(ronda)}</h3>`;
             for (const p of data[ronda]) {
-
-                const finalizado =
-                    p.estado === 'finalizado';
-
-                const ganador1 =
-                    p.ganador_id == p.participante1_id;
-
-                const ganador2 =
-                    p.ganador_id == p.participante2_id;
-
+                const finalizado = p.estado === 'finalizado';
+                const ganador1 = p.ganador_id == p.participante1_id;
+                const ganador2 = p.ganador_id == p.participante2_id;
                 html += `
-                    <div style="
-                        background:${finalizado ? 'rgba(84,207,224,0.12)' : 'rgba(255,255,255,0.05)'};
-                        border:${finalizado ? '1px solid #54cfe0' : '1px solid rgba(255,255,255,0.08)'};
-                        border-radius:16px;
-                        padding:18px;
-                        margin-bottom:20px;
-                    ">
-
-                        <div style="
-                            display:flex;
-                            justify-content:space-between;
-                            margin-bottom:10px;
-                            font-weight:${ganador1 ? '700' : '500'};
-                            color:${ganador1 ? '#54cfe0' : 'white'};
-                        ">
-                            <span>${escapeHTML(p.jugador1)}</span>
-                            <span>${p.marcador1 ?? 0}</span>
+                    <div style="background:${finalizado ? 'rgba(84,207,224,0.12)' : 'rgba(255,255,255,0.05)'}; border:${finalizado ? '1px solid #54cfe0' : '1px solid rgba(255,255,255,0.08)'}; border-radius:16px; padding:18px; margin-bottom:20px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:${ganador1 ? '700' : '500'}; color:${ganador1 ? '#54cfe0' : 'white'}">
+                            <span>${escapeHTML(p.jugador1)}</span><span>${p.marcador1 ?? 0}</span>
                         </div>
-
-                        <div style="
-                            display:flex;
-                            justify-content:space-between;
-                            margin-bottom:16px;
-                            font-weight:${ganador2 ? '700' : '500'};
-                            color:${ganador2 ? '#54cfe0' : 'white'};
-                        ">
-                            <span>${escapeHTML(p.jugador2)}</span>
-                            <span>${p.marcador2 ?? 0}</span>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:16px; font-weight:${ganador2 ? '700' : '500'}; color:${ganador2 ? '#54cfe0' : 'white'}">
+                            <span>${escapeHTML(p.jugador2)}</span><span>${p.marcador2 ?? 0}</span>
                         </div>
-
-                        <div style="
-                            font-size:12px;
-                            opacity:0.7;
-                            margin-bottom:14px;
-                        ">
-                            Estado:
-                            ${escapeHTML(p.estado)}
-                        </div>
+                        <div style="font-size:12px; opacity:0.7; margin-bottom:14px;">Estado: ${escapeHTML(p.estado)}</div>
                 `;
-
-                if (!finalizado) {
-
+                if (!finalizado && loggedUser.rol === 'admin') {
                     html += `
-                        <div style="
-                            display:flex;
-                            gap:10px;
-                            margin-bottom:10px;
-                        ">
-                            <input
-                                type="number"
-                                id="m1-${p.id}"
-                                placeholder="0"
-                                style="
-                                    width:100%;
-                                    padding:10px;
-                                    border-radius:10px;
-                                    border:none;
-                                    background:rgba(0,0,0,0.4);
-                                    color:white;
-                                "
-                            >
-
-                            <input
-                                type="number"
-                                id="m2-${p.id}"
-                                placeholder="0"
-                                style="
-                                    width:100%;
-                                    padding:10px;
-                                    border-radius:10px;
-                                    border:none;
-                                    background:rgba(0,0,0,0.4);
-                                    color:white;
-                                "
-                            >
+                        <div style="display:flex; gap:10px; margin-bottom:10px;">
+                            <input type="number" id="m1-${p.id}" placeholder="0" style="width:100%; padding:10px; border-radius:10px; border:none; background:rgba(0,0,0,0.4); color:white;">
+                            <input type="number" id="m2-${p.id}" placeholder="0" style="width:100%; padding:10px; border-radius:10px; border:none; background:rgba(0,0,0,0.4); color:white;">
                         </div>
-
-                        <button
-                            onclick="guardarResultado(${p.id}, ${id})"
-                            style="
-                                width:100%;
-                                padding:10px;
-                                border:none;
-                                border-radius:10px;
-                                background:linear-gradient(135deg,#0E6873,#54cfe0);
-                                color:white;
-                                cursor:pointer;
-                                font-weight:600;
-                            "
-                        >
-                            Guardar resultado
-                        </button>
+                        <button onclick="guardarResultado(${p.id}, ${id})" style="width:100%; padding:10px; border:none; border-radius:10px; background:linear-gradient(135deg,#0E6873,#54cfe0); color:white; cursor:pointer; font-weight:600;">Guardar resultado</button>
                     `;
+                } else if (finalizado) {
+                    html += `<div style="margin-top:10px; color:#54cfe0; font-weight:700; text-align:center;">✅ Clasificado</div>`;
                 }
-
-                if (finalizado) {
-
-                    html += `
-                        <div style="
-                            margin-top:10px;
-                            color:#54cfe0;
-                            font-weight:700;
-                            text-align:center;
-                        ">
-                            ✅ Clasificado
-                        </div>
-                    `;
-                }
-
                 html += `</div>`;
             }
-
             html += `</div>`;
         }
-
         html += `</div>`;
-
-        contenedor.innerHTML =
-            html || '<p>No hay bracket disponible</p>';
-
+        contenedor.innerHTML = html || '<p>No hay bracket disponible</p>';
     } catch (error) {
-
         console.error(error);
-
-        contenedor.innerHTML =
-            '<p>No hay bracket disponible</p>';
+        contenedor.innerHTML = '<p>No hay bracket disponible</p>';
     }
 }
 
 async function guardarResultado(partidoId, torneoId) {
-
-    const marcador1 =
-        document.getElementById(`m1-${partidoId}`).value;
-
-    const marcador2 =
-        document.getElementById(`m2-${partidoId}`).value;
-
-    if (
-        marcador1 === '' ||
-        marcador2 === ''
-    ) {
-        return alert('Ingrese ambos marcadores');
-    }
-
+    const marcador1 = document.getElementById(`m1-${partidoId}`).value;
+    const marcador2 = document.getElementById(`m2-${partidoId}`).value;
+    if (marcador1 === '' || marcador2 === '') return alert('Ingrese ambos marcadores');
     try {
-
-        await fetchJSON(
-            `${API_URL}/partidos/${partidoId}/resultado`,
-            {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    marcador1,
-                    marcador2
-                })
-            }
-        );
-
+        await fetchJSON(`${API_URL}/partidos/${partidoId}/resultado`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ marcador1, marcador2 })
+        });
         alert('Resultado guardado');
-
         cargarBracket(torneoId);
-
-    } catch (error) {
-
-        alert(error.message);
-    }
+    } catch (error) { alert(error.message); }
 }
 
-/* ===== CARGAR TOP 3 ===== */
 async function cargarTop3(id) {
     const contenedor = document.getElementById('top3');
     if (!contenedor) return;
     try {
         const data = await fetchJSON(`${API_URL}/torneos/${id}/top3`);
-        contenedor.innerHTML = `<div class="podio"><p>🥇 ${escapeHTML(data.primer_nombre || `Usuario ${data.primer_usuario}`)}</p><p>🥈 ${escapeHTML(data.segundo_nombre || `Usuario ${data.segundo_usuario}`)}</p><p>🥉 ${escapeHTML(data.tercer_nombre || `Usuario ${data.tercer_usuario}`)}</p></div>`;
+        contenedor.innerHTML = `<div class="podio"><p>🥇 ${escapeHTML(data.primer_nombre || `Usuario ${data.primer_lugar}`)}</p><p>🥈 ${escapeHTML(data.segundo_nombre || `Usuario ${data.segundo_lugar}`)}</p><p>🥉 ${escapeHTML(data.tercer_nombre || `Usuario ${data.tercer_lugar}`)}</p></div>`;
     } catch (error) { contenedor.innerHTML = '<p>Top 3 no disponible</p>'; }
 }
 
-/* ===== CARGAR USUARIOS DISPONIBLES ===== */
-async function cargarUsuariosDisponibles(idTorneo) {
-    const contenedor = document.getElementById('listaUsuarios');
-    if (!contenedor) return;
-    try {
-        const usuarios = await fetchJSON(`${API_URL}/usuarios`);
-        const filtrados = usuarios.filter(u => u.rol !== 'admin' && u.rol !== 'instructor');
-        const buscador = document.getElementById('buscarUsuario');
-        const render = (lista) => {
-            contenedor.innerHTML = '';
-            lista.forEach(u => {
-                contenedor.innerHTML += `<div class="card-torneo" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;"><span>${escapeHTML(u.nombre + ' ' + (u.apellido || ''))}</span><button class="btn-editar-torneo" onclick="agregarParticipante(${idTorneo}, ${u.id})">Agregar</button></div>`;
+// ===== NAVEGACIÓN =====
+function verDetalle(id) { window.location.href = `torneos-detalle.html?id=${id}`; }
+
+function editarTorneo(id) {
+    if (loggedUser.rol !== 'admin') return;
+    fetch(`${API_URL}/torneos/${id}`)
+        .then(res => res.json())
+        .then(t => {
+            document.getElementById('torneoIdModal').value = t.id;
+            document.getElementById('nombreTorneo').value = t.nombre;
+            document.getElementById('descripcionTorneo').value = t.descripcion || '';
+            document.getElementById('fechaInicioTorneo').value = t.fecha_inicio.split('T')[0];
+            document.getElementById('fechaFinTorneo').value = t.fecha_fin.split('T')[0];
+            document.getElementById('tipoTorneo').value = t.tipo_torneo || 'eliminacion';
+            cargarActividadesEnSelectModal().then(() => {
+                document.getElementById('actividadTorneo').value = t.actividad_id;
             });
-        };
-        render(filtrados);
-        if (buscador) {
-            buscador.oninput = () => {
-                const texto = buscador.value.toLowerCase();
-                render(filtrados.filter(u => (u.nombre + ' ' + (u.apellido || '')).toLowerCase().includes(texto)));
-            };
-        }
-    } catch (error) { console.error(error); }
+            document.getElementById('modalTorneoTitulo').textContent = 'Editar Torneo';
+            document.getElementById('modalTorneo').style.display = 'flex';
+        })
+        .catch(err => alert('Error al cargar torneo: ' + err.message));
 }
 
-/* ===== NAVEGACIÓN ===== */
-function verDetalle(id) { window.location.href = `torneos-detalle.html?id=${id}`; }
-function editarTorneo(id) { window.location.href = `torneos-form.html?id=${id}`; }
-function togglePanelUsuarios() { 
+function togglePanelUsuarios() {
     const panel = document.getElementById('panelUsuarios');
     if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
 }
 
-/* ===== INICIALIZAR ===== */
+// ===== INICIALIZACIÓN =====
 document.addEventListener('DOMContentLoaded', () => {
-    cargarActividadesEnSelect();
+    cargarActividadesEnSelectModal();
     if (document.getElementById('contenedorTorneos')) cargarTorneos();
     if (document.getElementById('detalle')) cargarDetalle();
-    const form = document.getElementById('formTorneo');
-    if (form) form.addEventListener('submit', guardarTorneo);
-    const btnCrear = document.getElementById('btnCrear');
-    if (btnCrear) btnCrear.onclick = () => window.location.href = 'torneos-form.html';
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) logoutBtn.addEventListener('click', () => { localStorage.removeItem('loggedUser'); window.location.href = 'index.html'; });
+
+    document.getElementById('btnAnteriorParticipantes')?.addEventListener('click', anteriorPaginaParticipantes);
+    document.getElementById('btnSiguienteParticipantes')?.addEventListener('click', siguientePaginaParticipantes);
+    document.getElementById('btnAnteriorUsuarios')?.addEventListener('click', anteriorPaginaUsuarios);
+    document.getElementById('btnSiguienteUsuarios')?.addEventListener('click', siguientePaginaUsuarios);
+
+    const formModal = document.getElementById('formTorneoModal');
+    if (formModal) {
+        formModal.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('torneoIdModal').value;
+            const nombre = document.getElementById('nombreTorneo').value.trim();
+            const descripcion = document.getElementById('descripcionTorneo').value.trim();
+            const fecha_inicio = document.getElementById('fechaInicioTorneo').value;
+            const fecha_fin = document.getElementById('fechaFinTorneo').value;
+            const actividad_id = document.getElementById('actividadTorneo').value;
+            const tipo_torneo = document.getElementById('tipoTorneo').value;
+            if (!nombre || !fecha_inicio || !fecha_fin || !actividad_id) {
+                alert('Complete los campos obligatorios');
+                return;
+            }
+            const data = {
+                nombre, descripcion, fecha_inicio, fecha_fin,
+                actividad_id: Number(actividad_id),
+                tipo_torneo,
+                creado_por: loggedUser.id
+            };
+            const url = id ? `${API_URL}/torneos/${id}` : `${API_URL}/torneos`;
+            const method = id ? 'PUT' : 'POST';
+            try {
+                await fetchJSON(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                alert(id ? 'Torneo actualizado' : 'Torneo creado');
+                document.getElementById('modalTorneo').style.display = 'none';
+                cargarTorneos();
+            } catch (err) { alert(err.message); }
+        });
+    }
+    document.getElementById('cerrarModalBtn')?.addEventListener('click', () => {
+        document.getElementById('modalTorneo').style.display = 'none';
+    });
+    document.getElementById('btnCrear')?.addEventListener('click', () => {
+        if (loggedUser.rol !== 'admin') {
+            alert('Solo administradores pueden crear torneos.');
+            return;
+        }
+        document.getElementById('torneoIdModal').value = '';
+        document.getElementById('nombreTorneo').value = '';
+        document.getElementById('descripcionTorneo').value = '';
+        document.getElementById('fechaInicioTorneo').value = '';
+        document.getElementById('fechaFinTorneo').value = '';
+        document.getElementById('tipoTorneo').value = 'eliminacion';
+        cargarActividadesEnSelectModal();
+        document.getElementById('modalTorneoTitulo').textContent = 'Nuevo Torneo';
+        document.getElementById('modalTorneo').style.display = 'flex';
+    });
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+        localStorage.removeItem('loggedUser');
+        window.location.href = 'index.html';
+    });
 });

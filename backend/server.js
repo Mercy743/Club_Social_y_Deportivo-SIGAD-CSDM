@@ -495,7 +495,7 @@ app.post('/api/reservaciones', async (req, res) => {
         let limite = 0;
         if (rol === 'socio') limite = 3;
         else if (rol === 'instructor') limite = 5;
-        else if (rol === 'admin') limite = 10; // Modificar según necesidades reales, o eliminar límite para admin
+        else if (rol === 'admin') limite = 10;
 
         // Verificar limite de reservaciones activas
         const reservacionesActivas = await pool.query(`

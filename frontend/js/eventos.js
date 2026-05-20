@@ -1,4 +1,4 @@
-const API_URL = '/api';
+const API_URL = '/api';  
 const loggedUser = JSON.parse(localStorage.getItem('loggedUser'));
 
 if (!loggedUser) window.location.href = 'index.html';
@@ -20,7 +20,17 @@ const formLabel = document.getElementById('formLabel');
 const eventList = document.getElementById('eventList');
 const toggleReporteBtn = document.getElementById('toggleReporteBtn');
 
+const esAdmin = loggedUser?.rol === 'admin';
 let modoReporte = false;
+
+// Ocultar formulario si no es admin
+if (!esAdmin) {
+    document.querySelector('.eventForm')?.closest('.dashboardCard')?.style.setProperty('display', 'none');
+    formLabel?.style.setProperty('display', 'none');
+    // Cambiar texto de sección si no es admin
+    const sectionLabel = document.querySelector('.section-label:last-of-type');
+    if (sectionLabel) sectionLabel.textContent = 'Eventos del club';
+}
 
 // ===== CARGAR EVENTOS =====
 async function cargarEventos() {
@@ -33,7 +43,7 @@ async function cargarEventos() {
                 <div class="emptyState">
                     <p>No hay eventos registrados.</p>
                     <p style="font-size:12px; margin-top:8px; opacity:.6;">
-                        Crea el primero usando el formulario de arriba.
+                        ${esAdmin ? 'Crea el primero usando el formulario de arriba.' : 'Próximamente habrá eventos disponibles.'}
                     </p>
                 </div>`;
             return;
@@ -44,19 +54,23 @@ async function cargarEventos() {
                 <div class="dashboardCard">
                     <table style="width:100%; border-collapse:collapse;">
                         <thead>
-                            <tr><th style="padding:12px 16px; text-align:left;">Nombre</th>
+                            <tr><th style="padding:12px 16px; text-align:left;">#</th>
+                                <th style="padding:12px 16px; text-align:left;">Nombre</th>
                                 <th style="padding:12px 16px; text-align:left;">Fecha</th>
                                 <th style="padding:12px 16px; text-align:left;">Hora</th>
                                 <th style="padding:12px 16px; text-align:left;">Descripción</th>
+                                <th style="padding:12px 16px; text-align:left;">Creador</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${eventos.map(e => `
-                                <tr>
-                                    <td style="padding:12px 16px;">${escapeHtml(e.nombre)}</td>
-                                    <td style="padding:12px 16px;">${e.fecha_evento || '—'}</td>
-                                    <td style="padding:12px 16px;">${e.hora || '—'}</td>
-                                    <td style="padding:12px 16px;">${escapeHtml(e.descripcion) || '—'}</td>
+                            ${eventos.map((e, i) => `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                                    <td style="padding:12px 16px; color:rgba(255,255,255,0.35);">${i + 1}</td>
+                                    <td style="padding:12px 16px; color:white; font-weight:600;">${escapeHtml(e.nombre)}</td>
+                                    <td style="padding:12px 16px; color:#54cfe0;">${formatearFecha(e.fecha_evento)}</td>
+                                    <td style="padding:12px 16px; color:rgba(255,255,255,0.6);">${e.hora || '—'}</td>
+                                    <td style="padding:12px 16px; color:rgba(255,255,255,0.6);">${escapeHtml(e.descripcion) || '—'}</td>
+                                    <td style="padding:12px 16px; color:rgba(255,255,255,0.4);">${e.creador || '—'}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -73,10 +87,17 @@ async function cargarEventos() {
                                 ${e.hora ? ' · ⏰ ' + e.hora.substring(0, 5) : ''}
                             </p>
                             <p class="eventText">${escapeHtml(e.descripcion) || 'Sin descripción.'}</p>
+                            ${esAdmin ? `
                             <div class="eventActions">
-                                <button class="secondaryBtn" onclick='editarEvento(${JSON.stringify(e)})'>Editar</button>
+                                <button class="secondaryBtn" onclick='editarEvento(
+                                    ${e.id_evento},
+                                    "${escapar(e.nombre)}",
+                                    "${e.fecha_evento}",
+                                    "${e.hora || ''}",
+                                    "${escapar(e.descripcion)}"
+                                )'>Editar</button>
                                 <button class="dangerBtn" onclick="eliminarEvento(${e.id_evento})">Eliminar</button>
-                            </div>
+                            </div>` : ''}
                         </div>
                     `).join('')}
                 </div>`;
@@ -87,87 +108,86 @@ async function cargarEventos() {
     }
 }
 
-// ===== GUARDAR =====
-if (guardarBtn) {
-    guardarBtn.addEventListener('click', async () => {
-        const nombre = nombreInput?.value.trim();
-        const fecha = fechaInput?.value;
-        const hora = horaInput?.value;
-        const descripcion = descripcionInput?.value.trim();
-        const id = eventoIdInput?.value;
+// ===== GUARDAR (solo admin) =====
+guardarBtn?.addEventListener('click', async () => {
+    if (!esAdmin) return;
 
-        if (!nombre || !fecha) {
-            alert('El nombre y la fecha son obligatorios.');
-            return;
-        }
+    const nombre = nombreInput.value.trim();
+    const fecha = fechaInput.value;
+    const hora = horaInput.value;
+    const descripcion = descripcionInput.value.trim();
+    const id = eventoIdInput.value;
 
-        const metodo = id ? 'PUT' : 'POST';
-        const url = id ? `${API_URL}/eventos/${id}` : `${API_URL}/eventos`;
+    if (!nombre || !fecha) {
+        alert('El nombre y la fecha son obligatorios.');
+        return;
+    }
 
-        const body = id
-            ? { nombre, fecha_evento: fecha, hora, descripcion }
-            : { nombre, fecha_evento: fecha, hora, descripcion, creado_por: loggedUser.id };
+    const metodo = id ? 'PUT' : 'POST';
+    const url = id ? `${API_URL}/eventos/${id}` : `${API_URL}/eventos`;
+    const body = id
+        ? { nombre, fecha_evento: fecha, hora, descripcion }
+        : { nombre, fecha_evento: fecha, hora, descripcion, creado_por: loggedUser.id };
 
-        try {
-            guardarBtn.disabled = true;
-            guardarBtn.textContent = 'Guardando...';
+    try {
+        guardarBtn.disabled = true;
+        guardarBtn.textContent = 'Guardando...';
 
-            const res = await fetch(url, {
-                method: metodo,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
+        const res = await fetch(url, {
+            method: metodo,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
 
-            if (!res.ok) throw new Error('Error al guardar');
+        if (!res.ok) throw new Error('Error al guardar');
 
-            limpiarFormulario();
-            await cargarEventos();
-            alert('Evento guardado correctamente');
+        limpiarFormulario();
+        await cargarEventos();
+        alert('Evento guardado correctamente');
+    } catch (err) {
+        console.error('Error guardando evento:', err);
+        alert('Ocurrió un error al guardar el evento.');
+    } finally {
+        guardarBtn.disabled = false;
+        guardarBtn.textContent = 'Guardar evento';
+    }
+});
 
-        } catch (err) {
-            console.error('Error guardando evento:', err);
-            alert('Ocurrió un error al guardar el evento.');
-        } finally {
-            guardarBtn.disabled = false;
-            guardarBtn.textContent = 'Guardar evento';
-        }
-    });
-}
+// ===== EDITAR (solo admin) =====
+function editarEvento(id, nombre, fecha, hora, descripcion) {
+    if (!esAdmin) return;
 
-// ===== EDITAR =====
-window.editarEvento = function(evento) {
-    if (eventoIdInput) eventoIdInput.value = evento.id_evento;
-    if (nombreInput) nombreInput.value = evento.nombre;
-    if (fechaInput) fechaInput.value = evento.fecha_evento ? evento.fecha_evento.split('T')[0] : '';
-    if (horaInput) horaInput.value = evento.hora || '';
-    if (descripcionInput) descripcionInput.value = evento.descripcion || '';
+    eventoIdInput.value = id;
+    nombreInput.value = nombre;
+    fechaInput.value = fecha.split('T')[0];
+    horaInput.value = hora || '';
+    descripcionInput.value = descripcion || '';
 
-    if (formLabel) formLabel.textContent = 'Editando evento';
-    if (guardarBtn) guardarBtn.textContent = 'Actualizar evento';
-    if (cancelarBtn) cancelarBtn.style.display = 'block';
+    formLabel.textContent = 'Editando evento';
+    guardarBtn.textContent = 'Actualizar evento';
+    cancelarBtn.style.display = 'block';
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-// ===== CANCELAR =====
-if (cancelarBtn) {
-    cancelarBtn.addEventListener('click', limpiarFormulario);
 }
+
+// ===== CANCELAR EDICIÓN =====
+cancelarBtn?.addEventListener('click', limpiarFormulario);
 
 function limpiarFormulario() {
-    if (eventoIdInput) eventoIdInput.value = '';
-    if (nombreInput) nombreInput.value = '';
-    if (fechaInput) fechaInput.value = '';
-    if (horaInput) horaInput.value = '';
-    if (descripcionInput) descripcionInput.value = '';
+    eventoIdInput.value = '';
+    nombreInput.value = '';
+    fechaInput.value = '';
+    horaInput.value = '';
+    descripcionInput.value = '';
 
-    if (formLabel) formLabel.textContent = 'Nuevo evento';
-    if (guardarBtn) guardarBtn.textContent = 'Guardar evento';
-    if (cancelarBtn) cancelarBtn.style.display = 'none';
+    formLabel.textContent = 'Nuevo evento';
+    guardarBtn.textContent = 'Guardar evento';
+    cancelarBtn.style.display = 'none';
 }
 
-// ===== ELIMINAR =====
-window.eliminarEvento = async function(id) {
+// ===== ELIMINAR (solo admin) =====
+async function eliminarEvento(id) {
+    if (!esAdmin) return;
     if (!confirm('¿Seguro que quieres eliminar este evento?')) return;
 
     try {
@@ -179,18 +199,26 @@ window.eliminarEvento = async function(id) {
         console.error('Error eliminando evento:', err);
         alert('Ocurrió un error al eliminar el evento.');
     }
-};
+}
 
 // ===== TOGGLE REPORTE =====
-if (toggleReporteBtn) {
-    toggleReporteBtn.addEventListener('click', () => {
-        modoReporte = !modoReporte;
-        toggleReporteBtn.textContent = modoReporte ? 'Ver gestión' : 'Ver reporte';
-        cargarEventos();
+toggleReporteBtn?.addEventListener('click', () => {
+    modoReporte = !modoReporte;
+    toggleReporteBtn.textContent = modoReporte ? 'Ver gestión' : 'Ver reporte';
+    cargarEventos();
+});
+
+// ===== HELPERS =====
+function formatearFecha(fecha) {
+    if (!fecha) return 'Sin fecha';
+    const d = new Date(fecha);
+    return d.toLocaleDateString('es-MX', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
     });
 }
 
-// ===== HELPERS =====
 function escapeHtml(str) {
     if (!str) return '';
     return str
@@ -199,6 +227,10 @@ function escapeHtml(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+function escapar(str) {
+    return escapeHtml(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
 // ===== INIT =====

@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = '/api';
 const loggedUser = JSON.parse(localStorage.getItem('loggedUser'));
 
 // Variables de paginacion

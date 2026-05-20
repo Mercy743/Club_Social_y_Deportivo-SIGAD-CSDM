@@ -399,3 +399,39 @@
         flex-wrap: wrap;
     }
 }
+/* Arregla botón "Agregar" en lista de usuarios */
+#listaUsuarios .btn-editar-torneo {
+    width: auto !important;
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    border-radius: 16px !important;
+    background: #0E6873 !important;
+    color: white !important;
+    border: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex: none !important;
+    white-space: nowrap !important;
+}
+
+/* Botón "Eliminar" en la lista de participantes */
+#participantes .btn-eliminar-torneo {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+    border-radius: 20px !important;
+    background: rgba(228,32,27,0.15) !important;
+    color: #ff8a8a !important;
+    border: 1px solid rgba(228,32,27,0.3) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+}
+
+#participantes .btn-eliminar-torneo:hover {
+    background: rgba(228,32,27,0.25) !important;
+    transform: translateY(-1px);
+}

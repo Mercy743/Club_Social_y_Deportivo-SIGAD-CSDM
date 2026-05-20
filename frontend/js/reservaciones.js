@@ -62,12 +62,7 @@ async function cargarEspacios() {
         document.getElementById('tablaEspacios').innerHTML = `
             <table class="espacios-table">
                 <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Nombre</th>
-                        <th>Tipo</th>
-                        <th>Capacidad</th>
-                    </tr>
+                    <tr><th>#</th><th>Nombre</th><th>Tipo</th><th>Capacidad</th></tr>
                 </thead>
                 <tbody>
                     ${espaciosActivos.map((e,i)=>`

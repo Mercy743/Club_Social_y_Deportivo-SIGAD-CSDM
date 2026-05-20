@@ -1,3 +1,5 @@
 node_modules/
 migrar_passwords.js
 .env
+package-lock.json
+package.json

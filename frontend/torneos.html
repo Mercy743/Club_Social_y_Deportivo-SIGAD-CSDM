@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Torneos - SIGAD</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torneos - SIGAD</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
@@ -11,8 +11,11 @@
 </head>
 <body class="dashboardPage">
 
-<svg class="bg-playbook" viewBox="0 0 700 560" ...>
+<svg class="bg-playbook" viewBox="0 0 700 560" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <!-- (mismo SVG que ya tienes) -->
 </svg>
+
+<div class="particles"></div>
 
 <div class="dashboardWrapper">
     <div class="dashboardTopbar">
@@ -21,26 +24,74 @@
             <h1>SIGAD <span class="topbarRole">· Torneos</span></h1>
         </div>
         <div class="topbarActions">
-            <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">Volver</button>
+            <button onclick="window.location.href='dashboard.html'" class="secondaryBtn">← Volver</button>
             <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
         </div>
     </div>
 
+    <p class="section-label">Resumen</p>
+    <div class="quickStats" style="margin-bottom: 28px;">
+        <div class="statPill"><strong id="totalTorneos">—</strong><span>Total torneos</span></div>
+        <div class="statPill"><strong id="torneosActivos">—</strong><span>En curso</span></div>
+        <div class="statPill"><strong id="torneosProgramados">—</strong><span>Programados</span></div>
+        <div class="statPill"><strong id="torneosFinalizados">—</strong><span>Finalizados</span></div>
+    </div>
+
     <p class="section-label">Gestión de torneos</p>
-    
     <div class="header-torneos">
         <div class="buscador-wrapper">
             <i class="fas fa-search"></i>
             <input type="text" id="busqueda" placeholder="Buscar torneo...">
         </div>
-        <button id="btnCrear" class="btn-crear-torneo">
-            <i class="fas fa-plus"></i> Crear Torneo
-        </button>
+        <button id="btnCrear" class="btn-crear-torneo"><i class="fas fa-plus"></i> Crear Torneo</button>
     </div>
 
     <div id="contenedorTorneos" class="grid-torneos"></div>
 </div>
 
+<!-- MODAL PARA CREAR/EDITAR TORNEO -->
+<div id="modalTorneo" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index:1000; justify-content: center; align-items: center;">
+    <div class="dashboardCard" style="max-width: 500px; width: 90%; margin: auto; position: relative;">
+        <h2 id="modalTorneoTitulo">Nuevo Torneo</h2>
+        <form id="formTorneoModal">
+            <input type="hidden" id="torneoIdModal">
+            <div class="campo">
+                <label>Nombre *</label>
+                <input type="text" id="nombreTorneo" required>
+            </div>
+            <div class="campo">
+                <label>Descripción</label>
+                <textarea id="descripcionTorneo" rows="2"></textarea>
+            </div>
+            <div class="campo-row">
+                <div class="campo">
+                    <label>Fecha inicio *</label>
+                    <input type="date" id="fechaInicioTorneo" required>
+                </div>
+                <div class="campo">
+                    <label>Fecha fin *</label>
+                    <input type="date" id="fechaFinTorneo" required>
+                </div>
+            </div>
+            <div class="campo">
+                <label>Actividad *</label>
+                <select id="actividadTorneo" required></select>
+            </div>
+            <div class="campo">
+                <label>Tipo de torneo</label>
+                <select id="tipoTorneo">
+                    <option value="eliminacion">Eliminación directa</option>
+                    <option value="liga">Liga (todos contra todos)</option>
+                    <option value="grupos">Fase de grupos</option>
+                </select>
+            </div>
+            <div class="botones-form" style="margin-top: 20px;">
+                <button type="submit" class="btn-guardar">Guardar</button>
+                <button type="button" id="cerrarModalBtn" class="btn-cancelar">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
 <script src="js/comunes.js"></script>
 <script src="js/torneos.js"></script>
 </body>

@@ -17,7 +17,7 @@
             <h1>SIGAD <span class="topbarRole">· Detalle Torneo</span></h1>
         </div>
         <div class="topbarActions">
-            <button onclick="window.location.href='torneos.html'" class="secondaryBtn">Volver</button>
+            <button onclick="window.location.href='torneos.html'" class="secondaryBtn">← Volver</button>
             <button id="logoutBtn" class="logoutBtn">Cerrar sesión</button>
         </div>
     </div>
@@ -26,6 +26,13 @@
 
     <p class="section-label">Participantes</p>
     <div id="participantes"></div>
+
+    <!-- Paginación para participantes -->
+    <div class="paginacion-container" id="paginacionParticipantes">
+        <button id="btnAnteriorParticipantes" class="btn-paginacion" disabled><i class="fas fa-chevron-left"></i> Anterior</button>
+        <span id="paginaParticipantesInfo" class="pagina-badge">Página 1</span>
+        <button id="btnSiguienteParticipantes" class="btn-paginacion">Siguiente <i class="fas fa-chevron-right"></i></button>
+    </div>
 
     <div style="text-align: center; margin: 20px 0;">
         <button onclick="togglePanelUsuarios()" style="background: linear-gradient(135deg, #0E6873, #54cfe0); border: none; padding: 10px 20px; border-radius: 30px; color: white; cursor: pointer;">
@@ -36,6 +43,12 @@
     <div id="panelUsuarios" style="display:none; margin-top:20px; background: rgba(20,20,20,0.68); border-radius: 16px; padding: 20px;">
         <input type="text" id="buscarUsuario" placeholder="Buscar usuario..." style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: white; margin-bottom: 15px;">
         <div id="listaUsuarios"></div>
+        <!-- Paginación para usuarios -->
+        <div class="paginacion-container" id="paginacionUsuarios" style="margin-top: 15px;">
+            <button id="btnAnteriorUsuarios" class="btn-paginacion" disabled><i class="fas fa-chevron-left"></i> Anterior</button>
+            <span id="paginaUsuariosInfo" class="pagina-badge">Página 1</span>
+            <button id="btnSiguienteUsuarios" class="btn-paginacion">Siguiente <i class="fas fa-chevron-right"></i></button>
+        </div>
     </div>
 
     <p class="section-label">Bracket</p>
@@ -44,8 +57,6 @@
     <p class="section-label">Podio</p>
     <div id="top3"></div>
 </div>
-
-<script src="js/comunes.js"></script>
 <script src="js/torneos.js"></script>
 </body>
 </html>
