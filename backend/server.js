@@ -6,6 +6,7 @@ const path = require('path');
 const multer = require('multer');
 const XLSX   = require('xlsx');
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const puerto = process.env.PORT || 3000;
@@ -25,6 +26,16 @@ const pool = new Pool({
 pool.connect()
     .then(() => console.log('Conectado a PostgreSQL'))
     .catch(err => console.error('Error conexión BD', err.stack));
+// Configuración de correo (después de pool)
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+    }
+});
 
 async function obtenerRolUsuario(usuario_id) {
     if (!usuario_id) return null;
@@ -1848,6 +1859,85 @@ app.get('/api/socios/exportar-excel', async (req, res) => {
     } catch (error) {
         console.error('Error al exportar socios:', error);
         res.status(500).json({ error: 'Error al exportar socios' });
+    }
+});
+
+/* ===== RECUPERAR CONTRASEÑA - SOLICITAR TOKEN ===== */
+app.post('/api/recuperar/solicitar', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "El correo es requerido" });
+    try {
+        const emailNormalizado = normalizarTexto(email);
+        const usuario = await pool.query(`
+            SELECT id, nombre, email FROM usuarios 
+            WHERE email = $1 AND activo = true
+        `, [emailNormalizado]);
+        if (usuario.rows.length === 0) {
+            return res.json({ mensaje: "Si el correo existe, recibirás un enlace para recuperar tu contraseña" });
+        }
+        const user = usuario.rows[0];
+        const crypto = require('crypto');
+        const token = crypto.randomBytes(32).toString('hex');
+        const expires = new Date();
+        expires.setHours(expires.getHours() + 1);
+        await pool.query(`
+            UPDATE usuarios 
+            SET reset_token = $1, reset_token_expires = $2 
+            WHERE id = $3
+        `, [token, expires, user.id]);
+        const resetLink = `${process.env.BASE_URL || 'http://localhost:3000'}/reset-password.html?token=${token}`;
+        await transporter.sendMail({
+            from: `"SIGAD Club" <${process.env.EMAIL_USER}>`,
+            to: user.email,
+            subject: 'Recuperación de contraseña - SIGAD',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; background: #1a1a2e; color: white; border-radius: 10px;">
+                    <h2 style="color: #54cfe0;">Recuperación de contraseña</h2>
+                    <p>Hola <strong>${user.nombre}</strong>,</p>
+                    <p>Recibimos una solicitud para restablecer tu contraseña.</p>
+                    <p>Haz clic en el siguiente enlace (válido por 1 hora):</p>
+                    <a href="${resetLink}" style="display: inline-block; padding: 12px 24px; margin: 20px 0; background: linear-gradient(135deg, #0E6873, #54cfe0); color: white; text-decoration: none; border-radius: 8px;">Restablecer contraseña</a>
+                    <p>Si no solicitaste este cambio, ignora este mensaje.</p>
+                    <hr style="border-color: #333;">
+                    <p style="font-size: 12px; color: #888;">SIGAD - Sistema de Gestión Integral</p>
+                </div>
+            `
+        });
+        res.json({ mensaje: "Si el correo existe, recibirás un enlace para recuperar tu contraseña" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al procesar la solicitud" });
+    }
+});
+
+/* ===== RECUPERAR CONTRASEÑA - RESTABLECER ===== */
+app.post('/api/recuperar/restablecer', async (req, res) => {
+    const { token, nueva_password } = req.body;
+    if (!token || !nueva_password) {
+        return res.status(400).json({ error: "Token y nueva contraseña son requeridos" });
+    }
+    if (nueva_password.length < 6) {
+        return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
+    }
+    try {
+        const usuario = await pool.query(`
+            SELECT id FROM usuarios 
+            WHERE reset_token = $1 AND reset_token_expires > NOW() AND activo = true
+        `, [token]);
+        if (usuario.rows.length === 0) {
+            return res.status(400).json({ error: "Token inválido o expirado" });
+        }
+        const user = usuario.rows[0];
+        const hashedPassword = await bcrypt.hash(nueva_password, 10);
+        await pool.query(`
+            UPDATE usuarios 
+            SET password = $1, reset_token = NULL, reset_token_expires = NULL 
+            WHERE id = $2
+        `, [hashedPassword, user.id]);
+        res.json({ mensaje: "Contraseña actualizada correctamente" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al restablecer la contraseña" });
     }
 });
 
