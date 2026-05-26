@@ -36,9 +36,9 @@ async function cargarSelects() {
     if (!esAdmin && !esInstructor) return;
     try {
         const [espacios, actividades, instructores] = await Promise.all([
-            fetch(API_URL + '/espacios').then(r => r.json()),
-            fetch(API_URL + '/actividades').then(r => r.json()),
-            fetch(API_URL + '/instructores').then(r => r.json())
+            apiRequest(API_URL + '/espacios').then(r => r.json()),
+            apiRequest(API_URL + '/actividades').then(r => r.json()),
+            apiRequest(API_URL + '/instructores').then(r => r.json())
         ]);
         espacios.forEach(e => {
             espacioSelect.innerHTML += `<option value="${e.id}">${e.nombre} (${e.tipo})</option>`;
@@ -57,7 +57,7 @@ async function cargarSelects() {
 // ===== CARGAR HORARIOS =====
 async function cargarHorarios() {
     try {
-        const res = await fetch(API_URL + '/horarios');
+        const res = await apiRequest(API_URL + '/horarios');
         const horarios = await res.json();
         const diaFiltro = filtroDia.value;
         const filtrados = diaFiltro ? horarios.filter(h => h.dia_semana === diaFiltro) : horarios;
@@ -155,7 +155,7 @@ guardarBtn?.addEventListener('click', async () => {
     try {
         guardarBtn.disabled = true;
         guardarBtn.textContent = 'Guardando...';
-        const res = await fetch(url, {
+        const res = await apiRequest(url, {
             method: metodo,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -188,7 +188,7 @@ async function editarHorario(id) {
         return;
     }
     try {
-        const res = await fetch(API_URL + '/horarios');
+        const res = await apiRequest(API_URL + '/horarios');
         const horarios = await res.json();
         const h = horarios.find(x => x.id === id);
         if (!h) return;
@@ -224,7 +224,7 @@ async function toggleEstado(id, activo) {
     }
     try {
         // Primero obtener el horario para verificar propiedad (si es instructor)
-        const resHor = await fetch(API_URL + '/horarios');
+        const resHor = await apiRequest(API_URL + '/horarios');
         const horarios = await resHor.json();
         const h = horarios.find(x => x.id === id);
         if (!h) return;
@@ -232,7 +232,7 @@ async function toggleEstado(id, activo) {
             alert('No puedes modificar un horario que no te pertenece.');
             return;
         }
-        const res = await fetch(`${API_URL}/horarios/${id}/estado`, {
+        const res = await apiRequest(`${API_URL}/horarios/${id}/estado`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ activo: !activo, usuario_id: loggedUser.id })
@@ -255,7 +255,7 @@ async function eliminarHorario(id) {
         return;
     }
     try {
-        const resHor = await fetch(API_URL + '/horarios');
+        const resHor = await apiRequest(API_URL + '/horarios');
         const horarios = await resHor.json();
         const h = horarios.find(x => x.id === id);
         if (!h) return;
@@ -264,7 +264,7 @@ async function eliminarHorario(id) {
             return;
         }
         if (!confirm('¿Seguro que quieres eliminar este horario?')) return;
-        const res = await fetch(`${API_URL}/horarios/${id}`, {
+        const res = await apiRequest(`${API_URL}/horarios/${id}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ usuario_id: loggedUser.id })

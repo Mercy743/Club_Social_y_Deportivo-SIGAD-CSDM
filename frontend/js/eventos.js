@@ -6,10 +6,6 @@ if (!loggedUser) window.location.href = 'index.html';
 const esAdmin = loggedUser?.rol === 'admin';
 let modoReporte = false;
 
-document.getElementById('logoutBtn')?.addEventListener('click', () => {
-    localStorage.removeItem('loggedUser');
-    window.location.href = 'index.html';
-});
 
 // ===== ELEMENTOS DEL DOM =====
 const eventList = document.getElementById('eventList');
@@ -49,7 +45,7 @@ cerrarModalBtn?.addEventListener('click', cerrarModalEvento);
 // ===== CARGAR EVENTOS =====
 async function cargarEventos() {
     try {
-        const res = await fetch(`${API_URL}/eventos`);
+        const res = await apiRequest(`${API_URL}/eventos`);
         const eventos = await res.json();
 
         if (!eventos || !eventos.length) {
@@ -173,7 +169,7 @@ formEventoModal?.addEventListener('submit', async (e) => {
         : { nombre, fecha_evento: fecha, hora, descripcion, creado_por: loggedUser.id };
 
     try {
-        const res = await fetch(url, {
+        const res = await apiRequest(url, {
             method: metodo,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -192,7 +188,7 @@ formEventoModal?.addEventListener('submit', async (e) => {
 window.editarEvento = async (id) => {
     if (!esAdmin) return;
     try {
-        const res = await fetch(`${API_URL}/eventos/${id}`);
+        const res = await apiRequest(`${API_URL}/eventos/${id}`);
         const evento = await res.json();
         eventoIdModal.value = evento.id_evento;
         document.getElementById('nombreEventoModal').value = evento.nombre;
@@ -212,7 +208,7 @@ window.eliminarEvento = async (id) => {
     if (!esAdmin) return;
     if (!confirm('¿Seguro que quieres eliminar este evento?')) return;
     try {
-        const res = await fetch(`${API_URL}/eventos/${id}`, { method: 'DELETE' });
+        const res = await apiRequest(`${API_URL}/eventos/${id}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Error al eliminar');
         await cargarEventos();
         alert('Evento eliminado');

@@ -5,11 +5,6 @@ const loggedUser = JSON.parse(localStorage.getItem('loggedUser'));
 
 if (!loggedUser) window.location.href = 'index.html';
 
-document.getElementById('logoutBtn').onclick = () => {
-    localStorage.removeItem('loggedUser');
-    window.location.href = 'index.html';
-};
-
 document.getElementById('refreshBtn').onclick = () => {
     cargarReservaciones();
     cargarEspacios();
@@ -55,7 +50,7 @@ llenarLista("horaFin", "listaFin");
 
 async function cargarEspacios() {
     try {
-        const res = await fetch(API_URL + '/espacios');
+        const res = await apiRequest(API_URL + '/espacios');
         const data = await res.json();
         const espaciosActivos = data.filter(e => e.activo === true);
 
@@ -92,7 +87,7 @@ window.seleccionarEspacio = (id, fila) => {
 
 async function cargarReservaciones() {
     try {
-        const res = await fetch(API_URL + '/reservaciones');
+        const res = await apiRequest(API_URL + '/reservaciones');
         const data = await res.json();
         const activas = data.filter(r => r.estado !== 'cancelada');
 
@@ -149,7 +144,7 @@ window.cancelarReserva = async (id, btn) => {
     btn.textContent = 'Cancelando...';
 
     try {
-        const res = await fetch(`${API_URL}/reservaciones/${id}/cancelar`, { method: 'PUT' });
+        const res = await apiRequest(`${API_URL}/reservaciones/${id}/cancelar`, { method: 'PUT' });
         if (!res.ok) throw new Error();
         await cargarReservaciones();
     } catch {
@@ -188,7 +183,7 @@ document.getElementById('guardarBtn').onclick = async () => {
     };
 
     try {
-        const res = await fetch(API_URL + '/reservaciones', {
+        const res = await apiRequest(API_URL + '/reservaciones', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)

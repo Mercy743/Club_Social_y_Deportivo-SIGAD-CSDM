@@ -31,7 +31,7 @@ function escapeHTML(str) {
 }
 
 async function fetchJSON(url, options = {}) {
-    const res = await fetch(url, options);
+    const res = await apiRequest(url, options);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error en la petición');
     return data;
@@ -47,7 +47,7 @@ async function cargarActividadesEnSelectModal() {
     const select = document.getElementById('actividadTorneo');
     if (!select) return;
     try {
-        const res = await fetch(`${API_URL}/actividades`);
+        const res = await apiRequest(`${API_URL}/actividades`);
         const actividades = await res.json();
         select.innerHTML = '<option value="">Seleccione actividad</option>';
         actividades.forEach(a => {
@@ -461,26 +461,25 @@ async function cargarTop3(id) {
 // ===== NAVEGACIÓN =====
 function verDetalle(id) { window.location.href = `torneos-detalle.html?id=${id}`; }
 
-function editarTorneo(id) {
+async function editarTorneo(id) {
     if (!esAdmin) return;
-    fetch(`${API_URL}/torneos/${id}`)
-        .then(res => res.json())
-        .then(t => {
-            document.getElementById('torneoIdModal').value = t.id;
-            document.getElementById('nombreTorneo').value = t.nombre;
-            document.getElementById('descripcionTorneo').value = t.descripcion || '';
-            document.getElementById('fechaInicioTorneo').value = t.fecha_inicio.split('T')[0];
-            document.getElementById('fechaFinTorneo').value = t.fecha_fin.split('T')[0];
-            document.getElementById('tipoTorneo').value = t.tipo_torneo || 'eliminacion';
-            cargarActividadesEnSelectModal().then(() => {
-                document.getElementById('actividadTorneo').value = t.actividad_id;
-            });
-            document.getElementById('modalTorneoTitulo').textContent = 'Editar Torneo';
-            document.getElementById('modalTorneo').style.display = 'flex';
-        })
-        .catch(err => alert('Error al cargar torneo: ' + err.message));
+    try {
+        const res = await apiRequest(`${API_URL}/torneos/${id}`);
+        const t = await res.json();
+        document.getElementById('torneoIdModal').value = t.id;
+        document.getElementById('nombreTorneo').value = t.nombre;
+        document.getElementById('descripcionTorneo').value = t.descripcion || '';
+        document.getElementById('fechaInicioTorneo').value = t.fecha_inicio.split('T')[0];
+        document.getElementById('fechaFinTorneo').value = t.fecha_fin.split('T')[0];
+        document.getElementById('tipoTorneo').value = t.tipo_torneo || 'eliminacion';
+        await cargarActividadesEnSelectModal();
+        document.getElementById('actividadTorneo').value = t.actividad_id;
+        document.getElementById('modalTorneoTitulo').textContent = 'Editar Torneo';
+        document.getElementById('modalTorneo').style.display = 'flex';
+    } catch (err) {
+        alert('Error al cargar torneo: ' + err.message);
+    }
 }
-
 function togglePanelUsuarios() {
     if (!esAdmin) return;
     const panel = document.getElementById('panelUsuarios');
@@ -546,9 +545,5 @@ document.addEventListener('DOMContentLoaded', () => {
         cargarActividadesEnSelectModal();
         document.getElementById('modalTorneoTitulo').textContent = 'Nuevo Torneo';
         document.getElementById('modalTorneo').style.display = 'flex';
-    });
-    document.getElementById('logoutBtn')?.addEventListener('click', () => {
-        localStorage.removeItem('loggedUser');
-        window.location.href = 'index.html';
     });
 });

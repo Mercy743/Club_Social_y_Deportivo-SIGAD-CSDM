@@ -1,12 +1,57 @@
-// ===== FUNCIONES COMPARTIDAS PARA TODO EL SITIO =====
+// ===== API REQUEST CON TOKEN =====
+async function apiRequest(url, options = {}) {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        window.location.href = "index.html";
+        throw new Error("No hay sesión activa");
+    }
 
-// Generar partículas flotantes
+    options.headers = options.headers || {};
+    options.headers["Authorization"] = `Bearer ${token}`;
+
+    if (!options.headers["Content-Type"] && !(options.body instanceof FormData)) {
+        options.headers["Content-Type"] = "application/json";
+    }
+
+    try {
+        const res = await fetch(url, options);
+        if (res.status === 401) {
+            alert("Tu sesión ha expirado. Inicia sesión nuevamente.");
+            localStorage.removeItem("token");
+            localStorage.removeItem("loggedUser");
+            window.location.href = "index.html";
+            throw new Error("Sesión expirada");
+        }
+        return res;
+    } catch (error) {
+        console.error("apiRequest error:", error);
+        throw error;
+    }
+}
+
+// ===== LOGOUT =====
+async function logout() {
+    const token = localStorage.getItem("token");
+    if (token) {
+        try {
+            await fetch("/api/logout", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+        } catch(e) {
+            console.error("Error cerrando sesión en servidor", e);
+        }
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("loggedUser");
+    window.location.href = "index.html";
+}
+
+// ===== PARTÍCULAS =====
 function generarParticulas() {
     const particlesContainer = document.querySelector(".particles");
     if (!particlesContainer) return;
-    
     particlesContainer.innerHTML = "";
-    
     const total = 40;
     for (let i = 0; i < total; i++) {
         const span = document.createElement("span");
@@ -19,20 +64,11 @@ function generarParticulas() {
         span.style.opacity = Math.random() * 0.6 + 0.2;
         particlesContainer.appendChild(span);
     }
-    console.log("Partículas generadas");
 }
 
-// Cargar footer dinámicamente
+// ===== FOOTER =====
 function cargarFooter() {
-    console.log("Intentando cargar footer...");
-    
-    // Verificar si ya existe un footer
-    if (document.getElementById('footer-container')) {
-        console.log("Footer ya existe, no se duplica");
-        return;
-    }
-    
-    // Crear el footer directamente sin fetch
+    if (document.getElementById('footer-container')) return;
     const footerHTML = `
         <footer class="footer-sigad">
             <div class="footer-content">
@@ -51,36 +87,22 @@ function cargarFooter() {
             </div>
         </footer>
     `;
-    
     const footerContainer = document.createElement('div');
     footerContainer.id = 'footer-container';
     footerContainer.innerHTML = footerHTML;
     document.body.appendChild(footerContainer);
-    
-    console.log("Footer agregado al final del body");
 }
 
-// Inicializar cuando el DOM esté listo
+// ===== INICIALIZACIÓN =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM cargado - Inicializando comunes.js");
-    
-    // Generar partículas si existe el contenedor
-    if (document.querySelector(".particles")) {
-        generarParticulas();
-    } else {
-        console.log("No se encontró .particles");
-    }
-    
-    // Cargar footer en todas las páginas EXCEPTO login y main
+    if (document.querySelector(".particles")) generarParticulas();
     const currentPage = window.location.pathname.split('/').pop();
-    console.log("Página actual:", currentPage);
-    
     const noFooterPages = ['index.html', 'main.html'];
+    if (!noFooterPages.includes(currentPage)) cargarFooter();
     
-    if (!noFooterPages.includes(currentPage)) {
-        console.log("Cargando footer para esta página");
-        cargarFooter();
-    } else {
-        console.log("Footer no cargado (página excluida)");
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.removeEventListener("click", logout);
+        logoutBtn.addEventListener("click", logout);
     }
 });

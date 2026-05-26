@@ -11,7 +11,7 @@ if (loginForm) {
         const password = document.getElementById("password").value;
         
         message.textContent = "Conectando...";
-        message.style.color = "#54cfe0";  // usando tu color teal2
+        message.style.color = "#54cfe0";
         
         try {
             const res = await fetch(`${API_URL}/login`, {
@@ -23,7 +23,11 @@ if (loginForm) {
             const data = await res.json();
             
             if (!res.ok) {
-                message.textContent = data.error || "Error al iniciar sesión";
+                if (res.status === 409) {
+                    message.textContent = data.error || "Ya hay una sesión activa en otro dispositivo. Ciérrala primero.";
+                } else {
+                    message.textContent = data.error || "Error al iniciar sesión";
+                }
                 message.style.color = "#ff6b6b";
                 return;
             }
@@ -31,6 +35,8 @@ if (loginForm) {
             message.textContent = "¡Éxito! Redirigiendo...";
             message.style.color = "#54cfe0";
             
+            // Guardar token y datos del usuario
+            localStorage.setItem("token", data.token);
             localStorage.setItem("loggedUser", JSON.stringify(data));
             
             setTimeout(() => {
@@ -39,7 +45,7 @@ if (loginForm) {
             
         } catch (error) {
             console.error("Error:", error);
-            message.textContent = "Error de conexión con el servidor. ¿El backend está corriendo?";
+            message.textContent = "Error de conexión con el servidor.";
             message.style.color = "#ff6b6b";
         }
     });

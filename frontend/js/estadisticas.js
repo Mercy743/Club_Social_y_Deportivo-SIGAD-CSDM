@@ -10,11 +10,6 @@ if (loggedUser.rol !== 'admin') {
     window.location.href = 'dashboard.html';
 }
 
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    localStorage.removeItem('loggedUser');
-    window.location.href = 'index.html';
-});
-
 let charts = {};
 
 // Configuracion base para graficas
@@ -48,7 +43,7 @@ const barOptions = {
 
 async function cargarEstadisticas() {
     try {
-        const response = await fetch(API_URL + '/estadisticas');
+        const response = await apiRequest(API_URL + '/estadisticas');
         const data = await response.json();
 
         const basics = data.basics || data;

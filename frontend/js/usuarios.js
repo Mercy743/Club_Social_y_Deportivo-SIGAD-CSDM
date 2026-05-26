@@ -9,8 +9,6 @@ if (!loggedUser) {
     window.location.href = 'index.html';
 }
 
-document.getElementById('logoutBtn').addEventListener('click', logout);
-
 cargarTodosLosUsuarios();
 
 document.getElementById('searchBtn').addEventListener('click', buscarSocios);
@@ -27,11 +25,11 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
 async function cargarTodosLosUsuarios() {
     try {
         const url = API_URL + `/usuarios/except/${loggedUser.id}?page=${paginaActual}&limit=${usuariosPorPagina}`;
-        console.log('🔍 URL consultada:', url);
-        const res = await fetch(url);
-        console.log('📡 Status HTTP:', res.status);
+        console.log('URL consultada:', url);
+        const res = await apiRequest(url);
+        console.log('Status HTTP:', res.status);
         const data = await res.json();
-        console.log('📦 Datos recibidos:', data);
+        console.log('Datos recibidos:', data);
 
         const usuarios = data.usuarios || [];
         const paginacion = data.paginacion || {};
@@ -139,7 +137,7 @@ async function buscarSocios() {
     }
 
     try {
-        const res = await fetch(API_URL + '/usuarios/buscar?q=' + encodeURIComponent(termino));
+        const res = await apiRequest(API_URL + '/usuarios/buscar?q=' + encodeURIComponent(termino));
         const usuarios = await res.json();
 
         if (!usuarios.length) {
@@ -206,7 +204,7 @@ async function buscarSocios() {
 }
 /* ===== EDITAR USUARIO ===== */
 async function editarUsuario(id) {
-    const res = await fetch(API_URL + '/usuarios/' + id);
+    const res = await apiRequest(API_URL + '/usuarios/' + id);
     const u = await res.json();
 
     document.getElementById('editId').value       = u.id;
@@ -228,7 +226,7 @@ async function guardarCambios() {
         telefono: document.getElementById('editTelefono').value
     };
 
-    await fetch(API_URL + '/usuarios/' + id, {
+    await apiRequest(API_URL + '/usuarios/' + id, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -275,7 +273,7 @@ document.getElementById('confirmDeleteBtn').addEventListener('click', async func
     }
 
     try {
-        const res = await fetch(API_URL + '/usuarios/' + usuarioAEliminar + '/seguro', {
+        const res = await apiRequest(API_URL + '/usuarios/' + usuarioAEliminar + '/seguro', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -335,7 +333,7 @@ const importarSocios = async (archivo) => {
     }, 3000);
     
     try {
-        const response = await fetch(API_URL + '/socios/importar-excel', {
+        const response = await apiRequest(API_URL + '/socios/importar-excel', {
             method: 'POST',
             body: formData
         });
@@ -486,7 +484,7 @@ const setupImportButton = () => {
 /* ===== EXPORTAR SOCIOS A EXCEL ===== */
 const exportarSocios = async () => {
     try {
-        const response = await fetch(API_URL + '/socios/exportar-excel');
+        const response = await apiRequest(API_URL + '/socios/exportar-excel');
         
         if (!response.ok) {
             throw new Error('Error al exportar');
@@ -551,7 +549,7 @@ document.getElementById('guardarInstructorBtn')?.addEventListener('click', async
     const passwordTemp = (nombreBase || 'inst') + (telefonoSufijo || '0000');
 
     try {
-        const res = await fetch(API_URL + '/instructores', {
+        const res = await apiRequest(API_URL + '/instructores', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -602,10 +600,4 @@ if (document.readyState === 'loading') {
     if (exportarBtn) {
         exportarBtn.addEventListener('click', exportarSocios);
     }
-}
-
-/* ===== LOGOUT ===== */
-function logout() {
-    localStorage.removeItem('loggedUser');
-    window.location.href = 'index.html';
 }

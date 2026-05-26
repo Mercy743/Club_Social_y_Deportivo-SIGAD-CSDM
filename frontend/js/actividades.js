@@ -21,7 +21,7 @@ function formatearDuracion(minutos) {
 }
 
 async function getActividades() {
-    const res = await fetch(`${API_URL}/actividades`);
+    const res = await apiRequest(`${API_URL}/actividades`);
     return await res.json();
 }
 
@@ -184,7 +184,7 @@ function activarBusqueda() {
 
 async function cargarInstructores(actividadId) {
     try {
-        const res = await fetch(`${API_URL}/actividades/${actividadId}/instructores`);
+        const res = await apiRequest(`${API_URL}/actividades/${actividadId}/instructores`);
         const instructores = await res.json();
         const span = document.getElementById(`instructores-${actividadId}`);
         if (span) {
@@ -198,7 +198,7 @@ async function cargarInstructores(actividadId) {
 async function asignarseInstructor(actividadId) {
     if (!confirm("¿Quieres asignarte como instructor de esta actividad?")) return;
     try {
-        const res = await fetch(`${API_URL}/actividades/${actividadId}/asignar-instructor`, {
+        const res = await apiRequest(`${API_URL}/actividades/${actividadId}/asignar-instructor`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ instructor_id: usuarioId })
@@ -218,7 +218,7 @@ async function asignarseInstructor(actividadId) {
 async function inscribirseActividad(actividadId) {
     if (!loggedUser) return alert('Debes iniciar sesión');
     try {
-        const res = await fetch(`${API_URL}/actividades/${actividadId}/inscribirse`, {
+        const res = await apiRequest(`${API_URL}/actividades/${actividadId}/inscribirse`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ socio_id: usuarioId })
@@ -251,7 +251,7 @@ async function eliminarActividad(id) {
         const body = rol === 'admin'
             ? { admin_id: usuarioId, password }
             : { usuario_id: usuarioId };
-        const res = await fetch(`${API_URL}/actividades/${id}`, {
+        const res = await apiRequest(`${API_URL}/actividades/${id}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -324,7 +324,7 @@ async function guardarActividad(event) {
     try {
         const url = id ? `${API_URL}/actividades/${id}` : `${API_URL}/actividades`;
         const method = id ? 'PUT' : 'POST';
-        const res = await fetch(url, {
+        const res = await apiRequest(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -351,7 +351,7 @@ async function cargarDatosParaEditar() {
         btnGuardar.textContent = 'Cargando...';
     }
     try {
-        const res = await fetch(`${API_URL}/actividades/${id}`);
+        const res = await apiRequest(`${API_URL}/actividades/${id}`);
         if (!res.ok) throw new Error('No se pudo obtener la actividad');
         const actividad = await res.json();
         document.getElementById('nombre').value = actividad.nombre || '';
@@ -416,10 +416,10 @@ async function cargarDetalle() {
         return;
     }
     try {
-        const resAct = await fetch(`${API_URL}/actividades/${id}`);
+        const resAct = await apiRequest(`${API_URL}/actividades/${id}`);
         if (!resAct.ok) throw new Error();
         const a = await resAct.json();
-        const resIns = await fetch(`${API_URL}/actividades/${id}/instructores`);
+        const resIns = await apiRequest(`${API_URL}/actividades/${id}/instructores`);
         const instructores = await resIns.json();
         const inscritos = a.inscritos || 0;
         const capacidad = a.capacidad || 1;

@@ -62,7 +62,7 @@ function controlarAccesoPorRol() {
 // ===== ESTADÍSTICAS (solo admin) =====
 async function cargarEstadisticas() {
     try {
-        const res = await fetch(`${API_URL}/estadisticas`);
+        const res = await apiRequest(`${API_URL}/estadisticas`);
         const datos = await res.json();
 
         const statsDiv = document.getElementById('dashboardStats');
@@ -87,7 +87,7 @@ async function cargarEstadisticas() {
 // ===== ALERTAS (solo admin) =====
 async function cargarAlertas() {
     try {
-        const res = await fetch(`${API_URL}/socios`);
+        const res = await apiRequest(`${API_URL}/socios`);
         const socios = await res.json();
         const inactivos = socios.filter(s => !s.activo).length;
         const inactivosEl = document.getElementById('inactivos');
@@ -96,15 +96,5 @@ async function cargarAlertas() {
         console.error('Error alertas:', error);
     }
 }
-
-// ===== CERRAR SESIÓN =====
-const logoutBtn = document.getElementById('logoutBtn');
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('loggedUser');
-        window.location.href = 'index.html';
-    });
-}
-
 // ===== INICIALIZAR =====
 controlarAccesoPorRol();

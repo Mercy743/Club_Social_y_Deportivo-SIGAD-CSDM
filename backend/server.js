@@ -7,6 +7,7 @@ const multer = require('multer');
 const XLSX   = require('xlsx');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
 const app = express();
 const puerto = process.env.PORT || 3000;
@@ -26,6 +27,77 @@ const pool = new Pool({
 pool.connect()
     .then(() => console.log('Conectado a PostgreSQL'))
     .catch(err => console.error('Error conexión BD', err.stack));
+
+// ===== SESIONES (sesión única) =====
+const crypto = require('crypto'); // asegúrate de que ya está, si no, añade al inicio
+
+function generarToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+// Crear tabla de sesiones si no existe (ejecutar una vez al iniciar)
+pool.query(`
+    CREATE TABLE IF NOT EXISTS sesiones (
+        id SERIAL PRIMARY KEY,
+        usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+        token VARCHAR(255) NOT NULL UNIQUE,
+        creado_en TIMESTAMP DEFAULT NOW(),
+        ultimo_uso TIMESTAMP DEFAULT NOW(),
+        expira_en TIMESTAMP DEFAULT NOW() + INTERVAL '24 hours',
+        activo BOOLEAN DEFAULT true
+    );
+    CREATE INDEX IF NOT EXISTS idx_sesiones_token ON sesiones(token);
+    CREATE INDEX IF NOT EXISTS idx_sesiones_usuario ON sesiones(usuario_id);
+`).catch(err => console.error('Error creando tabla sesiones:', err));
+
+app.post('/api/logout', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: "No autorizado" });
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+        await pool.query(`UPDATE sesiones SET activo = false WHERE token = $1`, [token]);
+        res.json({ mensaje: "Sesión cerrada correctamente" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al cerrar sesión" });
+    }
+});
+
+// Middleware para verificar token (colocar antes de las rutas protegidas)
+async function verificarSesion(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: "No autorizado. Token no proporcionado." });
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+        const sesion = await pool.query(`
+            SELECT usuario_id, expira_en FROM sesiones
+            WHERE token = $1 AND activo = true AND expira_en > NOW()
+        `, [token]);
+        if (sesion.rows.length === 0) {
+            return res.status(401).json({ error: "Sesión inválida o expirada. Inicia sesión nuevamente." });
+        }
+        await pool.query(`UPDATE sesiones SET ultimo_uso = NOW() WHERE token = $1`, [token]);
+        req.usuario_id = sesion.rows[0].usuario_id;
+        next();
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error interno al verificar sesión" });
+    }
+}
+
+// Aplicar middleware a todas las rutas /api excepto login y recuperar
+app.use('/api', (req, res, next) => {
+    const rutasPublicas = ['/login', '/recuperar/solicitar', '/recuperar/restablecer'];
+    if (rutasPublicas.some(ruta => req.path.startsWith(ruta))) {
+        return next();
+    }
+    verificarSesion(req, res, next);
+});
+
 // Configuración de correo (después de pool)
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -60,7 +132,7 @@ function normalizarTexto(str) {
 /* ===== LOGIN ===== */
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
-    const emailNormalizado = normalizarTexto(email);   // ← aquí está la clave
+    const emailNormalizado = normalizarTexto(email);
 
     try {
         const resultado = await pool.query(`
@@ -80,6 +152,23 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ error: "Credenciales incorrectas" });
         }
 
+        // Verificar si ya existe sesión activa
+        const sesionActiva = await pool.query(`
+            SELECT id FROM sesiones
+            WHERE usuario_id = $1 AND activo = true AND expira_en > NOW()
+        `, [usuario.id]);
+
+        if (sesionActiva.rows.length > 0) {
+            return res.status(409).json({ error: "Ya hay una sesión activa. Cierra la sesión en el otro dispositivo primero." });
+        }
+
+        // Crear nueva sesión
+        const token = generarToken();
+        await pool.query(`
+            INSERT INTO sesiones (usuario_id, token, expira_en)
+            VALUES ($1, $2, NOW() + INTERVAL '24 hours')
+        `, [usuario.id, token]);
+
         let tipo_accion = null;
         if (usuario.rol === 'socio') {
             const socio = await pool.query(`SELECT tipo_accion FROM socios WHERE usuario_id = $1`, [usuario.id]);
@@ -89,8 +178,7 @@ app.post('/api/login', async (req, res) => {
         await pool.query(`INSERT INTO auditoria(usuario_id, accion, ip_origen) VALUES($1, $2, $3)`, [usuario.id, 'login', req.ip]);
 
         const { password: _, ...usuarioSinPassword } = usuario;
-        res.json({ ...usuarioSinPassword, tipo_accion });
-
+        res.json({ ...usuarioSinPassword, tipo_accion, token });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Error en servidor" });
@@ -1955,6 +2043,13 @@ app.use(express.static(frontendPath, { index: false }));
 app.get('/', (req, res) => {
     res.sendFile(path.join(frontendPath, 'main.html'));
 });
+
+setInterval(async () => {
+    try {
+        const result = await pool.query(`DELETE FROM sesiones WHERE expira_en < NOW() OR activo = false`);
+        if (result.rowCount > 0) console.log(`Limpiadas ${result.rowCount} sesiones expiradas`);
+    } catch (err) { console.error(err); }
+}, 3600000);
 
 /* ===== SERVER ===== */
 app.listen(puerto, () => {

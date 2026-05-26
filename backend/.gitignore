@@ -1,3 +1,4 @@
 node_modules/
 migrar_passwords.js
 .env
+hash.js
