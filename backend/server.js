@@ -1948,7 +1948,11 @@ app.get('/api/socios/exportar-excel', async (req, res) => {
     }
 });
 
-/* ===== RECUPERAR CONTRASEÑA - SOLICITAR TOKEN ===== */
+// ===== RECUPERAR CONTRASEÑA con PIN =====
+function generarPin() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 app.post('/api/recuperar/solicitar', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: "El correo es requerido" });
@@ -1959,71 +1963,77 @@ app.post('/api/recuperar/solicitar', async (req, res) => {
             WHERE email = $1 AND activo = true
         `, [emailNormalizado]);
         if (usuario.rows.length === 0) {
-            return res.json({ mensaje: "Si el correo existe, recibirás un enlace para recuperar tu contraseña" });
+            return res.json({ mensaje: "Si el correo existe, recibirás un PIN en breve" });
         }
         const user = usuario.rows[0];
-        const crypto = require('crypto');
-        const token = crypto.randomBytes(32).toString('hex');
+        const pin = generarPin();
         const expires = new Date();
-        expires.setHours(expires.getHours() + 1);
+        expires.setMinutes(expires.getMinutes() + 15);
+
         await pool.query(`
             UPDATE usuarios 
-            SET reset_token = $1, reset_token_expires = $2 
+            SET reset_pin = $1, reset_pin_expires = $2 
             WHERE id = $3
-        `, [token, expires, user.id]);
-        const resetLink = `${process.env.BASE_URL || 'http://localhost:3000'}/reset-password.html?token=${token}`;
+        `, [pin, expires, user.id]);
+
         await transporter.sendMail({
             from: `"SIGAD Club" <${process.env.EMAIL_USER}>`,
             to: user.email,
-            subject: 'Recuperación de contraseña - SIGAD',
+            subject: 'Código de recuperación - SIGAD',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; background: #1a1a2e; color: white; border-radius: 10px;">
                     <h2 style="color: #54cfe0;">Recuperación de contraseña</h2>
                     <p>Hola <strong>${user.nombre}</strong>,</p>
-                    <p>Recibimos una solicitud para restablecer tu contraseña.</p>
-                    <p>Haz clic en el siguiente enlace (válido por 1 hora):</p>
-                    <a href="${resetLink}" style="display: inline-block; padding: 12px 24px; margin: 20px 0; background: linear-gradient(135deg, #0E6873, #54cfe0); color: white; text-decoration: none; border-radius: 8px;">Restablecer contraseña</a>
+                    <p>Tu código de verificación es:</p>
+                    <div style="font-size: 32px; font-weight: bold; letter-spacing: 4px; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 12px; text-align: center;">${pin}</div>
+                    <p>Este código expira en 15 minutos.</p>
                     <p>Si no solicitaste este cambio, ignora este mensaje.</p>
                     <hr style="border-color: #333;">
                     <p style="font-size: 12px; color: #888;">SIGAD - Sistema de Gestión Integral</p>
                 </div>
             `
         });
-        res.json({ mensaje: "Si el correo existe, recibirás un enlace para recuperar tu contraseña" });
+        res.json({ mensaje: "Revisa tu correo (incluyendo spam). El PIN es válido por 15 minutos." });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al procesar la solicitud" });
+        console.error('Error en solicitar PIN:', error);
+        res.status(500).json({ error: "No se pudo procesar la solicitud. Intenta más tarde." });
     }
 });
 
-/* ===== RECUPERAR CONTRASEÑA - RESTABLECER ===== */
 app.post('/api/recuperar/restablecer', async (req, res) => {
-    const { token, nueva_password } = req.body;
-    if (!token || !nueva_password) {
-        return res.status(400).json({ error: "Token y nueva contraseña son requeridos" });
+    const { email, pin, nueva_password } = req.body;
+    if (!email || !pin || !nueva_password) {
+        return res.status(400).json({ error: "Faltan datos (email, PIN o nueva contraseña)" });
     }
     if (nueva_password.length < 6) {
         return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
     }
     try {
+        const emailNormalizado = normalizarTexto(email);
         const usuario = await pool.query(`
-            SELECT id FROM usuarios 
-            WHERE reset_token = $1 AND reset_token_expires > NOW() AND activo = true
-        `, [token]);
+            SELECT id, reset_pin, reset_pin_expires FROM usuarios 
+            WHERE email = $1 AND activo = true
+        `, [emailNormalizado]);
         if (usuario.rows.length === 0) {
-            return res.status(400).json({ error: "Token inválido o expirado" });
+            return res.status(404).json({ error: "Usuario no encontrado" });
         }
         const user = usuario.rows[0];
+        if (!user.reset_pin || user.reset_pin !== pin) {
+            return res.status(400).json({ error: "PIN incorrecto" });
+        }
+        if (new Date() > user.reset_pin_expires) {
+            return res.status(400).json({ error: "El PIN ha expirado. Solicita uno nuevo." });
+        }
         const hashedPassword = await bcrypt.hash(nueva_password, 10);
         await pool.query(`
             UPDATE usuarios 
-            SET password = $1, reset_token = NULL, reset_token_expires = NULL 
+            SET password = $1, reset_pin = NULL, reset_pin_expires = NULL 
             WHERE id = $2
         `, [hashedPassword, user.id]);
         res.json({ mensaje: "Contraseña actualizada correctamente" });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al restablecer la contraseña" });
+        console.error('Error al restablecer:', error);
+        res.status(500).json({ error: "Error interno" });
     }
 });
 

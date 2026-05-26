@@ -7,18 +7,43 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/recuperar.css">
 </head>
-<body class="dashboardPage" style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
-    <div class="dashboardCard" style="max-width: 450px; width: 90%; text-align: center;">
-        <h2>Recuperar contraseña</h2>
-        <p class="subtitle">Ingresa tu correo electrónico</p>
-        <div id="message"></div>
-        <input type="email" id="email" placeholder="tu@correo.com">
-        <button id="sendBtn" class="btn-primary">Enviar enlace</button>
-        <p style="margin-top: 20px;">
-            <a href="index.html" style="color: #54cfe0;">← Volver al login</a>
-        </p>
+<body class="dashboardPage">
+    <div class="recuperar-container">
+        <div class="dashboardCard recuperar-card">
+            <h2>Recuperar contraseña</h2>
+            
+            <!-- Paso 1 -->
+            <div id="step1" class="form-step active">
+                <p class="subtitle">Ingresa tu correo electrónico</p>
+                <div id="step1Message" class="message-area"></div>
+                <input type="email" id="email" placeholder="tu@correo.com" required>
+                <button id="sendPinBtn" class="btn-primary">Enviar código PIN</button>
+                <p class="back-link">
+                    <a href="index.html">Volver al login</a>
+                </p>
+            </div>
+
+            <!-- Paso 2 -->
+            <div id="step2" class="form-step">
+                <p class="subtitle">Ingresa el código que recibiste</p>
+                <div id="step2Message" class="message-area"></div>
+                <input type="text" id="pin" placeholder="Código de 6 dígitos" maxlength="6" pattern="[0-9]{6}" required>
+                <div class="password-wrapper">
+                    <input type="password" id="newPassword" placeholder="Nueva contraseña (mínimo 6 caracteres)" required>
+                    <button type="button" class="toggle-password" data-target="newPassword">👁️</button>
+                </div>
+                <div class="password-wrapper">
+                    <input type="password" id="confirmPassword" placeholder="Confirmar contraseña" required>
+                    <button type="button" class="toggle-password" data-target="confirmPassword">👁️</button>
+                </div>
+                <button id="resetPasswordBtn" class="btn-primary">Restablecer contraseña</button>
+                <button id="backToStep1Btn" class="secondaryBtn">Volver</button>
+            </div>
+        </div>
     </div>
+
     <script src="js/recuperar.js"></script>
 </body>
 </html>

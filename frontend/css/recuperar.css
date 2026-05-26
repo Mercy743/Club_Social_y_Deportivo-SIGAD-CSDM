@@ -1,0 +1,70 @@
+.recuperar-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.recuperar-card {
+    max-width: 450px;
+    width: 100%;
+    text-align: center;
+}
+
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+}
+
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.password-wrapper input {
+    flex: 1;
+    padding-right: 40px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: #54cfe0;
+    font-size: 14px;
+}
+
+.message-area {
+    margin-bottom: 16px;
+}
+
+.error {
+    color: #ff6b6b;
+    background: rgba(228,32,27,0.15);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.success {
+    color: #4caf50;
+    background: rgba(76,175,80,0.15);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.back-link {
+    margin-top: 20px;
+}
+
+.back-link a {
+    color: #54cfe0;
+    text-decoration: none;
+}
