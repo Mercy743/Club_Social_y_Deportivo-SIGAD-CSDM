@@ -1942,7 +1942,15 @@ app.post('/api/recuperar/restablecer', async (req, res) => {
 });
 
 /* ===== FRONTEND STATIC ===== */
-const frontendPath = path.join(__dirname, '../Frontend');
+const frontendPath = path.join(__dirname, '../frontend');
+console.log('Ruta frontend:', frontendPath);
+const fs = require('fs');
+if (fs.existsSync(frontendPath)) {
+    console.log('Carpeta Frontend existe');
+    console.log('Archivos:', fs.readdirSync(frontendPath));
+} else {
+    console.log('❌ Carpeta Frontend NO existe');
+}
 app.use(express.static(frontendPath, { index: false }));
 app.get('/', (req, res) => {
     res.sendFile(path.join(frontendPath, 'main.html'));
