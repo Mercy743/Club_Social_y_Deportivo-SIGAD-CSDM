@@ -28,8 +28,6 @@ pool.connect()
     .then(() => console.log('Conectado a PostgreSQL'))
     .catch(err => console.error('Error conexión BD', err.stack));
 
-// ===== SESIONES (sesión única) =====
-const crypto = require('crypto'); // asegúrate de que ya está, si no, añade al inicio
 
 function generarToken() {
     return crypto.randomBytes(32).toString('hex');
