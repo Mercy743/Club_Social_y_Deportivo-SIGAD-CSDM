@@ -10,8 +10,13 @@ if (loginForm) {
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
         
-        message.textContent = "Conectando...";
-        message.style.color = "#54cfe0";
+        // Ocultar mensaje anterior si existía
+        if (message) {
+            message.classList.remove('visible');
+            message.textContent = "Conectando...";
+            message.style.color = "#54cfe0";
+            message.classList.add('visible');
+        }
         
         try {
             const res = await fetch(`${API_URL}/login`, {
@@ -23,19 +28,27 @@ if (loginForm) {
             const data = await res.json();
             
             if (!res.ok) {
+                let errorMsg = data.error || "Error al iniciar sesión";
                 if (res.status === 409) {
-                    message.textContent = data.error || "Ya hay una sesión activa en otro dispositivo. Ciérrala primero.";
-                } else {
-                    message.textContent = data.error || "Error al iniciar sesión";
+                    errorMsg = data.error || "Ya hay una sesión activa en otro dispositivo. Ciérrala primero.";
+                } else if (res.status === 401) {
+                    errorMsg = "Credenciales incorrectas. Verifica tu email y contraseña.";
                 }
-                message.style.color = "#ff6b6b";
+                if (message) {
+                    message.textContent = errorMsg;
+                    message.style.color = "#ff6b6b";
+                    message.classList.add('visible');
+                }
                 return;
             }
             
-            message.textContent = "¡Éxito! Redirigiendo...";
-            message.style.color = "#54cfe0";
+            // Login exitoso
+            if (message) {
+                message.textContent = "¡Éxito! Redirigiendo...";
+                message.style.color = "#54cfe0";
+                message.classList.add('visible');
+            }
             
-            // Guardar token y datos del usuario
             localStorage.setItem("token", data.token);
             localStorage.setItem("loggedUser", JSON.stringify(data));
             
@@ -45,13 +58,16 @@ if (loginForm) {
             
         } catch (error) {
             console.error("Error:", error);
-            message.textContent = "Error de conexión con el servidor.";
-            message.style.color = "#ff6b6b";
+            if (message) {
+                message.textContent = "Error de conexión con el servidor.";
+                message.style.color = "#ff6b6b";
+                message.classList.add('visible');
+            }
         }
     });
 }
 
-// ===== FRASES MOTIVACIONALES =====
+// Frases motivacionales (sin cambios)
 const frases = [
     "Cada entrenamiento cuenta.",
     "Tu mejor versión empieza hoy.",
@@ -61,7 +77,6 @@ const frases = [
 ];
 
 const motivationalText = document.getElementById("motivationalText");
-
 if (motivationalText) {
     let index = 0;
     motivationalText.textContent = frases[index];
