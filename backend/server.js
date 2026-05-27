@@ -6,8 +6,8 @@ const path = require('path');
 const multer = require('multer');
 const XLSX   = require('xlsx');
 const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const { Resend } = require('resend');
 
 const app = express();
 const puerto = process.env.PORT || 3000;
@@ -23,6 +23,8 @@ const pool = new Pool({
         rejectUnauthorized: false, // ← Esta línea es CLAVE para Render
     },
 });
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 pool.connect()
     .then(() => console.log('Conectado a PostgreSQL'))
@@ -94,18 +96,6 @@ app.use('/api', (req, res, next) => {
         return next();
     }
     verificarSesion(req, res, next);
-});
-
-// Configuración de correo (después de pool)
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
-    },
-    family: 4 // Forzar IPv4
 });
 
 async function obtenerRolUsuario(usuario_id) {
@@ -1957,29 +1947,33 @@ function generarPin() {
 app.post('/api/recuperar/solicitar', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: "El correo es requerido" });
+    
     try {
         const emailNormalizado = normalizarTexto(email);
         const usuario = await pool.query(`
             SELECT id, nombre, email FROM usuarios 
             WHERE email = $1 AND activo = true
         `, [emailNormalizado]);
+        
         if (usuario.rows.length === 0) {
             return res.json({ mensaje: "Si el correo existe, recibirás un PIN en breve" });
         }
+        
         const user = usuario.rows[0];
-        const pin = generarPin();
+        const pin = generarPin();  // Asegúrate de tener esta función definida
         const expires = new Date();
         expires.setMinutes(expires.getMinutes() + 15);
-
+        
         await pool.query(`
             UPDATE usuarios 
             SET reset_pin = $1, reset_pin_expires = $2 
             WHERE id = $3
         `, [pin, expires, user.id]);
-
-        await transporter.sendMail({
-            from: `"SIGAD Club" <${process.env.EMAIL_USER}>`,
-            to: user.email,
+        
+        // ===== ENVÍO DE CORREO CON RESEND =====
+        const { data, error } = await resend.emails.send({
+            from: 'onboarding@resend.dev',   // Puedes cambiarlo luego por tu dominio verificado
+            to: [user.email],
             subject: 'Código de recuperación - SIGAD',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; background: #1a1a2e; color: white; border-radius: 10px;">
@@ -1994,10 +1988,18 @@ app.post('/api/recuperar/solicitar', async (req, res) => {
                 </div>
             `
         });
+        
+        if (error) {
+            console.error('Error al enviar correo con Resend:', error);
+            return res.status(500).json({ error: "No se pudo enviar el código. Inténtalo más tarde." });
+        }
+        
+        console.log(`PIN enviado a ${user.email}, ID de Resend: ${data.id}`);
         res.json({ mensaje: "Revisa tu correo (incluyendo spam). El PIN es válido por 15 minutos." });
+        
     } catch (error) {
         console.error('Error en solicitar PIN:', error);
-        res.status(500).json({ error: "No se pudo procesar la solicitud. Intenta más tarde." });
+        res.status(500).json({ error: "Error interno del servidor" });
     }
 });
 
