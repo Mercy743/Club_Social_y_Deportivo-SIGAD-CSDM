@@ -1960,7 +1960,7 @@ app.post('/api/recuperar/solicitar', async (req, res) => {
         }
         
         const user = usuario.rows[0];
-        const pin = generarPin();  // Asegúrate de tener esta función definida
+        const pin = generarPin(); 
         const expires = new Date();
         expires.setMinutes(expires.getMinutes() + 15);
         
@@ -1972,7 +1972,7 @@ app.post('/api/recuperar/solicitar', async (req, res) => {
         
         // ===== ENVÍO DE CORREO CON RESEND =====
         const { data, error } = await resend.emails.send({
-            from: 'onboarding@resend.dev',   // Puedes cambiarlo luego por tu dominio verificado
+            from: 'sigad.com',   
             to: [user.email],
             subject: 'Código de recuperación - SIGAD',
             html: `
