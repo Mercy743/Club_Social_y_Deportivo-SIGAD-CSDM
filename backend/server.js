@@ -18,24 +18,22 @@ app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
 /* ===== CONEXION BD ===== */
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL, // Render configurará esta variable
+    connectionString: process.env.DATABASE_URL, 
     ssl: {
-        rejectUnauthorized: false, // ← Esta línea es CLAVE para Render
+        rejectUnauthorized: false, 
     },
 });
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 pool.connect()
     .then(() => console.log('Conectado a PostgreSQL'))
     .catch(err => console.error('Error conexión BD', err.stack));
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 
 function generarToken() {
     return crypto.randomBytes(32).toString('hex');
 }
 
-// Crear tabla de sesiones si no existe (ejecutar una vez al iniciar)
 pool.query(`
     CREATE TABLE IF NOT EXISTS sesiones (
         id SERIAL PRIMARY KEY,
@@ -65,7 +63,7 @@ app.post('/api/logout', async (req, res) => {
     }
 });
 
-// Middleware para verificar token (colocar antes de las rutas protegidas)
+// Middleware para verificar token 
 async function verificarSesion(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -89,7 +87,7 @@ async function verificarSesion(req, res, next) {
     }
 }
 
-// Aplicar middleware a todas las rutas /api excepto login y recuperar
+// Aplicar middleware a todas las rutas 
 app.use('/api', (req, res, next) => {
     const rutasPublicas = ['/login', '/recuperar/solicitar', '/recuperar/restablecer'];
     if (rutasPublicas.some(ruta => req.path.startsWith(ruta))) {
@@ -187,9 +185,7 @@ const upload = multer({
 
 /* ─── Helpers ─────────────────────────────────────────────────────── */
 function generarPasswordTemporal(nombreCompleto, telefono) {
-    // Tomar primeras 4 letras del nombre limpio (sin acentos, sin espacios)
     const nombreLimpio = normalizarTexto(nombreCompleto).replace(/\s/g, '').substring(0, 4);
-    // Últimos 4 dígitos del teléfono (solo números)
     const telefonoLimpio = String(telefono || '0000').replace(/\D/g, '').slice(-4);
     return (nombreLimpio || 'sigad') + telefonoLimpio;
 }
@@ -426,7 +422,15 @@ app.get('/api/reservaciones', async (req, res) => {
 
 app.post('/api/reservaciones', async (req, res) => {
     const { usuario_id, espacio_id, fecha_reserva, hora_inicio, hora_fin } = req.body;
+    // Validar que la fecha de reserva no sea anterior a hoy
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaReservaDate = new Date(fecha_reserva);
+    fechaReservaDate.setHours(0, 0, 0, 0);
 
+    if (fechaReservaDate < hoy) {
+        return res.status(400).json({ error: "No se pueden reservar espacios en fechas pasadas." });
+    }
     try {
         const conflicto = await pool.query(`
             SELECT * FROM reservaciones 
@@ -794,13 +798,21 @@ app.post('/api/torneos/:id/participantes', async (req, res) => {
     const { usuario_id, nombre_invitado, cuota_pagada } = req.body;
 
     try {
-        const torneo = await pool.query('SELECT estado FROM torneos WHERE id = $1', [id]);
+        const torneo = await pool.query('SELECT estado, fecha_inicio FROM torneos WHERE id = $1', [id]);
         if (torneo.rows.length === 0) {
             return res.status(404).json({ error: "Torneo no encontrado" });
         }
         const estado = torneo.rows[0].estado;
         if (estado === 'finalizado' || estado === 'cancelado') {
             return res.status(400).json({ error: "No se pueden agregar participantes a un torneo finalizado o cancelado" });
+        }
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const fechaInicio = new Date(torneo.rows[0].fecha_inicio);
+        fechaInicio.setHours(0, 0, 0, 0);
+
+        if (fechaInicio < hoy) {
+            return res.status(400).json({ error: "No puedes inscribirte a un torneo que ya empezó." });
         }
         if (!usuario_id && !nombre_invitado) {
             return res.status(400).json({ error: "Debe enviar usuario o invitado" });
@@ -1228,7 +1240,7 @@ app.get('/api/eventos/:id', async (req, res) => {
 app.put('/api/eventos/:id', async (req, res) => {
     const { id } = req.params;
     const { nombre, descripcion, fecha_evento, hora } = req.body;
-    // Validar que la fecha no sea anterior a hoy (opcional: permitir edición solo si la fecha no es pasada)
+    // Validar que la fecha no sea anterior a hoy
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const fechaEvento = new Date(fecha_evento);
@@ -1386,7 +1398,6 @@ app.post('/api/horarios', async (req, res) => {
         // Forzar que instructor_id sea el mismo que usuario_id
         instructorFinal = usuario_id;
     }
-    // ... conflicto y demás
     const resultado = await pool.query(`
         INSERT INTO horarios(espacio_id, actividad_id, instructor_id, dia_semana, hora_inicio, hora_fin, fecha_inicio_vigencia, fecha_fin_vigencia, activo)
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, true) RETURNING *
@@ -1407,7 +1418,6 @@ app.put('/api/horarios/:id', async (req, res) => {
             return res.status(403).json({ error: "Solo puedes editar tus propios horarios" });
         }
     }
-    // ... actualización
     await pool.query(`
         UPDATE horarios SET espacio_id=$1, actividad_id=$2, instructor_id=$3, dia_semana=$4, hora_inicio=$5, hora_fin=$6, fecha_inicio_vigencia=$7, fecha_fin_vigencia=$8
         WHERE id=$9
@@ -1493,6 +1503,18 @@ app.post('/api/actividades/:id/inscribirse', async (req, res) => {
         const usuario = await pool.query(`SELECT u.id, r.nombre as rol FROM usuarios u JOIN roles r ON u.rol_id = r.id WHERE u.id = $1 AND r.nombre = 'socio' AND u.activo = true`, [socio_id]);
         if (usuario.rows.length === 0) {
             return res.status(403).json({ error: "No eres socio o no existe" });
+        }
+        // Verificar que la actividad tenga al menos un horario activo con vigencia futura
+        const horariosActivos = await pool.query(`
+            SELECT 1 FROM horarios
+            WHERE actividad_id = $1
+            AND activo = true
+            AND (fecha_fin_vigencia IS NULL OR fecha_fin_vigencia >= CURRENT_DATE)
+            LIMIT 1
+        `, [id]);
+
+        if (horariosActivos.rows.length === 0) {
+            return res.status(400).json({ error: "Esta actividad no tiene horarios vigentes o ya expiraron." });
         }
         const actividad = await pool.query(`SELECT a.capacidad, a.nombre, (SELECT COUNT(*) FROM inscripciones WHERE actividad_id = a.id AND estado = 'activa') as inscritos FROM actividades a WHERE a.id = $1`, [id]);
         if (actividad.rows.length === 0) {
@@ -1939,7 +1961,7 @@ app.get('/api/socios/exportar-excel', async (req, res) => {
     }
 });
 
-// ===== RECUPERAR CONTRASEÑA con PIN =====
+/* ===== RECUPERAR CONTRASEÑA con PIN  ===== */
 function generarPin() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -1969,10 +1991,9 @@ app.post('/api/recuperar/solicitar', async (req, res) => {
             SET reset_pin = $1, reset_pin_expires = $2 
             WHERE id = $3
         `, [pin, expires, user.id]);
-        
-        // ===== ENVÍO DE CORREO CON RESEND =====
+    
         const { data, error } = await resend.emails.send({
-            from: 'sigad.com',   
+            from: 'onboarding@resend.dev',   
             to: [user.email],
             subject: 'Código de recuperación - SIGAD',
             html: `
@@ -2048,7 +2069,7 @@ if (fs.existsSync(frontendPath)) {
     console.log('Carpeta Frontend existe');
     console.log('Archivos:', fs.readdirSync(frontendPath));
 } else {
-    console.log('❌ Carpeta Frontend NO existe');
+    console.log('Carpeta Frontend NO existe');
 }
 app.use(express.static(frontendPath, { index: false }));
 app.get('/', (req, res) => {
