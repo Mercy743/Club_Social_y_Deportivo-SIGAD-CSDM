@@ -67,7 +67,7 @@ if (loginForm) {
     });
 }
 
-// Frases motivacionales (sin cambios)
+// Frases motivacionales 
 const frases = [
     "Cada entrenamiento cuenta.",
     "Tu mejor versión empieza hoy.",
@@ -94,12 +94,40 @@ document.querySelectorAll('.toggle-password').forEach(button => {
     button.addEventListener('click', function() {
         const targetId = this.getAttribute('data-target');
         const input = document.getElementById(targetId);
-        if (input.type === 'password') {
+        const svg = this.querySelector('svg');
+        const isHidden = input.type === 'password';
+        if (isHidden) {
             input.type = 'text';
-            this.textContent = '🙈';
+            this.setAttribute('aria-label', 'Ocultar contraseña');
+            this.style.opacity = '1';
+            if (svg) {
+                svg.innerHTML = `
+                    <path d="M1 12 C5 5, 19 5, 23 12" stroke="#54cfe0" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    <path d="M1 12 C5 19, 19 19, 23 12" stroke="#54cfe0" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    <circle cx="12" cy="12" r="3.5" stroke="#54cfe0" stroke-width="2" fill="none"/>
+                    <line x1="3" y1="3" x2="21" y2="21" stroke="#54cfe0" stroke-width="2" stroke-linecap="round"/>`;
+            }
         } else {
             input.type = 'password';
-            this.textContent = '👁️';
+            this.setAttribute('aria-label', 'Mostrar contraseña');
+            this.style.opacity = '0.6';
+            if (svg) {
+                svg.innerHTML = `
+                    <path d="M1 12 C5 5, 19 5, 23 12" stroke="#54cfe0" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    <path d="M1 12 C5 19, 19 19, 23 12" stroke="#54cfe0" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    <circle cx="12" cy="12" r="3.5" stroke="#54cfe0" stroke-width="2" fill="none"/>`;
+            }
         }
+    });
+    button.addEventListener('mouseenter', function() {
+        this.style.opacity = '1';
+    });
+    button.addEventListener('mouseleave', function() {
+
+        const targetId = this.getAttribute('data-target');
+
+        const input = document.getElementById(targetId);
+
+        if (input.type === 'password') this.style.opacity = '0.6';
     });
 });
