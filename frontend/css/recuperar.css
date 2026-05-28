@@ -34,12 +34,30 @@
 
 .toggle-password {
     position: absolute;
-    right: 12px;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
     cursor: pointer;
     background: none;
     border: none;
-    color: #54cfe0;
-    font-size: 14px;
+    padding: 4px;
+    width: auto;
+    max-width: none;
+    min-width: unset;
+    margin: 0;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.toggle-password:hover {
+    transform: translateY(-50%);
+    background: none;
+    box-shadow: none;
+    opacity: 1;
 }
 
 .message-area {

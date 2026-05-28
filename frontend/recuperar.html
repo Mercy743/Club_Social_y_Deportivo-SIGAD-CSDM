@@ -40,8 +40,11 @@
                     </button>
                 </div>
                 <div class="password-wrapper">
+                <input type="password" id="newPassword" placeholder="Nueva contraseña (mínimo 6 caracteres)" required>
+                </div>
+                <div class="password-wrapper">
                     <input type="password" id="confirmPassword" placeholder="Confirmar contraseña" required>
-                    <button type="button" class="toggle-password" data-target="confirmPassword" aria-label="Mostrar contraseña" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:4px; display:flex; align-items:center; opacity:0.6; transition:opacity 0.2s;">
+                    <button type="button" class="toggle-password" data-target="confirmPassword" aria-label="Mostrar contraseña">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#54cfe0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M1 12 C5 5, 19 5, 23 12"/>
                             <path d="M1 12 C5 19, 19 19, 23 12"/>

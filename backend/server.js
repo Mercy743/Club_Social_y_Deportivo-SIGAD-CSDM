@@ -2014,7 +2014,7 @@ app.post('/api/recuperar/solicitar', async (req, res) => {
 
 app.post('/api/recuperar/restablecer', async (req, res) => {
     const { email, pin, nueva_password } = req.body;
-    if (!email || !pin || !nueva_password) {
+    if (!email || !nueva_password) {
         return res.status(400).json({ error: "Faltan datos (email, PIN o nueva contraseña)" });
     }
     if (nueva_password.length < 6) {
@@ -2023,19 +2023,13 @@ app.post('/api/recuperar/restablecer', async (req, res) => {
     try {
         const emailNormalizado = normalizarTexto(email);
         const usuario = await pool.query(`
-            SELECT id, reset_pin, reset_pin_expires FROM usuarios 
+            SELECT id, FROM usuarios 
             WHERE email = $1 AND activo = true
         `, [emailNormalizado]);
         if (usuario.rows.length === 0) {
             return res.status(404).json({ error: "Usuario no encontrado" });
         }
         const user = usuario.rows[0];
-        if (!user.reset_pin || user.reset_pin !== pin) {
-            return res.status(400).json({ error: "PIN incorrecto" });
-        }
-        if (new Date() > user.reset_pin_expires) {
-            return res.status(400).json({ error: "El PIN ha expirado. Solicita uno nuevo." });
-        }
         const hashedPassword = await bcrypt.hash(nueva_password, 10);
         await pool.query(`
             UPDATE usuarios 
