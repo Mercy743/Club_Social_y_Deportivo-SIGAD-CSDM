@@ -7,7 +7,6 @@ const multer = require('multer');
 const XLSX   = require('xlsx');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 
 
 const app = express();
@@ -28,14 +27,6 @@ const pool = new Pool({
 pool.connect()
     .then(() => console.log('Conectado a PostgreSQL'))
     .catch(err => console.error('Error conexión BD', err.stack));
-
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS,
-    }
-});
 
 function generarToken() {
     return crypto.randomBytes(32).toString('hex');
@@ -1967,11 +1958,6 @@ app.get('/api/socios/exportar-excel', async (req, res) => {
         res.status(500).json({ error: 'Error al exportar socios' });
     }
 });
-
-/* ===== RECUPERAR CONTRASEÑA con PIN  ===== */
-function generarPin() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-}
 
 app.post('/api/recuperar/solicitar', async (req, res) => {
     const { email } = req.body;
