@@ -1,4 +1,5 @@
 const API_URL = '/api';
+emailjs.init("LwEfGdDK4QnjF6dtr");
 let emailUsuario = '';
 
 function showMessage(elementId, text, isError = true) {
@@ -58,26 +59,32 @@ document.getElementById('sendPinBtn').addEventListener('click', async () => {
         showMessage('step1Message', 'Ingresa tu correo electrónico', true);
         return;
     }
+
     const btn = document.getElementById('sendPinBtn');
     btn.disabled = true;
     btn.textContent = 'Enviando...';
+
+    const pin = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 15 * 60000);
+    const timeStr = expires.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+    sessionStorage.setItem('sigad_pin', pin);
+    sessionStorage.setItem('sigad_pin_expires', expires.getTime());
+
     try {
-        const res = await fetch(`${API_URL}/recuperar/solicitar`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
+        await emailjs.send("service_vrne29x", "template_2v1xrja", {
+            to_email: email,
+            nombre: email,
+            passcode: pin,
+            time: timeStr
         });
-        const data = await res.json();
-        if (res.ok) {
-            showMessage('step1Message', data.mensaje || 'Revisa tu correo', false);
-            emailUsuario = email;
-            document.getElementById('step1').classList.remove('active');
-            document.getElementById('step2').classList.add('active');
-        } else {
-            showMessage('step1Message', data.error || 'Error al enviar', true);
-        }
+        showMessage('step1Message', 'Revisa tu correo (incluyendo spam)', false);
+        emailUsuario = email;
+        document.getElementById('step1').classList.remove('active');
+        document.getElementById('step2').classList.add('active');
     } catch (error) {
-        showMessage('step1Message', 'Error de conexión', true);
+        console.error('EmailJS error:', error);
+        showMessage('step1Message', 'Error al enviar el código. Intenta de nuevo.', true);
     } finally {
         btn.disabled = false;
         btn.textContent = 'Enviar código PIN';
@@ -103,6 +110,23 @@ document.getElementById('resetPasswordBtn').addEventListener('click', async () =
         return;
     }
 
+    const pinGuardado = sessionStorage.getItem('sigad_pin');
+    const expires = sessionStorage.getItem('sigad_pin_expires');
+
+    if (!pinGuardado) {
+        showMessage('step2Message', 'El código expiró. Solicita uno nuevo.', true);
+        return;
+    }
+    if (Date.now() > parseInt(expires)) {
+        showMessage('step2Message', 'El código expiró. Solicita uno nuevo.', true);
+        sessionStorage.clear();
+        return;
+    }
+    if (pin !== pinGuardado) {
+        showMessage('step2Message', 'Código incorrecto', true);
+        return;
+    }
+
     const btn = document.getElementById('resetPasswordBtn');
     btn.disabled = true;
     btn.textContent = 'Procesando...';
@@ -114,7 +138,8 @@ document.getElementById('resetPasswordBtn').addEventListener('click', async () =
         });
         const data = await res.json();
         if (res.ok) {
-            showMessage('step2Message', data.mensaje || 'Contraseña actualizada. Redirigiendo...', false);
+            sessionStorage.clear();
+            showMessage('step2Message', 'Contraseña actualizada. Redirigiendo...', false);
             setTimeout(() => window.location.href = 'index.html', 2000);
         } else {
             showMessage('step2Message', data.error || 'Error al actualizar', true);

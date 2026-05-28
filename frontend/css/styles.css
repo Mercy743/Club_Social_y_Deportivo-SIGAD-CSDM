@@ -3436,6 +3436,6 @@ img {
     box-shadow: none;
 }
 .toggle-password:hover {
-    transform: translateY(-50%) scale(1.05);
+    transform: none;
     background: none;
 }
