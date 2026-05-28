@@ -2033,7 +2033,7 @@ app.post('/api/recuperar/restablecer', async (req, res) => {
         const hashedPassword = await bcrypt.hash(nueva_password, 10);
         await pool.query(`
             UPDATE usuarios 
-            SET password = $1, reset_pin = NULL, reset_pin_expires = NULL 
+            SET password = $1
             WHERE id = $2
         `, [hashedPassword, user.id]);
         res.json({ mensaje: "Contraseña actualizada correctamente" });
