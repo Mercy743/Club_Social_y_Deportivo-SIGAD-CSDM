@@ -28,8 +28,14 @@ const pool = new Pool({
 pool.connect()
     .then(() => console.log('Conectado a PostgreSQL'))
     .catch(err => console.error('Error conexión BD', err.stack));
-const resend = new Resend(process.env.RESEND_API_KEY);
 
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS,
+    }
+});
 
 function generarToken() {
     return crypto.randomBytes(32).toString('hex');
