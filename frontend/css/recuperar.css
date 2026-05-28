@@ -33,30 +33,29 @@
 }
 
 .toggle-password {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 4px;
-    width: auto;
-    max-width: none;
-    min-width: unset;
-    margin: 0;
-    box-shadow: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute !important;
+    right: 10px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: unset !important;
+    margin: 0 !important;
+    padding: 4px !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
     opacity: 0.6;
     transition: opacity 0.2s;
+    cursor: pointer;
 }
 
 .toggle-password:hover {
-    transform: translateY(-50%);
-    background: none;
-    box-shadow: none;
+    transform: translateY(-50%) !important;
+    background: none !important;
+    box-shadow: none !important;
     opacity: 1;
 }
 

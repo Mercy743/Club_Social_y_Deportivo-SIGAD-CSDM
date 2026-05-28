@@ -2023,7 +2023,7 @@ app.post('/api/recuperar/restablecer', async (req, res) => {
     try {
         const emailNormalizado = normalizarTexto(email);
         const usuario = await pool.query(`
-            SELECT id, FROM usuarios 
+            SELECT id FROM usuarios 
             WHERE email = $1 AND activo = true
         `, [emailNormalizado]);
         if (usuario.rows.length === 0) {
