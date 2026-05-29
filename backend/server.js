@@ -2077,14 +2077,14 @@ app.post('/api/resenas', async (req, res) => {
     }
     try {
         const existe = await pool.query(
-            `SELECT id FROM reseñas WHERE tipo=$1 AND referencia_id=$2 AND usuario_id=$3`,
+            `SELECT id FROM resenas WHERE tipo=$1 AND referencia_id=$2 AND usuario_id=$3`,
             [tipo, referencia_id, usuario_id]
         );
         if (existe.rows.length > 0) {
             return res.status(409).json({ error: 'Ya dejaste una reseña para este ' + tipo });
         }
         const r = await pool.query(
-            `INSERT INTO reseñas (tipo, referencia_id, usuario_id, estrellas, comentario)
+            `INSERT INTO resenas (tipo, referencia_id, usuario_id, estrellas, comentario)
              VALUES ($1,$2,$3,$4,$5) RETURNING *`,
             [tipo, referencia_id, usuario_id, estrellas, comentario || null]
         );
@@ -2101,7 +2101,7 @@ app.get('/api/resenas/resumen', async (req, res) => {
     try {
         const r = await pool.query(
             `SELECT ROUND(AVG(estrellas)::numeric, 1) as promedio, COUNT(*) as total
-             FROM reseñas WHERE tipo=$1 AND referencia_id=$2`,
+             FROM resenas WHERE tipo=$1 AND referencia_id=$2`,
             [tipo, referencia_id]
         );
         res.json(r.rows[0]);
@@ -2139,7 +2139,7 @@ app.get('/api/resenas/mia', async (req, res) => {
     const { tipo, referencia_id, usuario_id } = req.query;
     try {
         const r = await pool.query(
-            `SELECT id, estrellas, comentario FROM reseñas 
+            `SELECT id, estrellas, comentario FROM resenas 
              WHERE tipo=$1 AND referencia_id=$2 AND usuario_id=$3`,
             [tipo, referencia_id, usuario_id]
         );
@@ -2162,7 +2162,7 @@ app.get('/api/resenas', async (req, res) => {
         }
         const r = await pool.query(
             `SELECT r.*, u.nombre, u.apellido
-             FROM reseñas r
+             FROM resenas r
              JOIN usuarios u ON r.usuario_id = u.id
              ${whereClause}
              ORDER BY r.created_at DESC`,
