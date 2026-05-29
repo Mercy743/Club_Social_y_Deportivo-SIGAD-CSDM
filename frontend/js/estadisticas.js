@@ -177,8 +177,8 @@ async function cargarReseñasAdmin() {
 
     try {
         const [resRes, reseñasRes] = await Promise.all([
-            apiRequest(`${API_URL}/reseñas/resumen?tipo=${tipo}&referencia_id=${referenciaId}`),
-            apiRequest(`${API_URL}/reseñas?tipo=${tipo}&referencia_id=${referenciaId}&filtro=${filtro}`)
+            apiRequest(`${API_URL}/resenas/resumen?tipo=${tipo}&referencia_id=${referenciaId}`),
+            apiRequest(`${API_URL}/resenas?tipo=${tipo}&referencia_id=${referenciaId}&filtro=${filtro}`)
         ]);
         const resumenData = await resRes.json();
         const reseñas = await reseñasRes.json();
