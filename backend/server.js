@@ -1523,11 +1523,11 @@ app.post('/api/actividades/:id/inscribirse', async (req, res) => {
         if (inscritos >= capacidad) {
             return res.status(400).json({ error: "No hay cupo disponible" });
         }
-        const existe = await pool.query(`SELECT id FROM inscripciones WHERE actividad_id = $1 AND socio_id = $2 AND estado = 'activa'`, [id, socio_id]);
+       const existe = await pool.query(`SELECT id FROM inscripciones WHERE actividad_id = $1 AND usuario_id = $2 AND estado = 'activa'`, [id, socio_id]);
         if (existe.rows.length > 0) {
             return res.status(400).json({ error: "Ya estás inscrito en esta actividad" });
         }
-        await pool.query(`INSERT INTO inscripciones (actividad_id, socio_id, fecha_inscripcion, estado) VALUES ($1, $2, CURRENT_DATE, 'activa')`, [id, socio_id]);
+        await pool.query(`INSERT INTO inscripciones (actividad_id, usuario_id, fecha_inscripcion, estado) VALUES ($1, $2, CURRENT_DATE, 'activa')`, [id, socio_id]);
         res.json({ mensaje: "Te has inscrito exitosamente a la actividad" });
     } catch (error) {
         console.error(error);
@@ -1538,7 +1538,7 @@ app.post('/api/actividades/:id/inscribirse', async (req, res) => {
 app.get('/api/actividades/:id/inscrito/:socio_id', async (req, res) => {
     const { id, socio_id } = req.params;
     try {
-        const resultado = await pool.query(`SELECT * FROM inscripciones WHERE actividad_id = $1 AND socio_id = $2 AND estado = 'activa'`, [id, socio_id]);
+        const resultado = await pool.query(`SELECT * FROM inscripciones WHERE actividad_id = $1 AND usuario_id = $2 AND estado = 'activa'`, [id, socio_id]);
         res.json({ inscrito: resultado.rows.length > 0 });
     } catch (error) {
         console.error(error);

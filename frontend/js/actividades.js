@@ -96,8 +96,8 @@ async function renderActividades(filtro = "") {
                 <p><strong>Capacidad:</strong> ${inscritos}/${capacidad}</p>
                 <div class="barra"><div class="progreso ${color}" style="width:${Math.min(porcentaje, 100)}%"></div></div>
                 <p><strong>Duración:</strong> ${formatearDuracion(parseInt(act.duracion || '60'))}</p>
-                ${botones}
                 <div id="resumen-act-${act.id}" style="color:#f5c518; font-size:13px; margin:6px 0;">Cargando...</div>
+                <button class="btn-detalle" onclick="verDetalle(${act.id})">Ver detalles</button>
                 ${botones}
                 <button class="btn-detalle" onclick="verDetalle(${act.id})">Ver detalles</button>
             </div>
