@@ -513,7 +513,6 @@ async function cargarReseñasActividad() {
     } catch(e) {}
 
     if (esSocio) {
-    if (esSocio) {
         try {
             const puedeRes = await apiRequest(`${API_URL}/reseñas/puedo-reseñar?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
             const { puede } = await puedeRes.json();
@@ -577,4 +576,4 @@ async function cargarReseñasActividad() {
             }
         } catch(e) { console.error('Error reseñas:', e); }
     }
-}}
+}
