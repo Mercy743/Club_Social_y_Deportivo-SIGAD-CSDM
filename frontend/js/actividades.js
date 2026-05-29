@@ -97,7 +97,6 @@ async function renderActividades(filtro = "") {
                 <div class="barra"><div class="progreso ${color}" style="width:${Math.min(porcentaje, 100)}%"></div></div>
                 <p><strong>Duración:</strong> ${formatearDuracion(parseInt(act.duracion || '60'))}</p>
                 <div id="resumen-act-${act.id}" style="color:#f5c518; font-size:13px; margin:6px 0;">Cargando...</div>
-                <div id="resumen-act-${act.id}" style="color:#f5c518; font-size:13px; margin:6px 0;">Cargando...</div>
                 <button class="btn-detalle" onclick="verDetalle(${act.id})">Ver detalles</button>
                 ${botones}
             </div>
@@ -514,25 +513,25 @@ async function cargarReseñasActividad() {
     } catch(e) {}
 
     if (esSocio) {
-    try {
-        const puedeRes = await apiRequest(`${API_URL}/reseñas/puedo-reseñar?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
-        const { puede } = await puedeRes.json();
-        if (!puede) {
-                document.getElementById('formularioReseña').innerHTML = `
-                    <p style="color:rgba(255,255,255,0.3); font-size:13px;">Solo puedes calificar actividades en las que estás inscrito.</p>`;
-            return;
-        }
-        const miaRes = await apiRequest(`${API_URL}/reseñas/mia?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
-        const mia = await miaRes.json();
-        const form = document.getElementById('formularioReseña');
-        if (mia) {
-            const estrellasMia = '★'.repeat(mia.estrellas) + '☆'.repeat(5 - mia.estrellas);
-            form.innerHTML = `
-                <div style="background:rgba(84,207,224,0.08); border:1px solid rgba(84,207,224,0.2); border-radius:12px; padding:16px;">
-                    <p style="color:rgba(255,255,255,0.5); font-size:13px; margin-bottom:8px;">Tu reseña</p>
-                    <div style="color:#f5c518; font-size:20px;">${estrellasMia}</div>
-                    <p style="margin-top:8px; font-size:14px;">${mia.comentario || 'Sin comentario'}</p>
-                </div>`;
+    if (esSocio) {
+        try {
+            const puedeRes = await apiRequest(`${API_URL}/reseñas/puedo-reseñar?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
+            const { puede } = await puedeRes.json();
+            const form = document.getElementById('formularioReseña');
+            if (!puede) {
+                form.innerHTML = `<p style="color:rgba(255,255,255,0.3); font-size:13px;">Solo puedes calificar actividades en las que estás inscrito.</p>`;
+                return;
+            }
+            const miaRes = await apiRequest(`${API_URL}/reseñas/mia?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
+            const mia = await miaRes.json();
+            if (mia) {
+                const estrellasMia = '★'.repeat(mia.estrellas) + '☆'.repeat(5 - mia.estrellas);
+                form.innerHTML = `
+                    <div style="background:rgba(84,207,224,0.08); border:1px solid rgba(84,207,224,0.2); border-radius:12px; padding:16px;">
+                        <p style="color:rgba(255,255,255,0.5); font-size:13px; margin-bottom:8px;">Tu reseña</p>
+                        <div style="color:#f5c518; font-size:20px;">${estrellasMia}</div>
+                        <p style="margin-top:8px; font-size:14px;">${mia.comentario || 'Sin comentario'}</p>
+                    </div>`;
             } else {
                 form.innerHTML = `
                     <div style="margin-top:8px;">
@@ -576,6 +575,6 @@ async function cargarReseñasActividad() {
                     } catch(e) { msg.style.color = '#ff6b6b'; msg.textContent = 'Error de conexión'; }
                 });
             }
-        } catch(e) {}
+        } catch(e) { console.error('Error reseñas:', e); }
     }
-}
+}}
