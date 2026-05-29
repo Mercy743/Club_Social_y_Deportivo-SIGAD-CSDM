@@ -2070,7 +2070,7 @@ setInterval(async () => {
 /* ===== RESEÑAS ===== */
 
 // Crear reseña
-app.post('/api/reseñas', async (req, res) => {
+app.post('/api/resenas', async (req, res) => {
     const { tipo, referencia_id, usuario_id, estrellas, comentario } = req.body;
     if (!tipo || !referencia_id || !usuario_id || !estrellas) {
         return res.status(400).json({ error: 'Faltan campos obligatorios' });
@@ -2096,7 +2096,7 @@ app.post('/api/reseñas', async (req, res) => {
 });
 
 // Obtener reseñas de un torneo o actividad (promedio + total)
-app.get('/api/reseñas/resumen', async (req, res) => {
+app.get('/api/resenas/resumen', async (req, res) => {
     const { tipo, referencia_id } = req.query;
     try {
         const r = await pool.query(
@@ -2111,7 +2111,7 @@ app.get('/api/reseñas/resumen', async (req, res) => {
 });
 
 // Verificar si el usuario está inscrito en una actividad o torneo
-app.get('/api/reseñas/puedo-reseñar', async (req, res) => {
+app.get('/api/resenas/puedo-reseñar', async (req, res) => {
     const { tipo, referencia_id, usuario_id } = req.query;
     try {
         let inscrito = false;
@@ -2135,7 +2135,7 @@ app.get('/api/reseñas/puedo-reseñar', async (req, res) => {
 });
 
 // Verificar si el usuario ya reseñó
-app.get('/api/reseñas/mia', async (req, res) => {
+app.get('/api/resenas/mia', async (req, res) => {
     const { tipo, referencia_id, usuario_id } = req.query;
     try {
         const r = await pool.query(
@@ -2150,7 +2150,7 @@ app.get('/api/reseñas/mia', async (req, res) => {
 });
 
 // Obtener todas las reseñas (solo admin) con filtro
-app.get('/api/reseñas', async (req, res) => {
+app.get('/api/resenas', async (req, res) => {
     const { tipo, referencia_id, filtro } = req.query;
     try {
         let whereClause = 'WHERE r.tipo=$1 AND r.referencia_id=$2';

@@ -561,7 +561,7 @@ async function cargarReseñas() {
 
     // Resumen
     try {
-        const res = await apiRequest(`${API_URL}/reseñas/resumen?tipo=torneo&referencia_id=${id}`);
+        const res = await apiRequest(`${API_URL}/resenas/resumen?tipo=torneo&referencia_id=${id}`);
         const data = await res.json();
         const promedio = parseFloat(data.promedio) || 0;
         const total = parseInt(data.total) || 0;
@@ -580,7 +580,7 @@ async function cargarReseñas() {
     // Verificar si ya reseñó
     if (esSocio) {
         try {
-            const puedeRes = await apiRequest(`${API_URL}/reseñas/puedo-reseñar?tipo=torneo&referencia_id=${id}&usuario_id=${loggedUser.id}`);
+            const puedeRes = await apiRequest(`${API_URL}/resenas/puedo-reseñar?tipo=torneo&referencia_id=${id}&usuario_id=${loggedUser.id}`);
             const { puede } = await puedeRes.json();
             if (!puede) {
                 document.getElementById('formularioReseña').innerHTML = `
@@ -588,7 +588,7 @@ async function cargarReseñas() {
                 `;
                 return;
             }
-            const miaRes = await apiRequest(`${API_URL}/reseñas/mia?tipo=torneo&referencia_id=${id}&usuario_id=${loggedUser.id}`);
+            const miaRes = await apiRequest(`${API_URL}/resenas/mia?tipo=torneo&referencia_id=${id}&usuario_id=${loggedUser.id}`);
             const mia = await miaRes.json();
             const form = document.getElementById('formularioReseña');
             if (mia) {
@@ -635,7 +635,7 @@ async function cargarReseñas() {
                     const msg = document.getElementById('reseñaMsg');
                     if (!estrellas) { msg.style.color = '#ff6b6b'; msg.textContent = 'Selecciona una calificación'; return; }
                     try {
-                        const r = await apiRequest(`${API_URL}/reseñas`, {
+                        const r = await apiRequest(`${API_URL}/resenas`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ tipo: 'torneo', referencia_id: parseInt(id), usuario_id: loggedUser.id, estrellas, comentario })

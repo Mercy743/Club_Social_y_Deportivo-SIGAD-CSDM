@@ -478,7 +478,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 async function cargarResumenReseñaActividad(actId) {
     try {
-        const res = await apiRequest(`${API_URL}/reseñas/resumen?tipo=actividad&referencia_id=${actId}`);
+        const res = await apiRequest(`${API_URL}/resenas/resumen?tipo=actividad&referencia_id=${actId}`);
         const data = await res.json();
         const promedio = parseFloat(data.promedio) || 0;
         const total = parseInt(data.total) || 0;
@@ -496,7 +496,7 @@ async function cargarReseñasActividad() {
     const esSocio = loggedUser.rol === 'socio';
 
     try {
-        const res = await apiRequest(`${API_URL}/reseñas/resumen?tipo=actividad&referencia_id=${id}`);
+        const res = await apiRequest(`${API_URL}/resenas/resumen?tipo=actividad&referencia_id=${id}`);
         const data = await res.json();
         const promedio = parseFloat(data.promedio) || 0;
         const total = parseInt(data.total) || 0;
@@ -514,14 +514,14 @@ async function cargarReseñasActividad() {
 
     if (esSocio) {
         try {
-            const puedeRes = await apiRequest(`${API_URL}/reseñas/puedo-reseñar?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
+            const puedeRes = await apiRequest(`${API_URL}/resenas/puedo-reseñar?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
             const { puede } = await puedeRes.json();
             const form = document.getElementById('formularioReseña');
             if (!puede) {
                 form.innerHTML = `<p style="color:rgba(255,255,255,0.3); font-size:13px;">Solo puedes calificar actividades en las que estás inscrito.</p>`;
                 return;
             }
-            const miaRes = await apiRequest(`${API_URL}/reseñas/mia?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
+            const miaRes = await apiRequest(`${API_URL}/resenas/mia?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
             const mia = await miaRes.json();
             if (mia) {
                 const estrellasMia = '★'.repeat(mia.estrellas) + '☆'.repeat(5 - mia.estrellas);
@@ -564,7 +564,7 @@ async function cargarReseñasActividad() {
                     const msg = document.getElementById('reseñaMsg');
                     if (!estrellas) { msg.style.color = '#ff6b6b'; msg.textContent = 'Selecciona una calificación'; return; }
                     try {
-                        const r = await apiRequest(`${API_URL}/reseñas`, {
+                        const r = await apiRequest(`${API_URL}/resenas`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ tipo: 'actividad', referencia_id: parseInt(id), usuario_id: loggedUser.id, estrellas, comentario })
