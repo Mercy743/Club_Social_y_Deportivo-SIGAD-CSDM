@@ -207,7 +207,7 @@ async function cargarDetalle() {
         `;
         cargarBracket(id);
         cargarTop3(id);
-        await cargarUsuariosDisponibles(id);
+        if (esAdmin) await cargarUsuariosDisponibles(id);
     } catch (error) {
         contenedor.innerHTML = '<div class="emptyState">Error al cargar detalle</div>';
     }
@@ -547,6 +547,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modalTorneo').style.display = 'flex';
     });
     const btnCrear = document.getElementById('btnCrear');
+    const btnToggle = document.getElementById('btnTogglePanel');
+    if (btnToggle && esAdmin) btnToggle.style.display = 'inline-flex';
     if (btnCrear && esAdmin) btnCrear.style.display = 'inline-flex';
     if (document.getElementById('seccionReseñas')) cargarReseñas();
 });
