@@ -514,7 +514,7 @@ async function cargarReseñasActividad() {
 
     if (esSocio) {
         try {
-            const puedeRes = await apiRequest(`${API_URL}/resenas/puedo-reseñar?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
+            const puedeRes = await apiRequest(`${API_URL}/resenas/puedo-calificar?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
             const { puede } = await puedeRes.json();
             const form = document.getElementById('formularioReseña');
             if (!puede) {

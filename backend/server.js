@@ -2111,7 +2111,7 @@ app.get('/api/resenas/resumen', async (req, res) => {
 });
 
 // Verificar si el usuario está inscrito en una actividad o torneo
-app.get('/api/resenas/puedo-reseñar', async (req, res) => {
+app.get('/api/resenas/puedo-calificar', async (req, res) => {
     const { tipo, referencia_id, usuario_id } = req.query;
     try {
         let inscrito = false;
