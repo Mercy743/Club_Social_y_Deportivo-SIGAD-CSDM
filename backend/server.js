@@ -2110,32 +2110,6 @@ app.get('/api/reseñas/resumen', async (req, res) => {
     }
 });
 
-// Obtener todas las reseñas (solo admin) con filtro
-app.get('/api/reseñas', async (req, res) => {
-    const { tipo, referencia_id, filtro } = req.query;
-    try {
-        let whereClause = 'WHERE r.tipo=$1 AND r.referencia_id=$2';
-        const params = [tipo, referencia_id];
-        if (filtro === 'positivas') {
-            whereClause += ' AND r.estrellas >= 4';
-        } else if (filtro === 'negativas') {
-            whereClause += ' AND r.estrellas <= 2';
-        }
-        const r = await pool.query(
-            `SELECT r.*, u.nombre, u.apellido
-             FROM reseñas r
-             JOIN usuarios u ON r.usuario_id = u.id
-             ${whereClause}
-             ORDER BY r.created_at DESC`,
-            params
-        );
-        res.json(r.rows);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error al obtener reseñas' });
-    }
-});
-
 // Verificar si el usuario está inscrito en una actividad o torneo
 app.get('/api/reseñas/puedo-reseñar', async (req, res) => {
     const { tipo, referencia_id, usuario_id } = req.query;
@@ -2172,6 +2146,32 @@ app.get('/api/reseñas/mia', async (req, res) => {
         res.json(r.rows[0] || null);
     } catch (error) {
         res.status(500).json({ error: 'Error' });
+    }
+});
+
+// Obtener todas las reseñas (solo admin) con filtro
+app.get('/api/reseñas', async (req, res) => {
+    const { tipo, referencia_id, filtro } = req.query;
+    try {
+        let whereClause = 'WHERE r.tipo=$1 AND r.referencia_id=$2';
+        const params = [tipo, referencia_id];
+        if (filtro === 'positivas') {
+            whereClause += ' AND r.estrellas >= 4';
+        } else if (filtro === 'negativas') {
+            whereClause += ' AND r.estrellas <= 2';
+        }
+        const r = await pool.query(
+            `SELECT r.*, u.nombre, u.apellido
+             FROM reseñas r
+             JOIN usuarios u ON r.usuario_id = u.id
+             ${whereClause}
+             ORDER BY r.created_at DESC`,
+            params
+        );
+        res.json(r.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al obtener reseñas' });
     }
 });
 
