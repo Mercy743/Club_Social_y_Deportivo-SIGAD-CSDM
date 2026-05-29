@@ -1,0 +1,71 @@
+@media (max-width: 768px) {
+
+    /* ===== TOPBAR ===== */
+    .dashboardTopbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .topbarActions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .topbarActions button,
+    .topbarActions label {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        font-size: 12px !important;
+        padding: 10px 8px !important;
+    }
+
+    .dashboardWrapper {
+        padding: 20px 16px 40px;
+    }
+
+    /* ===== ESTADÍSTICAS — tarjetas resumen ===== */
+    .stats-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* ===== GRÁFICAS ===== */
+    .charts-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .chart-card {
+        width: 100%;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        height: 260px;
+    }
+
+    .chart-wrapper canvas {
+        max-height: 260px;
+    }
+
+    /* ===== TABLA USUARIOS ===== */
+    #userList {
+        overflow-x: auto;
+    }
+
+    #userList table {
+        min-width: 500px;
+    }
+
+    #userList th,
+    #userList td {
+        font-size: 12px;
+        padding: 8px 10px;
+    }
+}

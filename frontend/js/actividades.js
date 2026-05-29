@@ -97,10 +97,13 @@ async function renderActividades(filtro = "") {
                 <div class="barra"><div class="progreso ${color}" style="width:${Math.min(porcentaje, 100)}%"></div></div>
                 <p><strong>Duración:</strong> ${formatearDuracion(parseInt(act.duracion || '60'))}</p>
                 ${botones}
+                <div id="resumen-act-${act.id}" style="color:#f5c518; font-size:13px; margin:6px 0;">Cargando...</div>
+                ${botones}
                 <button class="btn-detalle" onclick="verDetalle(${act.id})">Ver detalles</button>
             </div>
         `;
         cargarInstructores(act.id);
+        cargarResumenReseñaActividad(act.id);
     }
 
     if (paginadas.length === 0) {
@@ -401,7 +404,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById('formActividad')) {
         inicializarFormulario();
         const selDur = document.getElementById('duracion');
-        // solo para evitar errores, la lógica de personalizado ya está en el HTML
     }
 });
 
@@ -472,7 +474,103 @@ async function cargarDetalle() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    if (document.getElementById("detalleActividad")) {
-        cargarDetalle();
-    }
+    if (document.getElementById("detalleActividad")) {cargarDetalle();}
+    if (document.getElementById('seccionReseñas')) cargarReseñasActividad();
 });
+async function cargarResumenReseñaActividad(actId) {
+    try {
+        const res = await apiRequest(`${API_URL}/reseñas/resumen?tipo=actividad&referencia_id=${actId}`);
+        const data = await res.json();
+        const promedio = parseFloat(data.promedio) || 0;
+        const total = parseInt(data.total) || 0;
+        const el = document.getElementById(`resumen-act-${actId}`);
+        if (!el) return;
+        if (total === 0) { el.textContent = 'Sin reseñas aún'; el.style.color = 'rgba(255,255,255,0.3)'; return; }
+        el.innerHTML = `${'★'.repeat(Math.round(promedio))}${'☆'.repeat(5 - Math.round(promedio))} <span style="color:rgba(255,255,255,0.5)">${promedio} (${total})</span>`;
+    } catch(e) {}
+}
+
+async function cargarReseñasActividad() {
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id || !document.getElementById('seccionReseñas')) return;
+
+    const esSocio = loggedUser.rol === 'socio';
+
+    try {
+        const res = await apiRequest(`${API_URL}/reseñas/resumen?tipo=actividad&referencia_id=${id}`);
+        const data = await res.json();
+        const promedio = parseFloat(data.promedio) || 0;
+        const total = parseInt(data.total) || 0;
+        const estrellas = '★'.repeat(Math.round(promedio)) + '☆'.repeat(5 - Math.round(promedio));
+        document.getElementById('resumenReseñas').innerHTML = `
+            <div style="display:flex; align-items:center; gap:16px;">
+                <span style="font-size:32px; color:#f5c518;">${estrellas}</span>
+                <div>
+                    <div style="font-size:22px; font-weight:700; color:#54cfe0;">${promedio > 0 ? promedio : 'Sin reseñas'}</div>
+                    <div style="font-size:13px; color:rgba(255,255,255,0.4);">${total} reseña${total !== 1 ? 's' : ''}</div>
+                </div>
+            </div>
+        `;
+    } catch(e) {}
+
+    if (esSocio) {
+        try {
+            const miaRes = await apiRequest(`${API_URL}/reseñas/mia?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
+            const mia = await miaRes.json();
+            const form = document.getElementById('formularioReseña');
+            if (mia) {
+                const estrellasMia = '★'.repeat(mia.estrellas) + '☆'.repeat(5 - mia.estrellas);
+                form.innerHTML = `
+                    <div style="background:rgba(84,207,224,0.08); border:1px solid rgba(84,207,224,0.2); border-radius:12px; padding:16px;">
+                        <p style="color:rgba(255,255,255,0.5); font-size:13px; margin-bottom:8px;">Tu reseña</p>
+                        <div style="color:#f5c518; font-size:20px;">${estrellasMia}</div>
+                        <p style="margin-top:8px; font-size:14px;">${mia.comentario || 'Sin comentario'}</p>
+                    </div>
+                `;
+            } else {
+                form.innerHTML = `
+                    <div style="margin-top:8px;">
+                        <p style="font-size:14px; color:rgba(255,255,255,0.6); margin-bottom:12px;">¿Cómo calificarías esta actividad?</p>
+                        <div id="starSelector" style="display:flex; gap:8px; font-size:28px; cursor:pointer; margin-bottom:12px;">
+                            ${[1,2,3,4,5].map(n => `<span data-val="${n}" style="color:rgba(255,255,255,0.2); transition:color 0.15s;">★</span>`).join('')}
+                        </div>
+                        <input type="hidden" id="estrellasSeleccionadas" value="0">
+                        <textarea id="comentarioReseña" placeholder="Comentario (opcional)" style="width:100%; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.4); color:white; font-size:14px; resize:vertical; min-height:80px; box-sizing:border-box;"></textarea>
+                        <button id="enviarReseñaBtn" style="margin-top:12px; max-width:180px;">Enviar reseña</button>
+                        <p id="reseñaMsg" style="font-size:13px; margin-top:8px;"></p>
+                    </div>
+                `;
+                const spans = document.querySelectorAll('#starSelector span');
+                spans.forEach(span => {
+                    span.addEventListener('mouseenter', () => {
+                        const val = parseInt(span.dataset.val);
+                        spans.forEach(s => s.style.color = parseInt(s.dataset.val) <= val ? '#f5c518' : 'rgba(255,255,255,0.2)');
+                    });
+                    span.addEventListener('mouseleave', () => {
+                        const sel = parseInt(document.getElementById('estrellasSeleccionadas').value);
+                        spans.forEach(s => s.style.color = parseInt(s.dataset.val) <= sel ? '#f5c518' : 'rgba(255,255,255,0.2)');
+                    });
+                    span.addEventListener('click', () => {
+                        document.getElementById('estrellasSeleccionadas').value = span.dataset.val;
+                        spans.forEach(s => s.style.color = parseInt(s.dataset.val) <= parseInt(span.dataset.val) ? '#f5c518' : 'rgba(255,255,255,0.2)');
+                    });
+                });
+                document.getElementById('enviarReseñaBtn').addEventListener('click', async () => {
+                    const estrellas = parseInt(document.getElementById('estrellasSeleccionadas').value);
+                    const comentario = document.getElementById('comentarioReseña').value.trim();
+                    const msg = document.getElementById('reseñaMsg');
+                    if (!estrellas) { msg.style.color = '#ff6b6b'; msg.textContent = 'Selecciona una calificación'; return; }
+                    try {
+                        const r = await apiRequest(`${API_URL}/reseñas`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ tipo: 'actividad', referencia_id: parseInt(id), usuario_id: loggedUser.id, estrellas, comentario })
+                        });
+                        if (r.ok) { cargarReseñasActividad(); }
+                        else { const d = await r.json(); msg.style.color = '#ff6b6b'; msg.textContent = d.error || 'Error'; }
+                    } catch(e) { msg.style.color = '#ff6b6b'; msg.textContent = 'Error de conexión'; }
+                });
+            }
+        } catch(e) {}
+    }
+}

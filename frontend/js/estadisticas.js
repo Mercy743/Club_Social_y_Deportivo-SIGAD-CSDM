@@ -142,3 +142,88 @@ async function cargarEstadisticas() {
 }
 cargarEstadisticas();
 setInterval(cargarEstadisticas, 30000);
+
+/* ===== RESEÑAS ADMIN ===== */
+async function cargarOpcionesReferencia() {
+    const tipo = document.getElementById('filtroTipoReseña').value;
+    const select = document.getElementById('filtroReferenciaReseña');
+    select.innerHTML = '<option value="">Cargando...</option>';
+    try {
+        const endpoint = tipo === 'actividad' ? '/actividades' : '/torneos';
+        const res = await apiRequest(API_URL + endpoint);
+        const data = await res.json();
+        select.innerHTML = '<option value="">Selecciona...</option>';
+        data.forEach(item => {
+            select.innerHTML += `<option value="${item.id}">${item.nombre}</option>`;
+        });
+    } catch(e) {
+        select.innerHTML = '<option value="">Error al cargar</option>';
+    }
+}
+
+async function cargarReseñasAdmin() {
+    const tipo = document.getElementById('filtroTipoReseña').value;
+    const referenciaId = document.getElementById('filtroReferenciaReseña').value;
+    const filtro = document.getElementById('filtroSentimiento').value;
+    const lista = document.getElementById('listaReseñasAdmin');
+    const resumen = document.getElementById('resumenReseñasAdmin');
+
+    if (!referenciaId) {
+        lista.innerHTML = '<p style="color:rgba(255,255,255,0.4); font-size:14px;">Selecciona una actividad o torneo</p>';
+        return;
+    }
+
+    lista.innerHTML = '<p style="color:rgba(255,255,255,0.4); font-size:14px;">Cargando...</p>';
+
+    try {
+        const [resRes, reseñasRes] = await Promise.all([
+            apiRequest(`${API_URL}/reseñas/resumen?tipo=${tipo}&referencia_id=${referenciaId}`),
+            apiRequest(`${API_URL}/reseñas?tipo=${tipo}&referencia_id=${referenciaId}&filtro=${filtro}`)
+        ]);
+        const resumenData = await resRes.json();
+        const reseñas = await reseñasRes.json();
+
+        const promedio = parseFloat(resumenData.promedio) || 0;
+        const total = parseInt(resumenData.total) || 0;
+        resumen.innerHTML = `
+            <div style="display:flex; align-items:center; gap:16px; padding:12px; background:rgba(84,207,224,0.06); border-radius:10px;">
+                <span style="font-size:28px; color:#f5c518;">${'★'.repeat(Math.round(promedio))}${'☆'.repeat(5 - Math.round(promedio))}</span>
+                <div>
+                    <span style="font-size:20px; font-weight:700; color:#54cfe0;">${promedio > 0 ? promedio : '—'}</span>
+                    <span style="font-size:13px; color:rgba(255,255,255,0.4); margin-left:8px;">${total} reseña${total !== 1 ? 's' : ''} en total</span>
+                </div>
+            </div>
+        `;
+
+        if (reseñas.length === 0) {
+            lista.innerHTML = '<p style="color:rgba(255,255,255,0.4); font-size:14px; margin-top:12px;">No hay reseñas con ese filtro</p>';
+            return;
+        }
+
+        lista.innerHTML = reseñas.map(r => {
+            const estrellas = '★'.repeat(r.estrellas) + '☆'.repeat(5 - r.estrellas);
+            const color = r.estrellas >= 4 ? '#4caf50' : r.estrellas <= 2 ? '#ff6b6b' : '#ff9800';
+            const fecha = new Date(r.created_at).toLocaleDateString('es-MX');
+            return `
+                <div style="padding:14px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; gap:14px; align-items:flex-start;">
+                    <div style="min-width:80px; text-align:center;">
+                        <div style="font-size:18px; color:${color};">${estrellas}</div>
+                        <div style="font-size:11px; color:rgba(255,255,255,0.3); margin-top:2px;">${fecha}</div>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-weight:600; font-size:14px; color:#54cfe0;">${r.nombre} ${r.apellido}</div>
+                        <div style="font-size:13px; color:rgba(255,255,255,0.6); margin-top:4px;">${r.comentario || '<em style="color:rgba(255,255,255,0.3)">Sin comentario</em>'}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch(e) {
+        lista.innerHTML = '<p style="color:#ff6b6b; font-size:14px;">Error al cargar reseñas</p>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarOpcionesReferencia();
+    document.getElementById('filtroTipoReseña')?.addEventListener('change', cargarOpcionesReferencia);
+    document.getElementById('btnCargarReseñas')?.addEventListener('click', cargarReseñasAdmin);
+});

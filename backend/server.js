@@ -2067,6 +2067,90 @@ setInterval(async () => {
     } catch (err) { console.error(err); }
 }, 3600000);
 
+/* ===== RESEÑAS ===== */
+
+// Crear reseña
+app.post('/api/reseñas', async (req, res) => {
+    const { tipo, referencia_id, usuario_id, estrellas, comentario } = req.body;
+    if (!tipo || !referencia_id || !usuario_id || !estrellas) {
+        return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+    try {
+        const existe = await pool.query(
+            `SELECT id FROM reseñas WHERE tipo=$1 AND referencia_id=$2 AND usuario_id=$3`,
+            [tipo, referencia_id, usuario_id]
+        );
+        if (existe.rows.length > 0) {
+            return res.status(409).json({ error: 'Ya dejaste una reseña para este ' + tipo });
+        }
+        const r = await pool.query(
+            `INSERT INTO reseñas (tipo, referencia_id, usuario_id, estrellas, comentario)
+             VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+            [tipo, referencia_id, usuario_id, estrellas, comentario || null]
+        );
+        res.json(r.rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al guardar reseña' });
+    }
+});
+
+// Obtener reseñas de un torneo o actividad (promedio + total)
+app.get('/api/reseñas/resumen', async (req, res) => {
+    const { tipo, referencia_id } = req.query;
+    try {
+        const r = await pool.query(
+            `SELECT ROUND(AVG(estrellas)::numeric, 1) as promedio, COUNT(*) as total
+             FROM reseñas WHERE tipo=$1 AND referencia_id=$2`,
+            [tipo, referencia_id]
+        );
+        res.json(r.rows[0]);
+    } catch (error) {
+        res.status(500).json({ error: 'Error' });
+    }
+});
+
+// Obtener todas las reseñas (solo admin) con filtro
+app.get('/api/reseñas', async (req, res) => {
+    const { tipo, referencia_id, filtro } = req.query;
+    try {
+        let whereClause = 'WHERE r.tipo=$1 AND r.referencia_id=$2';
+        const params = [tipo, referencia_id];
+        if (filtro === 'positivas') {
+            whereClause += ' AND r.estrellas >= 4';
+        } else if (filtro === 'negativas') {
+            whereClause += ' AND r.estrellas <= 2';
+        }
+        const r = await pool.query(
+            `SELECT r.*, u.nombre, u.apellido
+             FROM reseñas r
+             JOIN usuarios u ON r.usuario_id = u.id
+             ${whereClause}
+             ORDER BY r.created_at DESC`,
+            params
+        );
+        res.json(r.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al obtener reseñas' });
+    }
+});
+
+// Verificar si el usuario ya reseñó
+app.get('/api/reseñas/mia', async (req, res) => {
+    const { tipo, referencia_id, usuario_id } = req.query;
+    try {
+        const r = await pool.query(
+            `SELECT id, estrellas, comentario FROM reseñas 
+             WHERE tipo=$1 AND referencia_id=$2 AND usuario_id=$3`,
+            [tipo, referencia_id, usuario_id]
+        );
+        res.json(r.rows[0] || null);
+    } catch (error) {
+        res.status(500).json({ error: 'Error' });
+    }
+});
+
 /* ===== SERVER ===== */
 app.listen(puerto, () => {
     console.log(`Servidor corriendo en http://localhost:${puerto}`);
