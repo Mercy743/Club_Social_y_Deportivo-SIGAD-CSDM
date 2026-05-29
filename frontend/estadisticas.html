@@ -78,26 +78,26 @@
                 </p>
             </div>
         </div>
-    </div>
-    <p class="section-label">Reseñas por actividad y torneo</p>
-    <div class="dashboardCard" style="margin-bottom: 24px;">
-        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; align-items:center;">
-            <select id="filtroTipoReseña" style="padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.4); color:white; font-size:14px;">
-                <option value="actividad">Actividades</option>
-                <option value="torneo">Torneos</option>
-            </select>
-            <select id="filtroReferenciaReseña" style="padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.4); color:white; font-size:14px; min-width:200px;">
-                <option value="">Selecciona...</option>
-            </select>
-            <select id="filtroSentimiento" style="padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.4); color:white; font-size:14px;">
-                <option value="">Todas</option>
-                <option value="positivas">Positivas (4-5 estrellas)</option>
-                <option value="negativas">Negativas (1-2 estrellas)</option>
-            </select>
-            <button id="btnCargarReseñas" style="max-width:160px; margin:0; padding:10px 16px;">Ver reseñas</button>
+        <p class="section-label">Reseñas por actividad y torneo</p>
+        <div class="dashboardCard" style="margin-bottom: 24px;">
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; align-items:center;">
+                <select id="filtroTipoReseña" style="padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.4); color:white; font-size:14px;">
+                    <option value="actividad">Actividades</option>
+                    <option value="torneo">Torneos</option>
+                </select>
+                <select id="filtroReferenciaReseña" style="padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.4); color:white; font-size:14px; min-width:200px;">
+                    <option value="">Selecciona...</option>
+                </select>
+                <select id="filtroSentimiento" style="padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.4); color:white; font-size:14px;">
+                    <option value="">Todas</option>
+                    <option value="positivas">Positivas (4-5 estrellas)</option>
+                    <option value="negativas">Negativas (1-2 estrellas)</option>
+                </select>
+                <button id="btnCargarReseñas" style="max-width:160px; margin:0; padding:10px 16px;">Ver reseñas</button>
+            </div>
+            <div id="resumenReseñasAdmin" style="margin-bottom:16px;"></div>
+            <div id="listaReseñasAdmin"></div>
         </div>
-        <div id="resumenReseñasAdmin" style="margin-bottom:16px;"></div>
-        <div id="listaReseñasAdmin"></div>
     </div>
     <script src="js/comunes.js"></script>
     <script src="js/estadisticas.js"></script>

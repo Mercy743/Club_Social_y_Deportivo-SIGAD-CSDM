@@ -578,6 +578,14 @@ async function cargarReseñas() {
     // Verificar si ya reseñó
     if (esSocio) {
         try {
+            const puedeRes = await apiRequest(`${API_URL}/reseñas/puedo-reseñar?tipo=torneo&referencia_id=${id}&usuario_id=${loggedUser.id}`);
+            const { puede } = await puedeRes.json();
+            if (!puede) {
+                document.getElementById('formularioReseña').innerHTML = `
+                    <p style="color:rgba(255,255,255,0.3); font-size:13px;">Solo puedes calificar torneos en los que participaste.</p>
+                `;
+                return;
+            }
             const miaRes = await apiRequest(`${API_URL}/reseñas/mia?tipo=torneo&referencia_id=${id}&usuario_id=${loggedUser.id}`);
             const mia = await miaRes.json();
             const form = document.getElementById('formularioReseña');

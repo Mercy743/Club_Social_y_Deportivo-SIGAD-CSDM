@@ -514,19 +514,25 @@ async function cargarReseñasActividad() {
     } catch(e) {}
 
     if (esSocio) {
-        try {
-            const miaRes = await apiRequest(`${API_URL}/reseñas/mia?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
-            const mia = await miaRes.json();
-            const form = document.getElementById('formularioReseña');
-            if (mia) {
-                const estrellasMia = '★'.repeat(mia.estrellas) + '☆'.repeat(5 - mia.estrellas);
-                form.innerHTML = `
-                    <div style="background:rgba(84,207,224,0.08); border:1px solid rgba(84,207,224,0.2); border-radius:12px; padding:16px;">
-                        <p style="color:rgba(255,255,255,0.5); font-size:13px; margin-bottom:8px;">Tu reseña</p>
-                        <div style="color:#f5c518; font-size:20px;">${estrellasMia}</div>
-                        <p style="margin-top:8px; font-size:14px;">${mia.comentario || 'Sin comentario'}</p>
-                    </div>
-                `;
+    try {
+        const puedeRes = await apiRequest(`${API_URL}/reseñas/puedo-reseñar?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
+        const { puede } = await puedeRes.json();
+        if (!puede) {
+                document.getElementById('formularioReseña').innerHTML = `
+                    <p style="color:rgba(255,255,255,0.3); font-size:13px;">Solo puedes calificar actividades en las que estás inscrito.</p>`;
+            return;
+        }
+        const miaRes = await apiRequest(`${API_URL}/reseñas/mia?tipo=actividad&referencia_id=${id}&usuario_id=${loggedUser.id}`);
+        const mia = await miaRes.json();
+        const form = document.getElementById('formularioReseña');
+        if (mia) {
+            const estrellasMia = '★'.repeat(mia.estrellas) + '☆'.repeat(5 - mia.estrellas);
+            form.innerHTML = `
+                <div style="background:rgba(84,207,224,0.08); border:1px solid rgba(84,207,224,0.2); border-radius:12px; padding:16px;">
+                    <p style="color:rgba(255,255,255,0.5); font-size:13px; margin-bottom:8px;">Tu reseña</p>
+                    <div style="color:#f5c518; font-size:20px;">${estrellasMia}</div>
+                    <p style="margin-top:8px; font-size:14px;">${mia.comentario || 'Sin comentario'}</p>
+                </div>`;
             } else {
                 form.innerHTML = `
                     <div style="margin-top:8px;">
@@ -538,8 +544,7 @@ async function cargarReseñasActividad() {
                         <textarea id="comentarioReseña" placeholder="Comentario (opcional)" style="width:100%; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.4); color:white; font-size:14px; resize:vertical; min-height:80px; box-sizing:border-box;"></textarea>
                         <button id="enviarReseñaBtn" style="margin-top:12px; max-width:180px;">Enviar reseña</button>
                         <p id="reseñaMsg" style="font-size:13px; margin-top:8px;"></p>
-                    </div>
-                `;
+                    </div>`;
                 const spans = document.querySelectorAll('#starSelector span');
                 spans.forEach(span => {
                     span.addEventListener('mouseenter', () => {

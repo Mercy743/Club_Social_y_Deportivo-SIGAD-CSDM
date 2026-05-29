@@ -2136,6 +2136,30 @@ app.get('/api/reseñas', async (req, res) => {
     }
 });
 
+// Verificar si el usuario está inscrito en una actividad o torneo
+app.get('/api/reseñas/puedo-reseñar', async (req, res) => {
+    const { tipo, referencia_id, usuario_id } = req.query;
+    try {
+        let inscrito = false;
+        if (tipo === 'actividad') {
+            const r = await pool.query(
+                `SELECT id FROM inscripciones WHERE usuario_id=$1 AND actividad_id=$2`,
+                [usuario_id, referencia_id]
+            );
+            inscrito = r.rows.length > 0;
+        } else if (tipo === 'torneo') {
+            const r = await pool.query(
+                `SELECT id FROM participantes_torneo WHERE usuario_id=$1 AND torneo_id=$2`,
+                [usuario_id, referencia_id]
+            );
+            inscrito = r.rows.length > 0;
+        }
+        res.json({ puede: inscrito });
+    } catch (error) {
+        res.status(500).json({ error: 'Error' });
+    }
+});
+
 // Verificar si el usuario ya reseñó
 app.get('/api/reseñas/mia', async (req, res) => {
     const { tipo, referencia_id, usuario_id } = req.query;
