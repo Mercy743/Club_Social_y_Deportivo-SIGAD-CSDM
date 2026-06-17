@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SIGAD - Asignar Roles</title>
+    <link rel="stylesheet" href="asignar_roles.css">
+</head>
+<body>
+    <h2>Gestión de Roles de Usuario</h2>
+    
+    <div class="container">
+        <form id="form-roles">
+            <div class="input-group">
+                <label for="usuario_id">ID del Usuario:</label>
+                <input type="number" id="usuario_id" min="1" required placeholder="Ej: 1">
+                <button type="button" id="btn-buscar" class="btn-secondary">🔍 Buscar Usuario</button>
+            </div>
+
+            <div id="info-actual" class="info-box">
+                </div>
+
+            <hr>
+
+            <div class="input-group">
+                <label for="rol_id">Asignar Nuevo Rol:</label>
+                <select id="rol_id" name="rol_id">
+                    <option value="1">Socio</option>
+                    <option value="2">Instructor</option>
+                    <option value="3">Administrador</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-primary">Actualizar Rol</button>
+        </form>
+
+        <div id="mensaje"></div>
+    </div>
+
+    <script src="asignar_roles.js"></script>
+</body>
+</html>
